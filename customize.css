@@ -1,0 +1,15 @@
+/* 1. 最初は対象の4項目を強制的に非表示にする */
+[field-id="返送先対象者の氏名"],
+[field-id="返送先対象者の会社名"],
+[field-id="返送先対象者の電話番号"],
+[field-id="返送先対象者のメールアドレス"] {
+    display: none !important;
+}
+
+/* 2. 「返送先が異なる」が選択された時だけ表示する（後述のJSと組み合わせ） */
+.show-target-fields [field-id="返送先対象者の氏名"],
+.show-target-fields [field-id="返送先対象者の会社名"],
+.show-target-fields [field-id="返送先対象者の電話番号"],
+.show-target-fields [field-id="返送先対象者のメールアドレス"] {
+    display: block !important;
+}
