@@ -1,36 +1,112 @@
-body { background-color: #f0f2f5 !important; margin: 0; }
-body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
-[field-id] { margin-bottom: 32px !important; clear: both; }
-[field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
-
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
-    width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important; transition: all 0.2s !important;
-}
-body .kb-injector input:focus { border-color: #007bff !important; box-shadow: 0 0 0 4px rgba(0,123,255,0.1) !important; outline: none !important; }
-
-/* 出し分けエリア */
-[field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
-.show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
-    display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
+/* --- 1. ベース・コンテナデザイン --- */
+body {
+    background-color: #f0f2f5 !important;
+    margin: 0;
 }
 
-/* --- 標準エラーデザイン再現 --- */
-.custom-error-container { margin-top: 4px !important; }
-.error-icon-tri {
-    display: block !important; height: 0.75em !important; width: 0.75em !important;
-    margin: 0 0 0 1.5em !important; position: relative !important; z-index: 2;
+body .kb-injector {
+    max-width: 800px !important;
+    margin: 40px auto !important;
+    padding: 32px !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
+    box-sizing: border-box !important;
 }
+
+[field-id] {
+    margin-bottom: 32px !important;
+    clear: both;
+}
+
+[field-id] label {
+    font-weight: 600 !important;
+    color: #1a1a1a !important;
+    margin-bottom: 12px !important;
+    display: block !important;
+    font-size: 17px !important;
+}
+
+/* 入力欄の装飾 */
+body .kb-injector input,
+body .kb-injector select,
+body .kb-injector textarea {
+    width: 100% !important;
+    padding: 14px 16px !important;
+    border: 1.5px solid #e0e4e8 !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+    transition: all 0.2s ease !important;
+}
+
+body .kb-injector input:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 4px rgba(0,123,255,0.1) !important;
+    outline: none !important;
+}
+
+/* --- 2. 出し分け（返送先が異なる）のグループ化 --- */
+[field-id="返送先対象者の氏名"],
+[field-id="返送先対象者の会社名"],
+[field-id="返送先対象者の電話番号"],
+[field-id="返送先対象者のメールアドレス"] {
+    display: none !important;
+}
+
+.show-target-fields [field-id="返送先対象者の氏名"],
+.show-target-fields [field-id="返送先対象者の会社名"],
+.show-target-fields [field-id="返送先対象者の電話番号"],
+.show-target-fields [field-id="返送先対象者のメールアドレス"] {
+    display: block !important;
+    background-color: #f8fbff !important;
+    padding: 10px 20px !important;
+    margin-bottom: 0 !important;
+    border-left: 5px solid #007bff !important;
+}
+
+/* --- 3. エラーデザイン（CSSによる三角形描画） --- */
+.custom-error-container {
+    margin-top: 6px !important;
+}
+
+/* 画像を使わずCSSで三角形を作成 */
+.error-triangle {
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 7px solid transparent !important;
+    border-right: 7px solid transparent !important;
+    border-bottom: 9px solid rgb(183, 40, 46) !important;
+    margin-left: 1.5em !important;
+    display: block !important;
+}
+
 body .kb-injector .error-message {
-    background-color: rgb(183, 40, 46) !important; color: #ffffff !important;
-    border-radius: 0.25em !important; display: block !important;
-    line-height: 2.2em !important; margin: -1px 0 0 0 !important; /* アイコンと密着させる */
-    padding: 0 0.8em !important; font-size: 14px !important; font-weight: 500 !important;
+    background-color: rgb(183, 40, 46) !important;
+    color: #ffffff !important;
+    border-radius: 0.25em !important;
+    display: block !important;
+    line-height: 2.2em !important;
+    margin: -1px 0 0 0 !important; /* 三角形と合体 */
+    padding: 0 0.8em !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
 }
-body .kb-injector input.error-input { border-color: rgb(183, 40, 46) !important; background-color: #fff8f8 !important; }
 
-/* ボタン */
+/* エラー時の入力枠 */
+body .kb-injector input.error-input {
+    border-color: rgb(183, 40, 46) !important;
+    background-color: #fff8f8 !important;
+}
+
+/* --- 4. 送信ボタン --- */
 .submit-button, button[type="submit"] {
-    width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
-    color: #fff !important; padding: 18px !important; border-radius: 12px !important;
-    font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important;
+    width: 100% !important;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: #fff !important;
+    padding: 18px !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin-top: 40px !important;
 }
