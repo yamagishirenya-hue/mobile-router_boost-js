@@ -3,7 +3,7 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 郵便番号：1文字1枠UIの生成と同期 ---
+    // --- 郵便番号：UI生成 ---
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
@@ -11,6 +11,7 @@
         const valueContainer = parentField.querySelector('.kb-field-value');
         const originalInput = valueContainer ? valueContainer.querySelector('input') : null;
 
+        // すでにコンテナが存在する場合は重複作成しない
         if (!originalInput || parentField.querySelector('.postal-box-container')) return;
 
         originalInput.style.display = 'none';
@@ -61,9 +62,8 @@
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
-        let val = e.target.value;
         if (fieldId.includes("電話番号") || fieldId === "郵便番号") {
-            val = val.replace(/[^\d]/g, ""); 
+            let val = e.target.value.replace(/[^\d]/g, ""); 
             const maxLen = fieldId === "郵便番号" ? 7 : 11;
             if (val.length > maxLen) val = val.slice(0, maxLen);
             e.target.value = val;
@@ -94,12 +94,9 @@
         if (existing) existing.remove();
     };
 
-    // バリデーションとポップアップ表示
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
-        
-        // 全エラーリセット
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
         // 電話番号
@@ -112,25 +109,21 @@
 
         // メール
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) { showError("連絡先メールアドレス", "形式を確認してください"); hasError = true; }
-        if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) { showError("返送先対象者のメールアドレス", "形式を確認してください"); hasError = true; }
+        const checkMail = (id) => {
+            if (!(record[id]?.value || "").match(mailRegex)) { showError(id, "形式を確認してください"); hasError = true; }
+        };
+        checkMail("連絡先メールアドレス");
+        if (isDiff) checkMail("返送先対象者のメールアドレス");
 
         // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal.length !== 7) { showError("郵便番号", "7桁の数字を入力してください"); hasError = true; }
 
-        // 必須項目
+        // 必須
         if (isDiff) {
             targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です"); hasError = true; } });
         }
 
-        if (hasError) {
-            // アラートの代わりにポップアップ（エラー通知）を設定
-            const errorMsg = "入力内容に誤りがあります。赤枠の項目を確認してください。";
-            if (typeof kb !== 'undefined' && kb.ui && kb.ui.showMessage) {
-                kb.ui.showMessage(errorMsg, 'error');
-            }
-        }
         return !hasError;
     };
 
@@ -139,26 +132,26 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // メインの初期化処理
-    let isEventAttached = false;
+    // 監視タイマー
+    let eventReady = false;
     const timer = setInterval(() => {
-        const zipField = document.querySelector('[field-id="郵便番号"]');
-        if (zipField && typeof kb !== 'undefined' && kb.event) {
-            initPostalCodeUI();
-            
-            if (!isEventAttached) {
+        if (typeof kb !== 'undefined' && kb.event && document.querySelector('[field-id]')) {
+            if (!eventReady) {
+                initPostalCodeUI();
                 document.addEventListener('input', handleInputControl);
                 kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); initPostalCodeUI(); return ev; });
                 kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
                 kb.event.on('kb.create.submit', (ev) => { 
                     if (!validateAll(ev.record)) {
-                        ev.error = "入力内容を確認してください。"; // 画面上部にメッセージ表示
+                        ev.error = "入力内容に誤りがあります。赤枠の箇所を確認してください。";
                         return false; 
                     }
                     return ev; 
                 });
-                isEventAttached = true;
+                eventReady = true;
+            } else {
+                initPostalCodeUI(); // 追加読み込み対策
             }
         }
-    }, 300);
+    }, 500);
 })();
