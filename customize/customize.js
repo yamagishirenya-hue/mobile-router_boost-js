@@ -3,37 +3,7 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // ラベルのテキストを精密に装飾する関数
-    const formatLabels = () => {
-        const captions = document.querySelectorAll('.kb-field-caption');
-        if (captions.length === 0) return;
-
-        captions.forEach(el => {
-            // すでに装飾済みなら二重処理しない
-            if (el.querySelector('.formatted-done')) return;
-
-            let html = el.innerHTML;
-            
-            // 1. 【必須】を赤文字にする
-            if (html.includes('【必須】')) {
-                html = html.replace(/【必須】/g, '<span class="formatted-done custom-req">【必須】</span>');
-            }
-            // 2. （必須）を赤文字にする
-            if (html.includes('（必須）')) {
-                html = html.replace(/（必須）/g, '<span class="formatted-done custom-req">（必須）</span>');
-            }
-            // 3. ※以降を小さく薄くする（改行含め）
-            if (html.includes('※')) {
-                html = html.replace(/(※[\s\S]+)/g, '<span class="formatted-done custom-note">$1</span>');
-            }
-
-            if (el.innerHTML !== html) {
-                el.innerHTML = html;
-            }
-        });
-    };
-
-    // 入力制御（リアルタイム桁数・ハイフン）
+    // リアルタイム入力制御（桁数・ハイフン）
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
@@ -84,6 +54,7 @@
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
+        
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -91,9 +62,10 @@
             if (val.length < 10 || val.length > 11) { showError(id, "数字10桁または11桁で入力してください"); hasError = true; }
         });
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) { showError("連絡先メールアドレス", "正しい形式で入力してください"); hasError = true; }
-        if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) { showError("返送先対象者のメールアドレス", "正しい形式で入力してください"); hasError = true; }
+        if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) { showError("連絡先メールアドレス", "形式を確認してください"); hasError = true; }
+        if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) { showError("返送先対象者のメールアドレス", "形式を確認してください"); hasError = true; }
         if (!(record["郵便番号"]?.value || "").match(/^\d{3}-\d{4}$/)) { showError("郵便番号", "正しく入力してください"); hasError = true; }
+        
         if (isDiff) {
             targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です"); hasError = true; } });
         }
@@ -111,13 +83,7 @@
         if (typeof kb !== 'undefined' && kb.event) {
             clearInterval(timer);
             document.addEventListener('input', handleInputControl);
-            
-            kb.event.on('kb.view.show', (ev) => { 
-                updateVisibility(ev.record); 
-                // 描画を待って装飾。Injectorの再描画に備えて定期実行も。
-                setInterval(formatLabels, 500); 
-                return ev; 
-            });
+            kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); return ev; });
             kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
             kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
         }
