@@ -1,132 +1,78 @@
 /* ============================================================
-   1. ベースデザイン & レイアウト
+   1. 独自実装ポップアップ（HTMLねじ込み用）
    ============================================================ */
-body { background-color: #f0f2f5 !important; margin: 0; }
-body .kb-injector { 
-    max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; 
-    background: #ffffff !important; border-radius: 16px !important; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; 
-}
-[field-id] { margin-bottom: 32px !important; clear: both; }
-[field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
-    width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; 
-    border-radius: 10px !important; font-size: 16px !important; 
-}
-
-/* ============================================================
-   2. 郵便番号：1文字1枠デザイン
-   ============================================================ */
-.postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
-.postal-box-unit {
-    width: 42px !important; height: 50px !important; text-align: center !important; font-size: 22px !important;
-    font-weight: bold !important; color: #444 !important; border: 1px solid #ccc !important;
-    border-radius: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; outline: none !important;
-}
-.postal-box-unit + .postal-box-unit { border-left: none !important; }
-.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
-.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
-.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
-.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
-.postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; color: #555 !important; font-size: 20px !important; }
-.postal-box-unit:focus { border-color: #007bff !important; box-shadow: 0 0 5px rgba(0,123,255,0.5) !important; z-index: 10 !important; }
-
-/* 郵便番号のエラー枠 */
-.postal-box-unit.error-input { border: 2px solid rgb(183, 40, 46) !important; background-color: #fff6f6 !important; }
-
-/* ============================================================
-   3. フィールドの出し分け制御（返送先が異なる場合）
-   ============================================================ */
-[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
-[field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] {
-    display: none !important;
-}
-body.show-target-fields [field-id="返送先対象者の氏名"], 
-body.show-target-fields [field-id="返送先対象者の会社名"], 
-body.show-target-fields [field-id="返送先対象者の電話番号"], 
-body.show-target-fields [field-id="返送先対象者のメールアドレス"] {
-    display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; 
-    margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
-}
-
-/* ============================================================
-   4. ポップアップ（Booster標準ダイアログ）の上書きデザイン
-   ============================================================ */
-/* ダイアログ全体の背景（半透明） */
-.kb-dialog {
-    background-color: rgba(0, 0, 0, 0.6) !important;
-}
-
-/* ダイアログ本体（白い箱） */
-.kb-dialog > div {
-    background-color: #ffffff !important;
-    border-radius: 12px !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
-    padding: 0 0 60px 0 !important; /* 下部ボタンエリア用の余白 */
-    overflow: hidden !important;
-    width: 450px !important;
-    max-width: 90% !important;
-    height: auto !important;
-}
-
-/* メッセージ表示エリア（「入力内容に誤りがあります」の部分） */
-.kb-dialog > div > div:first-child {
-    height: auto !important;
-    min-height: 100px !important;
+/* 背景の黒い幕 */
+.custom-popup-overlay {
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6) !important;
+    z-index: 999999 !important; /* 最前面 */
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 18px !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ポップアップ本体 */
+.custom-popup-body {
+    background: #ffffff !important;
+    width: 480px;
+    max-width: 90%;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+    overflow: hidden;
+    position: relative;
+    animation: custom-popup-show 0.2s ease-out;
+}
+
+@keyframes custom-popup-show {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* メッセージエリア */
+.custom-popup-content {
+    padding: 48px 24px !important;
+    text-align: center !important;
+    font-size: 20px !important;
     font-weight: bold !important;
     color: #333 !important;
-    padding: 40px 24px !important;
-    text-align: center !important;
-    line-height: 1.5 !important;
+    line-height: 1.6;
 }
 
-/* ボタンが配置されるフッターエリア */
-.kb-dialog div[style*="border-top: 1px solid rgb(66, 165, 245)"],
-.kb-dialog div[style*="border-top: 1px solid"] {
+/* フッター（ボタンエリア） */
+.custom-popup-footer {
+    background: #f9f9f9 !important;
     border-top: 1px solid #eee !important;
-    background-color: #f9f9f9 !important;
-    height: 60px !important;
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    display: flex !important;
-    padding: 0 !important;
+    height: 70px;
+    display: flex;
 }
 
-/* OK / Cancel ボタンのデザイン共通 */
-.kb-dialog .kb-dialog-button {
-    background-color: transparent !important;
+/* OKボタン */
+.custom-popup-button {
+    flex: 1;
+    border: none;
+    background: transparent !important;
     color: #007bff !important;
-    font-size: 16px !important;
+    font-size: 18px !important;
     font-weight: bold !important;
-    height: 60px !important;
-    line-height: 60px !important;
-    margin: 0 !important;
-    border: none !important;
-    flex: 1 !important; /* ボタンを均等に横並び */
-    cursor: pointer !important;
-    outline: none !important;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s;
 }
 
-/* OKボタン（左側）とCancelボタンの境界線 */
-.kb-dialog .kb-dialog-button:first-child {
-    border-right: 1px solid #eee !important;
-}
-
-/* ホバー効果 */
-.kb-dialog .kb-dialog-button:hover {
-    background-color: #f2f8ff !important;
+.custom-popup-button:hover {
+    background: #f2f8ff !important;
 }
 
 /* ============================================================
-   5. 入力フィールド直下のエラー表示（赤い吹き出し）
+   2. エラー表示（赤い吹き出し） & 赤枠
    ============================================================ */
 /* 入力項目の赤枠 */
-.error-input { border: 2px solid rgb(183, 40, 46) !important; background-color: #fff6f6 !important; }
+.error-input, .postal-box-unit.error-input {
+    border: 2px solid rgb(183, 40, 46) !important;
+    background-color: #fff6f6 !important;
+}
 
 /* 吹き出しコンテナ */
 .custom-error-container { margin-top: 10px !important; display: block !important; clear: both; }
@@ -148,12 +94,34 @@ body.show-target-fields [field-id="返送先対象者のメールアドレス"] 
 }
 
 /* ============================================================
-   6. 送信ボタンのデザイン
+   3. 郵便番号：1文字1枠
    ============================================================ */
-.submit-button, .kb-injector-button { 
-    width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; 
-    color: #fff !important; padding: 18px !important; border-radius: 12px !important; 
-    font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; 
-    cursor: pointer !important; transition: opacity 0.2s;
+.postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
+.postal-box-unit {
+    width: 42px !important; height: 50px !important; text-align: center !important; 
+    font-size: 22px !important; font-weight: bold; border: 1px solid #ccc !important;
+    border-radius: 0 !important; background: #fff !important; outline: none !important;
 }
-.submit-button:hover, .kb-injector-button:hover { opacity: 0.9 !important; }
+.postal-box-unit + .postal-box-unit { border-left: none !important; }
+.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
+.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
+.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
+.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
+.postal-box-hyphen { margin: 0 10px !important; font-weight: bold; font-size: 20px; }
+
+/* ============================================================
+   4. その他レイアウト・表示制御
+   ============================================================ */
+/* フィールドの非表示設定 */
+[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
+[field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { 
+    display: none !important; 
+}
+
+/* 条件一致時の表示設定 */
+body.show-target-fields [field-id="返送先対象者の氏名"], 
+body.show-target-fields [field-id="返送先対象者の会社名"], 
+body.show-target-fields [field-id="返送先対象者の電話番号"], 
+body.show-target-fields [field-id="返送先対象者のメールアドレス"] { 
+    display: block !important; 
+}
