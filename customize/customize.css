@@ -12,13 +12,18 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
     width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important;
 }
 
+/* 郵便番号入力欄の擬似的な3-4桁ガイド（プレースホルダー的な装飾） */
+[field-id="郵便番号"] input::placeholder {
+    color: #bbb;
+}
+
 /* --- 2. 出し分けエリアのデザイン --- */
 [field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
 .show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
     display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
 }
 
-/* --- 3. エラー項目デザイン（三角形アイコンと21px吹き出し） --- */
+/* --- 3. エラー項目デザイン --- */
 .custom-error-container { margin-top: 10px !important; display: block !important; position: relative !important; }
 .error-triangle { width: 0 !important; height: 0 !important; border-left: 12px solid transparent !important; border-right: 12px solid transparent !important; border-bottom: 14px solid rgb(183, 40, 46) !important; margin-left: 1.5em !important; display: block !important; visibility: visible !important; }
 body .kb-injector .error-message {
@@ -27,7 +32,7 @@ body .kb-injector .error-message {
 }
 body .kb-injector input.error-input { border-color: rgb(183, 40, 46) !important; background-color: #fff8f8 !important; }
 
-/* --- 4. ポップアップ（ダイアログ）のモダン化デザイン --- */
+/* --- 4. ポップアップ（ダイアログ）のモダン化 --- */
 div[style*="rgb(240, 240, 240)"] {
     background-color: #ffffff !important; border-radius: 12px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
     padding-bottom: 60px !important; overflow: hidden !important; min-width: 300px !important;
