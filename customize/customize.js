@@ -2,8 +2,6 @@
     "use strict";
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
-    // Vercel上の画像パス
-    const triangleIconUrl = "https://mobile-router-boost-js.vercel.app/customize/image/error-message_Triangle.png";
 
     const showError = (fieldId, message) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
@@ -16,16 +14,15 @@
         const errorWrap = document.createElement('div');
         errorWrap.className = 'custom-error-container';
 
-        // 指定されたURLの画像を生成
-        const icon = document.createElement('img');
-        icon.src = triangleIconUrl;
-        icon.className = 'error-icon-tri';
+        // CSSで三角形を描画するための空要素
+        const triangle = document.createElement('div');
+        triangle.className = 'error-triangle';
 
         const errorSpan = document.createElement('span');
         errorSpan.className = 'error-message';
         errorSpan.innerText = message;
 
-        errorWrap.appendChild(icon);
+        errorWrap.appendChild(triangle);
         errorWrap.appendChild(errorSpan);
         container.appendChild(errorWrap);
     };
@@ -44,31 +41,22 @@
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
-        const telCheck = (id) => {
-            if (!(record[id]?.value || "").match(/^\d{10,11}$/)) {
-                showError(id, "数字のみ10〜11桁で入力してください");
+        const checkMatch = (id, regex, msg) => {
+            if (!(record[id]?.value || "").match(regex)) {
+                showError(id, msg);
                 hasError = true;
             }
         };
 
-        telCheck("連絡先電話番号");
-        telCheck("モバイルルーターの電話番号");
-        if (isDiff) telCheck("返送先対象者の電話番号");
+        checkMatch("連絡先電話番号", /^\d{10,11}$/, "数字のみ10〜11桁で入力してください");
+        checkMatch("モバイルルーターの電話番号", /^\d{10,11}$/, "数字のみ10〜11桁で入力してください");
+        if (isDiff) checkMatch("返送先対象者の電話番号", /^\d{10,11}$/, "数字のみ10〜11桁で入力してください");
 
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) {
-            showError("連絡先メールアドレス", "正しいメールアドレスの形式で入力してください");
-            hasError = true;
-        }
-        if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) {
-            showError("返送先対象者のメールアドレス", "正しいメールアドレスの形式で入力してください");
-            hasError = true;
-        }
+        checkMatch("連絡先メールアドレス", mailRegex, "正しいメールアドレスの形式で入力してください");
+        if (isDiff) checkMatch("返送先対象者のメールアドレス", mailRegex, "正しいメールアドレスの形式で入力してください");
 
-        if (!(record["郵便番号"]?.value || "").match(/^\d{7}$/)) {
-            showError("郵便番号", "数字7桁で入力してください");
-            hasError = true;
-        }
+        checkMatch("郵便番号", /^\d{7}$/, "数字7桁で入力してください");
 
         if (isDiff) {
             targetFieldIds.forEach(id => {
