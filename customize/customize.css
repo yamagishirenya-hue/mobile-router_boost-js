@@ -1,22 +1,30 @@
 /* --- 1. ベースデザイン --- */
 body { background-color: #f0f2f5 !important; margin: 0; }
-body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
+body .kb-injector { 
+    max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; 
+    background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
+    box-sizing: border-box !important; 
+}
 [field-id] { margin-bottom: 32px !important; clear: both; }
 [field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
 body .kb-injector input, body .kb-injector select, body .kb-injector textarea { width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important; }
 
-/* --- 2. 【必須】と※の装飾（CSSのみで対応） --- */
-/* 「必須」という文字が含まれるラベルを赤く強調 */
-label:contains("必須"), .kb-label:contains("必須"), 
-[field-id*="必須"] label {
+/* --- 2. 文字装飾（【必須】の赤字化と※の小サイズ化） --- */
+/* 「必須」という文字を含むラベル（親要素ごと）を赤くする */
+[field-id*="必須"] label, 
+[field-id*="必須"] .kb-label {
     color: #e53935 !important;
 }
 
-/* ※マークとその周辺を小さく薄くする（疑似的な対応） */
-[field-id] p, [field-id] span:not(.error-message) {
-    font-size: 0.85em !important;
+/* ※マークで始まる補足説明文のみを小さく薄くする */
+/* フォーム内の「説明文」や「補足」にあたる要素に限定 */
+.kb-injector p, 
+.kb-injector div[style*="font-size: 0.8em"], 
+.kb-injector div[style*="font-size: 0.75em"] {
+    font-size: 13px !important; /* 小さすぎない程度に調整 */
     opacity: 0.6 !important;
     font-weight: normal !important;
+    margin-top: 4px !important;
 }
 
 /* --- 3. 出し分けエリア --- */
