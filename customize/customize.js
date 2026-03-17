@@ -3,18 +3,22 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 郵便番号：1文字1枠UIの生成と同期 ---
+    // --- 郵便番号：1文字1枠UIの生成と同期（強化版） ---
     const initPostalCodeUI = () => {
-        const parent = document.querySelector('[field-id="郵便番号"]');
-        if (!parent || parent.querySelector('.postal-box-container')) return;
+        // 画像の構造に基づき、field-id="郵便番号" 内の入力エリアを取得
+        const parentField = document.querySelector('[field-id="郵便番号"]');
+        if (!parentField) return;
 
-        const originalInput = parent.querySelector('input');
-        if (!originalInput) return;
+        const valueContainer = parentField.querySelector('.kb-field-value');
+        const originalInput = valueContainer ? valueContainer.querySelector('input') : null;
 
-        // 元の入力を隠す
+        // すでに作成済み、または入力欄がない場合は何もしない
+        if (!originalInput || parentField.querySelector('.postal-box-container')) return;
+
+        // 1. 元の入力を完全に隠す
         originalInput.style.display = 'none';
 
-        // コンテナ作成
+        // 2. 新しい入力枠のコンテナ作成
         const container = document.createElement('div');
         container.className = 'postal-box-container';
 
@@ -24,16 +28,14 @@
             box.type = 'text';
             box.maxLength = 1;
             box.className = 'postal-box-unit';
-            box.inputMode = 'numeric'; // スマホで数字キーボードを出す
+            box.inputMode = 'numeric';
             
-            // 入力時の挙動
             box.addEventListener('input', (e) => {
-                box.value = box.value.replace(/[^\d]/g, ""); // 数字以外削除
-                if (box.value && i < 6) boxes[i + 1].focus(); // 次へ
+                box.value = box.value.replace(/[^\d]/g, "");
+                if (box.value && i < 6) boxes[i + 1].focus();
                 syncValue();
             });
 
-            // 削除（バックスペース）時の挙動
             box.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && !box.value && i > 0) {
                     boxes[i - 1].focus();
@@ -43,7 +45,6 @@
             container.appendChild(box);
             boxes.push(box);
 
-            // 3文字目の後にハイフン
             if (i === 2) {
                 const hyphen = document.createElement('span');
                 hyphen.className = 'postal-box-hyphen';
@@ -52,31 +53,25 @@
             }
         }
 
-        // 値を同期する関数
         const syncValue = () => {
-            const combinedValue = boxes.map(b => b.value).join('');
-            originalInput.value = combinedValue;
-            // kintoneのchangeイベントを発生させる
+            originalInput.value = boxes.map(b => b.value).join('');
             originalInput.dispatchEvent(new Event('input', { bubbles: true }));
+            originalInput.dispatchEvent(new Event('change', { bubbles: true }));
         };
 
-        parent.appendChild(container);
+        // 元の入力欄の直後に挿入
+        valueContainer.appendChild(container);
     };
 
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
-
         let val = e.target.value;
-
-        // 電話番号：数字のみ最大11桁
         if (fieldId.includes("電話番号")) {
             val = val.replace(/[^\d]/g, ""); 
             if (val.length > 11) val = val.slice(0, 11);
             e.target.value = val;
         }
-
-        // 郵便番号（元のinput用。UIからの同期時に実行される）
         if (fieldId === "郵便番号") {
             val = val.replace(/[^\d]/g, ""); 
             if (val.length > 7) val = val.slice(0, 7);
@@ -88,15 +83,12 @@
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
         removeError(fieldId);
-        
-        // 郵便番号の場合は全ボックスに赤枠をつける
         if (fieldId === "郵便番号") {
             container.querySelectorAll('.postal-box-unit').forEach(el => el.classList.add('error-input'));
         } else {
             const input = container.querySelector('input, select, textarea');
             if (input) input.classList.add('error-input');
         }
-
         const errorWrap = document.createElement('div');
         errorWrap.className = 'custom-error-container';
         const triangle = document.createElement('div');
@@ -112,7 +104,6 @@
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
-        
         container.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
         const existing = container.querySelector('.custom-error-container');
         if (existing) existing.remove();
@@ -122,7 +113,6 @@
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
-
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -132,38 +122,31 @@
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) { showError("連絡先メールアドレス", "形式を確認してください"); hasError = true; }
         if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) { showError("返送先対象者のメールアドレス", "形式を確認してください"); hasError = true; }
-        
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal.length !== 7) { showError("郵便番号", "7桁の数字を入力してください"); hasError = true; }
-        
         if (isDiff) {
             targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です"); hasError = true; } });
         }
-        if (hasError) kb.alert("入力内容に誤りがあります。");
+        if (hasError) alert("入力内容に誤りがあります。");
         return !hasError;
     };
 
     const updateVisibility = (record) => {
         const isDifferent = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.body.classList.toggle("show-target-fields", isDifferent);
-        if (!isDifferent) targetFieldIds.forEach(id => { if (record[id]) record[id].value = ""; });
     };
 
+    // 監視タイマー：要素が出るまで繰り返し実行
     const timer = setInterval(() => {
-        if (typeof kb !== 'undefined' && kb.event) {
-            clearInterval(timer);
-            document.addEventListener('input', handleInputControl);
-            
-            // 郵便番号UIの初期化を実行
+        if (document.querySelector('[field-id="郵便番号"]')) {
             initPostalCodeUI();
-
-            kb.event.on('kb.view.show', (ev) => { 
-                updateVisibility(ev.record); 
-                initPostalCodeUI(); // 再描画時にも実行
-                return ev; 
-            });
-            kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
-            kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
+            if (typeof kb !== 'undefined' && kb.event) {
+                // clearInterval(timer); // フォームが動的に変わる場合は止めずに監視
+                document.addEventListener('input', handleInputControl);
+                kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); initPostalCodeUI(); return ev; });
+                kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
+                kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
+            }
         }
-    }, 500);
+    }, 300);
 })();
