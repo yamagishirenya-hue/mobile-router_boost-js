@@ -3,7 +3,7 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 郵便番号：UI生成 (変更なし) ---
+    // --- 郵便番号：UI生成 (既存ロジック維持) ---
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
@@ -108,9 +108,7 @@
 
     // --- メイン：Boosterイベント登録 ---
     if (typeof kb !== 'undefined' && kb.event) {
-        // UI生成監視
         setInterval(initPostalCodeUI, 500);
-
         document.addEventListener('input', handleInputControl);
 
         kb.event.on('kb.view.show', (ev) => { 
@@ -124,17 +122,21 @@
             return ev; 
         });
 
-        // 保存時：Promiseを使用して確実にBoosterへエラーを伝える
+        // 保存ボタン押下時
         kb.event.on('kb.create.submit', (ev) => {
-            return new Promise((resolve) => {
-                if (!validateAll(ev.record)) {
-                    // エラーメッセージをセット
-                    ev.error = "入力内容に誤りがあります。";
+            if (!validateAll(ev.record)) {
+                const errorMsg = "入力内容に誤りがあります。";
+                
+                // 【重要】kb.ui.showMessage を使って強制的にポップアップを表示
+                if (kb.ui && kb.ui.showMessage) {
+                    kb.ui.showMessage(errorMsg);
                 }
-                // エラーがあってもなくても ev を resolve する
-                // error プロパティがある場合、Booster側で保存が止まりポップアップが出る
-                resolve(ev);
-            });
+                
+                // 念のため ev.error にもセットし、false を返して送信を中断
+                ev.error = errorMsg;
+                return false; 
+            }
+            return ev;
         });
     }
 
