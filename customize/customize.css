@@ -3,43 +3,30 @@ body { background-color: #f0f2f5 !important; margin: 0; }
 body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
 [field-id] { margin-bottom: 32px !important; clear: both; }
 
-/* ラベル：標準の【必須】や※を透明にして隠す */
+/* ラベル基本（色は透明にせず標準に戻す） */
 .kb-field-caption { 
-    color: transparent !important; 
-    position: relative !important; 
+    font-weight: 600 !important; 
+    color: #1a1a1a !important; 
     font-size: 17px !important; 
     line-height: 1.4 !important; 
 }
 
-/* 疑似要素で「黒い項目名」を再描画 */
-.kb-field-caption::before {
-    color: #1a1a1a !important;
-    font-weight: 600 !important;
-    visibility: visible !important;
-}
-
-/* 共通：【必須】タグのスタイル */
-.kb-field-caption::after {
+/* JSで付与した装飾クラス */
+.required-red {
     color: #e53935 !important;
     font-weight: bold !important;
-    margin-left: 6px !important;
-    visibility: visible !important;
+    margin-left: 4px;
+}
+.note-gray {
+    font-size: 13px !important;
+    color: #666 !important;
+    opacity: 0.7;
+    font-weight: normal !important;
+    display: inline-block;
+    margin-top: 4px;
 }
 
-/* --- 個別の項目名と装飾の指定（ここを調整） --- */
-[field-id="連絡先電話番号"] .kb-field-caption::before { content: "連絡先電話番号"; }
-[field-id="連絡先電話番号"] .kb-field-caption::after { content: "【必須】"; }
-
-[field-id="モバイルルーターの電話番号"] .kb-field-caption::before { content: "モバイルルーターの電話番号"; }
-[field-id="モバイルルーターの電話番号"] .kb-field-caption::after { content: "【必須】\A ※ハイフン不要"; white-space: pre !important; font-size: 13px; color: #666; opacity: 0.6; }
-
-[field-id="郵便番号"] .kb-field-caption::before { content: "郵便番号"; }
-[field-id="郵便番号"] .kb-field-caption::after { content: "【必須】\A ※ハイフン不要"; white-space: pre !important; font-size: 13px; color: #666; opacity: 0.6; }
-
-[field-id="返送先対象者確認"] .kb-field-caption::before { content: "返送先対象者様のご確認"; }
-[field-id="返送先対象者確認"] .kb-field-caption::after { content: "【必須】"; }
-
-/* --- 以降、安定動作している出し分け・エラー・ボタンの共通CSS --- */
+/* --- 以降、出し分け・エラー・ボタンの共通CSS --- */
 [field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
 .show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
     display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
