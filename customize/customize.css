@@ -1,3 +1,32 @@
+/* --- エラーメッセージの上書き設定 --- */
+/* セレクタを詳細にし、標準の「color: rgb(38 50 56)」を強制上書きします */
+body .kb-injector .error-message {
+    background-color: #ff4d4f !important; /* 赤背景 */
+    color: #ffffff !important;           /* 白文字を強制 */
+    font-size: 14px !important;         /* 文字サイズを調整（21pxは大きすぎるため） */
+    font-weight: bold !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    margin-top: 5px !important;
+    display: inline-block !important;
+    line-height: 1.4 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    animation: fadeIn 0.3s ease;
+}
+
+/* 入力項目がエラーの時の枠線（これも !important で上書き） */
+body .kb-injector input.error-input,
+body .kb-injector select.error-input,
+body .kb-injector textarea.error-input {
+    border: 2px solid #ff4d4f !important;
+    background-color: #fff2f0 !important;
+}
+
+/* フェードインアニメーション */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 /* エラーメッセージのスタイル */
 .error-message {
     background-color: #ff4d4f; /* 赤背景 */
