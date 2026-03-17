@@ -1,50 +1,85 @@
 /* ============================================================
-   kintone 郵便番号 1文字1枠デザイン（精密同期版）
+   kintone 郵便番号 1文字1枠・ハイフン分離デザイン
    ============================================================ */
 
-/* --- 1. ベースデザイン --- */
+/* --- 1. 全体ベースデザイン（既存踏襲） --- */
 body { background-color: #f0f2f5 !important; margin: 0; }
 body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
 [field-id] { margin-bottom: 32px !important; clear: both; }
 [field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea { width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important; }
 
-/* --- 2. 郵便番号：7つのマス目（計算一致版） --- */
-[field-id="郵便番号"] input {
-    /* 1. フォントを等幅に固定 */
-    font-family: "Courier New", Monaco, monospace !important;
-    font-size: 24px !important;      /* 文字の大きさ */
-    
-    /* 2. マスの計算: 1マス 40px */
-    /* letter-spacing = 1マスの幅(40px) - 文字の幅(約14.4px) = 25.6px */
-    letter-spacing: 30px !important; 
-    padding-left: 14px !important;   /* 最初の1文字を中央に寄せる */
-    
-    /* 3. 全体の幅: 40px * 7マス = 280px (+ 枠線) */
-    width: 284px !important;         
-    height: 54px !important;
-    min-width: 284px !important;
-    max-width: 284px !important;
-
-    /* 4. 背景の線を6本（7マス分）引く */
-    background-image: linear-gradient(to right, #030303 2px, transparent 2px) !important;
-    background-size: 40.6px 100% !important; /* 40pxごとに線を引く */
-    background-position: 39px 0 !important; /* 最初の線を40pxの位置に */
-    background-repeat: repeat-x !important;
-    background-color: #ffffff !important;
-
-    border: 2px solid #007bff !important;
-    border-radius: 8px !important;
-    box-sizing: border-box !important;
+/* 一般的な入力欄のデザインを提示いただいたスタイルに合わせる */
+body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
+    width: 100% !important; 
+    padding: 10px !important; 
+    border: 1px solid #ccc !important; 
+    border-radius: 4px !important; 
+    font-size: 18px !important; 
+    transition: all 0.2s ease;
 }
 
-/* 郵便番号のエラー時（赤色に同期） */
+/* --- 2. 郵便番号：提示デザイン再現版 --- */
+[field-id="郵便番号"] input {
+    font-family: 'Courier New', Courier, monospace !important; /* 等幅フォント */
+    font-size: 22px !important;      /* 数字の大きさ */
+    font-weight: 500 !important;
+    color: #555 !important;
+    
+    /* 1マスの幅を42px、中央の隙間を20pxとして計算 */
+    letter-spacing: 28px !important; 
+    padding-left: 14px !important;   
+    
+    /* 全体幅：(42*3) + 20 + (42*4) ≒ 314px */
+    width: 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    height: 50px !important;
+    
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    background-color: #fff !important;
+
+    /* 背景で「縦線6本」と「中央のハイフン」を描画 */
+    background-image: 
+        /* 縦線（左から1,2本目） */
+        linear-gradient(to right, #ccc 1px, transparent 1px),
+        linear-gradient(to right, #ccc 1px, transparent 1px),
+        /* ハイフン（中央） */
+        linear-gradient(to right, #555 10px, transparent 10px),
+        /* 縦線（右から4,5,6本目） */
+        linear-gradient(to right, #ccc 1px, transparent 1px),
+        linear-gradient(to right, #ccc 1px, transparent 1px),
+        linear-gradient(to right, #ccc 1px, transparent 1px) !important;
+    
+    background-repeat: no-repeat !important;
+    background-size: 
+        1px 100%, 1px 100%,  /* 縦線サイズ */
+        10px 2px,             /* ハイフンサイズ */
+        1px 100%, 1px 100%, 1px 100% !important;
+
+    /* 線の位置をミリ単位で固定（1マス42px計算） */
+    background-position: 
+        42px 0, 84px 0,       /* 前半の区切り */
+        131px 50%,            /* ハイフンの位置 */
+        178px 0, 220px 0, 262px 0 !important; /* 後半の区切り */
+    
+    box-sizing: border-box !important;
+    outline: none !important;
+}
+
+/* フォーカス時のデザイン（青枠＋シャドウ） */
+[field-id="郵便番号"] input:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 5px rgba(0,123,255,0.5) !important;
+}
+
+/* エラー時のデザイン */
 [field-id="郵便番号"] input.error-input {
     border-color: #b7282e !important;
-    background-image: linear-gradient(to right, #b7282e 2px, transparent 2px) !important;
+    box-shadow: 0 0 5px rgba(183, 40, 46, 0.5) !important;
 }
 
-/* --- 3. その他共通デザイン --- */
+/* --- 3. その他共通デザイン（出し分け・エラー） --- */
 [field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
 .show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
     display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
@@ -52,4 +87,4 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
 .custom-error-container { margin-top: 10px !important; display: block !important; position: relative !important; }
 .error-triangle { width: 0 !important; height: 0 !important; border-left: 12px solid transparent !important; border-right: 12px solid transparent !important; border-bottom: 14px solid rgb(183, 40, 46) !important; margin-left: 1.5em !important; display: block !important; }
 body .kb-injector .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 0.25em !important; display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 21px !important; font-weight: 500 !important; }
-.submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; }
+.submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; cursor: pointer; }
