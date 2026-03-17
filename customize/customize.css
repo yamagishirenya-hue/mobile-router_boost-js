@@ -1,103 +1,58 @@
-/* --- エラーメッセージの上書き設定 --- */
-/* セレクタを詳細にし、標準の「color: rgb(38 50 56)」を強制上書きします */
-body .kb-injector .error-message {
-    background-color: #ff4d4f !important; /* 赤背景 */
-    color: #ffffff !important;           /* 白文字を強制 */
-    font-size: 14px !important;         /* 文字サイズを調整（21pxは大きすぎるため） */
-    font-weight: bold !important;
-    padding: 6px 12px !important;
-    border-radius: 4px !important;
-    margin-top: 5px !important;
-    display: inline-block !important;
-    line-height: 1.4 !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    animation: fadeIn 0.3s ease;
-}
-
-/* 入力項目がエラーの時の枠線（これも !important で上書き） */
-body .kb-injector input.error-input,
-body .kb-injector select.error-input,
-body .kb-injector textarea.error-input {
-    border: 2px solid #ff4d4f !important;
-    background-color: #fff2f0 !important;
-}
-
-/* フェードインアニメーション */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* エラーメッセージのスタイル */
-.error-message {
-    background-color: #ff4d4f; /* 赤背景 */
-    color: #ffffff;           /* 白文字 */
-    font-size: 0.85rem;
-    padding: 4px 10px;
-    border-radius: 4px;
-    margin-top: 4px;
-    display: inline-block;
-    animation: fadeIn 0.3s ease;
-}
-
-/* 入力項目がエラーの時の枠線 */
-.error-input {
-    border: 1px solid #ff4d4f !important;
-    background-color: #fff2f0 !important;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* --- 全体のレイアウト調整 --- */
+/* --- 1. 全体のレイアウト調整 --- */
 body {
     background-color: #f5f7fa; /* 薄いグレーの背景 */
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
 }
 
 /* フォーム全体のコンテナ */
-#injector-container {
+body .kb-injector {
     max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin: 20px auto !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
 }
 
 /* 各入力行の間隔 */
 [field-id] {
-    margin-bottom: 20px !important;
+    margin-bottom: 24px !important;
 }
 
 /* ラベルの強調 */
 [field-id] label, .kb-label {
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 8px;
-    display: block;
-    font-size: 0.95rem;
+    font-weight: bold !important;
+    color: #333 !important;
+    margin-bottom: 10px !important;
+    display: block !important;
+    font-size: 16px !important; /* 標準より少し見やすく */
 }
 
-/* 入力フォームのスタイル */
-input, input[type="email"], input[type="tel"], textarea, select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 16px; /* モバイルでのズーム防止 */
+/* 入力フォームのスタイル（標準の21pxを上書き） */
+body .kb-injector input, 
+body .kb-injector input[type="email"], 
+body .kb-injector input[type="tel"], 
+body .kb-injector textarea, 
+body .kb-injector select {
+    width: 100% !important;
+    padding: 12px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important; /* モバイルでのズーム防止 */
+    color: #333 !important;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+/* フォーカス時の色 */
 input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1) !important;
     outline: none;
 }
 
-/* --- 返送先フィールド（出し分け対象）の特別デザイン --- */
-/* 最初は非表示 */
+/* --- 2. 返送先フィールド（出し分け対象）の特別デザイン --- */
+/* 初期状態は非表示（JSが動く前も確実に隠す） */
 [field-id="返送先対象者の氏名"],
 [field-id="返送先対象者の会社名"],
 [field-id="返送先対象者の電話番号"],
@@ -111,27 +66,52 @@ input:focus {
 .show-target-fields [field-id="返送先対象者の電話番号"],
 .show-target-fields [field-id="返送先対象者のメールアドレス"] {
     display: block !important;
-    background-color: #f9fbfc;
-    padding: 10px 15px;
+    background-color: #f9fbfc !important;
+    padding: 10px 15px !important;
     margin-bottom: 0 !important;
-    border-left: 4px solid #007bff; /* 左側に青いアクセント線 */
+    border-left: 4px solid #007bff !important; /* 左側に青いアクセント線 */
 }
 
-/* 送信ボタンの装飾 */
+/* --- 3. 標準エラーデザインの再現 --- */
+body .kb-injector .error-message {
+    background-color: rgb(183, 40, 46) !important; /* 標準の赤 */
+    color: rgb(255, 255, 255) !important;         /* 白文字 */
+    border-radius: 0.25em !important;            /* 角丸 */
+    display: block !important;                   /* ブロック表示 */
+    line-height: 2em !important;                 /* 行間 */
+    margin: 6px 0 0 0 !important;                /* 上に少し余白 */
+    min-width: max-content !important;
+    padding: 0px 0.5em !important;
+    position: relative !important;
+    font-size: 14px !important;                 /* 読みやすいサイズ */
+    font-weight: normal !important;
+    text-align: left !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 入力欄のエラー枠線 */
+body .kb-injector input.error-input,
+body .kb-injector select.error-input,
+body .kb-injector textarea.error-input {
+    border: 2px solid rgb(183, 40, 46) !important;
+    background-color: #fff2f0 !important;
+}
+
+/* --- 4. 送信ボタンの装飾 --- */
 .submit-button, button[type="submit"] {
-    width: 100%;
-    background-color: #007bff;
-    color: white;
-    padding: 16px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: bold;
+    width: 100% !important;
+    background-color: #007bff !important;
+    color: white !important;
+    padding: 16px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
     cursor: pointer;
     transition: background-color 0.2s;
-    margin-top: 20px;
+    margin-top: 20px !important;
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+    background-color: #0056b3 !important;
 }
