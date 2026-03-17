@@ -127,7 +127,7 @@
         if (isDiff) {
             targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です"); hasError = true; } });
         }
-        // alertを削除
+        if (hasError) alert("入力内容に誤りがあります。");
         return !hasError;
     };
 
@@ -145,14 +145,7 @@
                 document.addEventListener('input', handleInputControl);
                 kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); initPostalCodeUI(); return ev; });
                 kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
-                kb.event.on('kb.create.submit', (ev) => { 
-                    if (!validateAll(ev.record)) {
-                        // ポップアップ通知に統一
-                        ev.error = "入力内容に誤りがあります。赤枠の項目を確認してください。";
-                        return false; 
-                    }
-                    return ev; 
-                });
+                kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
             }
         }
     }, 300);
