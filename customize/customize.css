@@ -1,146 +1,64 @@
 /* ============================================================
-   kintone 郵便番号 1文字1枠デザイン 完全制圧版
+   kintone 郵便番号 1文字1枠デザイン（幅固定・リピート禁止版）
    ============================================================ */
 
-/* --- 1. ベースデザイン（全体レイアウト） --- */
-body { 
-    background-color: #f0f2f5 !important; 
-    margin: 0; 
-}
-body .kb-injector { 
-    max-width: 800px !important; 
-    margin: 40px auto !important; 
-    padding: 32px !important; 
-    background: #ffffff !important; 
-    border-radius: 16px !important; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
-    box-sizing: border-box !important; 
-}
-[field-id] { 
-    margin-bottom: 32px !important; 
-    clear: both; 
-}
-[field-id] label { 
-    font-weight: 600 !important; 
-    color: #1a1a1a !important; 
-    margin-bottom: 12px !important; 
-    display: block !important; 
-    font-size: 17px !important; 
-}
-body .kb-injector input, 
-body .kb-injector select, 
-body .kb-injector textarea { 
-    width: 100% !important; 
-    padding: 14px 16px !important; 
-    border: 1.5px solid #e0e4e8 !important; 
-    border-radius: 10px !important; 
-    font-size: 16px !important; 
-}
+/* --- 1. ベースデザイン --- */
+body { background-color: #f0f2f5 !important; margin: 0; }
+body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
+[field-id] { margin-bottom: 32px !important; clear: both; }
+[field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
+body .kb-injector input, body .kb-injector select, body .kb-injector textarea { width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important; }
 
-/* --- 2. 郵便番号：7つのマス目（計算統合版） --- 
-   1マスの幅を 40px に固定し、文字と背景を同期
-*/
+/* --- 2. 郵便番号：7つのマス目（リピート停止・幅強制版） --- */
 [field-id="郵便番号"] input {
-    /* フォント設定：ズレを防ぐため等幅フォントを強制 */
+    /* 1. 横幅を「px」で強制固定し、100%を無効化 */
+    min-width: 282px !important;
+    max-width: 282px !important;
+    width: 282px !important;
+    height: 54px !important;
+
+    /* 2. 背景の「線」を直接6本だけ描く（リピートさせない） */
+    background: 
+        linear-gradient(to right, #007bff 2px, transparent 2px) 40px 0,
+        linear-gradient(to right, #007bff 2px, transparent 2px) 80px 0,
+        linear-gradient(to right, #007bff 2px, transparent 2px) 120px 0,
+        linear-gradient(to right, #007bff 2px, transparent 2px) 160px 0,
+        linear-gradient(to right, #007bff 2px, transparent 2px) 200px 0,
+        linear-gradient(to right, #007bff 2px, transparent 2px) 240px 0 !important;
+    background-repeat: no-repeat !important; /* 絶対に繰り返さない */
+    background-size: 2px 100% !important;
+    background-color: #ffffff !important;
+
+    /* 3. 文字の調整 */
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 30px !important;      /* 数字を大きく表示 */
-    font-weight: bold !important;
-    line-height: 50px !important;
-    
-    /* 文字の間隔：1マスの幅(40px)に合わせる */
-    letter-spacing: 16px !important; 
-    padding-left: 12px !important;   /* 最初の文字を中央に寄せる */
-    
-    /* 枠のサイズ：40px * 7マス = 280px + 枠線分 */
-    width: 283px !important;
-    height: 60px !important;
+    font-size: 28px !important;
+    letter-spacing: 13.5px !important; /* 枠に収まるよう微調整 */
+    padding-left: 10px !important;
+    box-sizing: border-box !important;
     border: 2px solid #007bff !important;
     border-radius: 6px !important;
-    background-color: #ffffff !important;
-    
-    /* 背景で縦線を描画（一括指定で干渉を防ぐ） */
-    background: 
-        linear-gradient(to right, #007bff 2px, transparent 2px) 
-        repeat-x !important;
-    background-size: 40px 100% !important;
-    background-position: 38px 0 !important; /* 1本目の線を40px付近に配置 */
-    
-    box-sizing: border-box !important;
-    display: block !important;
 }
 
-/* 郵便番号のエラー時（赤色に同期） */
+/* 郵便番号のエラー時（赤線に変更） */
 [field-id="郵便番号"] input.error-input {
     border-color: #b7282e !important;
     background: 
-        linear-gradient(to right, #b7282e 2px, transparent 2px) 
-        repeat-x !important;
-    background-size: 40px 100% !important;
-    background-position: 38px 0 !important;
+        linear-gradient(to right, #b7282e 2px, transparent 2px) 40px 0,
+        linear-gradient(to right, #b7282e 2px, transparent 2px) 80px 0,
+        linear-gradient(to right, #b7282e 2px, transparent 2px) 120px 0,
+        linear-gradient(to right, #b7282e 2px, transparent 2px) 160px 0,
+        linear-gradient(to right, #b7282e 2px, transparent 2px) 200px 0,
+        linear-gradient(to right, #b7282e 2px, transparent 2px) 240px 0 !important;
+    background-repeat: no-repeat !important;
+    background-size: 2px 100% !important;
 }
 
-/* --- 3. その他共通デザイン（氏名などの出し分け・エラー表示） --- */
-[field-id="返送先対象者の氏名"],
-[field-id="返送先対象者の会社名"],
-[field-id="返送先対象者の電話番号"],
-[field-id="返送先対象者のメールアドレス"] { 
-    display: none !important; 
+/* --- 3. その他共通デザイン --- */
+[field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
+.show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
+    display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
 }
-
-.show-target-fields [field-id="返送先対象者の氏名"], 
-.show-target-fields [field-id="返送先対象者の会社名"], 
-.show-target-fields [field-id="返送先対象者の電話番号"], 
-.show-target-fields [field-id="返送先対象者のメールアドレス"] {
-    display: block !important; 
-    background-color: #f8fbff !important; 
-    padding: 10px 20px !important; 
-    margin-bottom: 0 !important; 
-    border-left: 5px solid #007bff !important;
-}
-
-.custom-error-container { 
-    margin-top: 10px !important; 
-    display: block !important; 
-    position: relative !important; 
-}
-
-.error-triangle { 
-    width: 0 !important; 
-    height: 0 !important; 
-    border-left: 12px solid transparent !important; 
-    border-right: 12px solid transparent !important; 
-    border-bottom: 14px solid rgb(183, 40, 46) !important; 
-    margin-left: 1.5em !important; 
-    display: block !important; 
-}
-
-body .kb-injector .error-message { 
-    background-color: rgb(183, 40, 46) !important; 
-    color: #ffffff !important; 
-    border-radius: 0.25em !important; 
-    display: block !important; 
-    line-height: 2.2em !important; 
-    padding: 0 0.8em !important; 
-    font-size: 21px !important; 
-    font-weight: 500 !important; 
-}
-
-/* ダイアログ・ボタン装飾 */
-div[style*="rgb(240, 240, 240)"] { 
-    background-color: #ffffff !important; 
-    border-radius: 12px !important; 
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; 
-    padding-bottom: 60px !important; 
-}
-
-.submit-button, .kb-injector-button { 
-    width: 100% !important; 
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; 
-    color: #fff !important; 
-    padding: 18px !important; 
-    border-radius: 12px !important; 
-    font-size: 18px !important; 
-    font-weight: 700 !important; 
-    margin-top: 40px !important; 
-    border: none !important; 
-}
+.custom-error-container { margin-top: 10px !important; display: block !important; position: relative !important; }
+.error-triangle { width: 0 !important; height: 0 !important; border-left: 12px solid transparent !important; border-right: 12px solid transparent !important; border-bottom: 14px solid rgb(183, 40, 46) !important; margin-left: 1.5em !important; display: block !important; }
+body .kb-injector .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 0.25em !important; display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 21px !important; font-weight: 500 !important; }
+.submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; }
