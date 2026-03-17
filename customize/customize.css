@@ -1,25 +1,16 @@
-/* --- ベースデザイン --- */
-body { background-color: #f0f2f5 !important; }
-body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; }
-[field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
-
-/* 一般的な入力欄のデザイン */
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
-    width: 100% !important; padding: 12px !important; border: 1px solid #ccc !important; border-radius: 6px !important; font-size: 16px !important; 
-}
-
 /* --- 郵便番号：新UI（1文字1枠）のデザイン --- */
 .postal-box-container {
-    display: flex;
-    align-items: center;
-    gap: 0;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0 !important;
+    margin-top: 8px !important; /* ラベルとの隙間 */
 }
 
 .postal-box-unit {
-    width: 42px !important; /* 1マスの幅 */
+    width: 42px !important;
     height: 50px !important;
     text-align: center !important;
-    font-size: 20px !important;
+    font-size: 22px !important;
     font-weight: bold !important;
     color: #444 !important;
     border: 1px solid #ccc !important;
@@ -27,52 +18,35 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
-    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
-/* 枠線の重なりを解消 */
-.postal-box-unit + .postal-box-unit {
-    border-left: none !important;
-}
-
-/* 角丸の適用 */
+/* 境界線の調整 */
+.postal-box-unit + .postal-box-unit { border-left: none !important; }
 .postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
 .postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
 
-/* ハイフン前後の枠線復活 */
-.postal-box-unit:nth-of-type(4) { border-left: 1px solid #ccc !important; border-radius: 4px 0 0 4px !important; }
-.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; }
+/* 3桁目と4桁目の間に隙間とハイフンを作るための調整 */
+.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
+.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
 
-/* ハイフンのデザイン */
 .postal-box-hyphen {
-    margin: 0 8px;
-    font-weight: bold;
-    color: #555;
-    font-size: 18px;
+    margin: 0 10px !important;
+    font-weight: bold !important;
+    color: #555 !important;
+    font-size: 20px !important;
 }
 
-/* フォーカス効果 */
 .postal-box-unit:focus {
-    outline: none !important;
     border-color: #007bff !important;
     box-shadow: 0 0 5px rgba(0,123,255,0.5) !important;
-    z-index: 10;
+    z-index: 10 !important;
 }
 
-/* エラー時の赤枠 */
-.postal-box-unit.error-input {
-    border-color: #b7282e !important;
-    background-color: #fff6f6 !important;
-}
+/* エラー表示 */
+.postal-box-unit.error-input { border-color: #b7282e !important; background-color: #fff6f6 !important; }
 
-/* --- エラー・ボタンなど（既存） --- */
-.custom-error-container { margin-top: 10px !important; }
-.error-triangle { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 14px solid rgb(183, 40, 46); margin-left: 1.5em; }
-.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 18px !important; }
-.submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; cursor: pointer; }
-
-/* 出し分け用 */
-[field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
-.show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
-    display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; border-left: 5px solid #007bff !important;
-}
+/* その他共通スタイル（既存） */
+.show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"] { display: block !important; }
+[field-id="返送先対象者の氏名"] { display: none; } /* デフォルト非表示 */
