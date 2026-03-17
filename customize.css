@@ -1,3 +1,25 @@
+/* エラーメッセージのスタイル */
+.error-message {
+    background-color: #ff4d4f; /* 赤背景 */
+    color: #ffffff;           /* 白文字 */
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 入力項目がエラーの時の枠線 */
+.error-input {
+    border: 1px solid #ff4d4f !important;
+    background-color: #fff2f0 !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 /* --- 全体のレイアウト調整 --- */
 body {
     background-color: #f5f7fa; /* 薄いグレーの背景 */
