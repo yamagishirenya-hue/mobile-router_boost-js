@@ -3,25 +3,32 @@ body { background-color: #f0f2f5 !important; margin: 0; }
 body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
 [field-id] { margin-bottom: 32px !important; clear: both; }
 
-/* ラベル：基本スタイル */
-.kb-field-caption { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; line-height: 1.4 !important; }
-
-/* 【必須】が含まれるラベル全体を赤く強調 */
-.is-required-label {
-    color: #e53935 !important;
+/* ラベル基本（元のテキストを透明にして、注入したタグで上書きする） */
+.kb-field-caption { 
+    position: relative !important; 
+    font-size: 17px !important; 
+    line-height: 1.4 !important; 
+    overflow: hidden !important;
 }
 
-/* ※マーク以降の補足テキスト（小サイズ・薄色） */
-.kb-note-text {
-    display: inline-block !important;
-    font-size: 13px !important;
-    opacity: 0.6 !important;
-    font-weight: normal !important;
-    margin-top: 4px !important;
-    color: #666 !important; /* 強制的に少しグレーに */
-}
+/* 注入した各パーツのスタイル */
+.injected-tag { display: inline-block !important; visibility: visible !important; }
 
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea { width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important; }
+/* 項目名（黒） */
+.custom-label-text { color: #1a1a1a !important; font-weight: 600 !important; }
+
+/* 【必須】（赤） */
+.custom-required-badge { color: #e53935 !important; font-weight: bold !important; margin-left: 4px !important; }
+
+/* ※注釈（控えめ） */
+.custom-note-text { 
+    display: block !important; 
+    font-size: 13px !important; 
+    opacity: 0.6 !important; 
+    font-weight: normal !important; 
+    color: #666 !important; 
+    margin-top: 4px !important; 
+}
 
 /* --- 2. 出し分けエリア --- */
 [field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
