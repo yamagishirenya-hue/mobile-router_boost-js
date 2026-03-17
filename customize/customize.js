@@ -3,6 +3,25 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
+    // ラベル内の文字を個別に装飾する関数
+    const reformatLabels = () => {
+        const captions = document.querySelectorAll('.kb-field-caption');
+        captions.forEach(el => {
+            // すでに装飾済みならスキップ
+            if (el.querySelector('.formatted-part')) return;
+
+            let html = el.innerHTML;
+            // 【必須】を赤いスパンで囲む
+            html = html.replace(/【必須】/g, '<span class="formatted-part required-red">【必須】</span>');
+            // ※から改行または末尾までを小さいグレーのスパンで囲む
+            html = html.replace(/(※[^\n<]+)/g, '<span class="formatted-part note-gray">$1</span>');
+
+            if (el.innerHTML !== html) {
+                el.innerHTML = html;
+            }
+        });
+    };
+
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
@@ -80,7 +99,12 @@
         if (typeof kb !== 'undefined' && kb.event) {
             clearInterval(timer);
             document.addEventListener('input', handleInputControl);
-            kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); return ev; });
+            kb.event.on('kb.view.show', (ev) => { 
+                updateVisibility(ev.record); 
+                // 描画を待ってラベルを装飾
+                setTimeout(reformatLabels, 500);
+                return ev; 
+            });
             kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
             kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
         }
