@@ -3,7 +3,7 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 郵便番号：1文字1枠UIの生成 ---
+    // --- 郵便番号：UI生成 (変更なし) ---
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
@@ -49,8 +49,8 @@
         let val = e.target.value;
         if (fieldId.includes("電話番号") || fieldId === "郵便番号") {
             val = val.replace(/[^\d]/g, ""); 
-            const max = fieldId === "郵便番号" ? 7 : 11;
-            if (val.length > max) val = val.slice(0, max);
+            const maxLen = fieldId === "郵便番号" ? 7 : 11;
+            if (val.length > maxLen) val = val.slice(0, maxLen);
             e.target.value = val;
         }
     };
@@ -106,22 +106,36 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    const timer = setInterval(() => {
-        if (document.querySelector('[field-id="郵便番号"]')) {
-            initPostalCodeUI();
-            if (typeof kb !== 'undefined' && kb.event) {
-                document.addEventListener('input', handleInputControl);
-                kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); initPostalCodeUI(); return ev; });
-                kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
-                
-                // 【修正点】リファレンスに基づき ev.error をセットして ev を返す
-                kb.event.on('kb.create.submit', (ev) => { 
-                    if (!validateAll(ev.record)) {
-                        ev.error = "入力内容に誤りがあります。赤枠の項目を確認してください。";
-                    }
-                    return ev; 
-                });
-            }
-        }
-    }, 300);
+    // --- メイン：Boosterイベント登録 ---
+    if (typeof kb !== 'undefined' && kb.event) {
+        // UI生成監視
+        setInterval(initPostalCodeUI, 500);
+
+        document.addEventListener('input', handleInputControl);
+
+        kb.event.on('kb.view.show', (ev) => { 
+            updateVisibility(ev.record); 
+            initPostalCodeUI(); 
+            return ev; 
+        });
+
+        kb.event.on('kb.change.返送先対象者確認', (ev) => { 
+            updateVisibility(ev.record); 
+            return ev; 
+        });
+
+        // 保存時：Promiseを使用して確実にBoosterへエラーを伝える
+        kb.event.on('kb.create.submit', (ev) => {
+            return new Promise((resolve) => {
+                if (!validateAll(ev.record)) {
+                    // エラーメッセージをセット
+                    ev.error = "入力内容に誤りがあります。";
+                }
+                // エラーがあってもなくても ev を resolve する
+                // error プロパティがある場合、Booster側で保存が止まりポップアップが出る
+                resolve(ev);
+            });
+        });
+    }
+
 })();
