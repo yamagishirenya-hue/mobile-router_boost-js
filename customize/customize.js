@@ -3,23 +3,21 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // リアルタイム入力制御（桁数・ハイフン）
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
         let val = e.target.value;
+
         if (fieldId.includes("電話番号")) {
             val = val.replace(/[^\d]/g, ""); 
             if (val.length > 11) val = val.slice(0, 11);
             e.target.value = val;
         }
+
+        // 郵便番号：CSSで枠を作るため、JS側ではハイフンなしの「数字7桁」に徹する
         if (fieldId === "郵便番号") {
             val = val.replace(/[^\d]/g, ""); 
-            if (val.length > 3) {
-                val = val.slice(0, 3) + "-" + val.slice(3, 7);
-            } else {
-                val = val.slice(0, 3);
-            }
+            if (val.length > 7) val = val.slice(0, 7);
             e.target.value = val;
         }
     };
@@ -64,7 +62,10 @@
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) { showError("連絡先メールアドレス", "形式を確認してください"); hasError = true; }
         if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) { showError("返送先対象者のメールアドレス", "形式を確認してください"); hasError = true; }
-        if (!(record["郵便番号"]?.value || "").match(/^\d{3}-\d{4}$/)) { showError("郵便番号", "正しく入力してください"); hasError = true; }
+        
+        // 郵便番号：7文字ちょうどであることを確認
+        const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
+        if (zipVal.length !== 7) { showError("郵便番号", "7桁の数字を入力してください"); hasError = true; }
         
         if (isDiff) {
             targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です"); hasError = true; } });
