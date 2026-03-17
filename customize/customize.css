@@ -27,7 +27,7 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
     max-width: 284px !important;
 
     /* 4. 背景の線を6本（7マス分）引く */
-    background-image: linear-gradient(to right, #007bff 2px, transparent 2px) !important;
+    background-image: linear-gradient(to right, #030303 2px, transparent 2px) !important;
     background-size: 40.6px 100% !important; /* 40pxごとに線を引く */
     background-position: 39px 0 !important; /* 最初の線を40pxの位置に */
     background-repeat: repeat-x !important;
