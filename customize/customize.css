@@ -1,75 +1,78 @@
-/* ============================================================
-   kintone 郵便番号デザイン（3-4桁・ハイフン分離・完全同期版）
-   ============================================================ */
-
-/* --- 1. ベースデザイン（全体） --- */
+/* --- ベースデザイン --- */
 body { background-color: #f0f2f5 !important; }
-body .kb-injector { 
-    max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; 
-    background: #ffffff !important; border-radius: 16px !important; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
-}
-[field-id] label { 
-    font-weight: 600 !important; color: #1a1a1a !important; 
-    margin-bottom: 12px !important; display: block !important; font-size: 17px !important; 
+body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; }
+[field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
+
+/* 一般的な入力欄のデザイン */
+body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
+    width: 100% !important; padding: 12px !important; border: 1px solid #ccc !important; border-radius: 6px !important; font-size: 16px !important; 
 }
 
-/* --- 2. 郵便番号：1文字1枠デザイン（精密調整） --- */
-[field-id="郵便番号"] input {
-    /* フォント設定：等幅フォントを使用 */
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 24px !important;
-    font-weight: 500 !important;
+/* --- 郵便番号：新UI（1文字1枠）のデザイン --- */
+.postal-box-container {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.postal-box-unit {
+    width: 42px !important; /* 1マスの幅 */
+    height: 50px !important;
+    text-align: center !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
     color: #444 !important;
-    
-    /* 1マスを50pxとして計算 */
-    /* 文字幅(約14.4px) + letter-spacing = 50px になるよう調整 */
-    letter-spacing: 35.6px !important; 
-    padding-left: 18px !important;   /* 1文字目を1マスのセンターに配置 */
-    
-    /* 全体幅：50px × 7マス = 350px (+ 枠線) */
-    width: 352px !important;
-    min-width: 352px !important;
-    max-width: 352px !important;
-    height: 54px !important;
-    
-    /* 外枠（postal-boxの指定に合わせる） */
     border: 1px solid #ccc !important;
-    border-radius: 4px !important;
-    background-color: #ffffff !important;
-
-    /* 背景で「縦線」と「ハイフン」を描画 */
-    background-image: 
-        /* ハイフン（中央：3マス目と4マス目の間） */
-        linear-gradient(to right, #555 12px, transparent 12px),
-        /* 縦区切り線（50px間隔） */
-        linear-gradient(to right, #ccc 1px, transparent 1px) !important;
-    
-    background-repeat: no-repeat, repeat-x !important;
-    
-    /* ハイフンのサイズと位置 */
-    background-size: 12px 2px, 50px 100% !important;
-    /* 150px地点（3マス終了後）にハイフンを配置 */
-    background-position: 144px 50%, 49px 0 !important; 
-
-    box-sizing: border-box !important;
-    outline: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
     transition: all 0.2s ease !important;
 }
 
-/* フォーカス時のデザイン */
-[field-id="郵便番号"] input:focus {
-    border-color: #007bff !important;
-    box-shadow: 0 0 5px rgba(0,123,255,0.5) !important;
-    background-color: #fff !important;
+/* 枠線の重なりを解消 */
+.postal-box-unit + .postal-box-unit {
+    border-left: none !important;
 }
 
-/* --- 3. その他共通デザイン（出し分け・エラー表示） --- */
+/* 角丸の適用 */
+.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
+.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
+
+/* ハイフン前後の枠線復活 */
+.postal-box-unit:nth-of-type(4) { border-left: 1px solid #ccc !important; border-radius: 4px 0 0 4px !important; }
+.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; }
+
+/* ハイフンのデザイン */
+.postal-box-hyphen {
+    margin: 0 8px;
+    font-weight: bold;
+    color: #555;
+    font-size: 18px;
+}
+
+/* フォーカス効果 */
+.postal-box-unit:focus {
+    outline: none !important;
+    border-color: #007bff !important;
+    box-shadow: 0 0 5px rgba(0,123,255,0.5) !important;
+    z-index: 10;
+}
+
+/* エラー時の赤枠 */
+.postal-box-unit.error-input {
+    border-color: #b7282e !important;
+    background-color: #fff6f6 !important;
+}
+
+/* --- エラー・ボタンなど（既存） --- */
+.custom-error-container { margin-top: 10px !important; }
+.error-triangle { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 14px solid rgb(183, 40, 46); margin-left: 1.5em; }
+.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 18px !important; }
+.submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; cursor: pointer; }
+
+/* 出し分け用 */
 [field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
 .show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
-    display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
+    display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; border-left: 5px solid #007bff !important;
 }
-.custom-error-container { margin-top: 10px !important; display: block !important; position: relative !important; }
-.error-triangle { width: 0 !important; height: 0 !important; border-left: 12px solid transparent !important; border-right: 12px solid transparent !important; border-bottom: 14px solid rgb(183, 40, 46) !important; margin-left: 1.5em !important; display: block !important; }
-body .kb-injector .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 0.25em !important; display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 21px !important; font-weight: 500 !important; }
-.submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; }
