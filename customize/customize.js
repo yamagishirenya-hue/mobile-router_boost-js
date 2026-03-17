@@ -3,14 +3,44 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 郵便番号：UI生成 (既存ロジック維持) ---
+    // --- 独自ポップアップ生成関数 ---
+    const createCustomPopup = (message) => {
+        // すでに存在すれば削除
+        const existing = document.querySelector('.custom-popup-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-popup-overlay';
+        
+        const dialog = document.createElement('div');
+        dialog.className = 'custom-popup-body';
+        
+        const content = document.createElement('div');
+        content.className = 'custom-popup-content';
+        content.innerText = message;
+        
+        const footer = document.createElement('div');
+        footer.className = 'custom-popup-footer';
+        
+        const okBtn = document.createElement('button');
+        okBtn.className = 'custom-popup-button';
+        okBtn.innerText = 'OK';
+        okBtn.onclick = () => overlay.remove();
+
+        footer.appendChild(okBtn);
+        dialog.appendChild(content);
+        dialog.appendChild(footer);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+    };
+
+    // --- 郵便番号UI生成 (既存維持) ---
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
         const valueContainer = parentField.querySelector('.kb-field-value');
         const originalInput = valueContainer ? valueContainer.querySelector('input') : null;
         if (!originalInput || parentField.querySelector('.postal-box-container')) return;
-
         originalInput.style.display = 'none';
         const container = document.createElement('div');
         container.className = 'postal-box-container';
@@ -30,8 +60,7 @@
             boxes.push(box);
             if (i === 2) {
                 const hyphen = document.createElement('span');
-                hyphen.className = 'postal-box-hyphen';
-                hyphen.innerText = '-';
+                hyphen.className = 'postal-box-hyphen'; hyphen.innerText = '-';
                 container.appendChild(hyphen);
             }
         }
@@ -46,9 +75,8 @@
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
-        let val = e.target.value;
         if (fieldId.includes("電話番号") || fieldId === "郵便番号") {
-            val = val.replace(/[^\d]/g, ""); 
+            let val = e.target.value.replace(/[^\d]/g, ""); 
             const maxLen = fieldId === "郵便番号" ? 7 : 11;
             if (val.length > maxLen) val = val.slice(0, maxLen);
             e.target.value = val;
@@ -83,12 +111,11 @@
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
-
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
-            if (val.length < 10 || val.length > 11) { showError(id, "数字10桁または11桁で入力してください"); hasError = true; }
+            if (val.length < 10 || val.length > 11) { showError(id, "10桁または11桁で入力してください"); hasError = true; }
         });
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) { showError("連絡先メールアドレス", "形式を確認してください"); hasError = true; }
@@ -106,38 +133,20 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // --- メイン：Boosterイベント登録 ---
     if (typeof kb !== 'undefined' && kb.event) {
         setInterval(initPostalCodeUI, 500);
         document.addEventListener('input', handleInputControl);
-
-        kb.event.on('kb.view.show', (ev) => { 
-            updateVisibility(ev.record); 
-            initPostalCodeUI(); 
-            return ev; 
-        });
-
-        kb.event.on('kb.change.返送先対象者確認', (ev) => { 
-            updateVisibility(ev.record); 
-            return ev; 
-        });
-
-        // 保存ボタン押下時
+        kb.event.on('kb.view.show', (ev) => { updateVisibility(ev.record); initPostalCodeUI(); return ev; });
+        kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
+        
         kb.event.on('kb.create.submit', (ev) => {
             if (!validateAll(ev.record)) {
-                const errorMsg = "入力内容に誤りがあります。";
-                
-                // 【重要】kb.ui.showMessage を使って強制的にポップアップを表示
-                if (kb.ui && kb.ui.showMessage) {
-                    kb.ui.showMessage(errorMsg);
-                }
-                
-                // 念のため ev.error にもセットし、false を返して送信を中断
-                ev.error = errorMsg;
+                // 強制的にHTMLポップアップを表示
+                createCustomPopup("入力内容に誤りがあります。");
+                ev.error = true;
                 return false; 
             }
             return ev;
         });
     }
-
 })();
