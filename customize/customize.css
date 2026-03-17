@@ -26,7 +26,9 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
 .postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
 .postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; color: #555 !important; font-size: 20px !important; }
 .postal-box-unit:focus { border-color: #007bff !important; box-shadow: 0 0 5px rgba(0,123,255,0.5) !important; z-index: 10 !important; }
-.postal-box-unit.error-input { border-color: #b7282e !important; background-color: #fff6f6 !important; }
+
+/* 郵便番号のエラー枠 */
+.postal-box-unit.error-input { border: 2px solid rgb(183, 40, 46) !important; background-color: #fff6f6 !important; }
 
 /* --- 3. フィールドの出し分け制御 --- */
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
@@ -42,32 +44,50 @@ body.show-target-fields [field-id="返送先対象者のメールアドレス"] 
 }
 
 /* --- 4. ポップアップ（ダイアログ）のデザイン再現 --- */
+/* ダイアログ外枠 */
 div[style*="rgb(240, 240, 240)"] { 
     background-color: #ffffff !important; border-radius: 12px !important; 
     box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; padding-bottom: 60px !important; overflow: hidden !important; 
 }
+/* メッセージエリア */
 div[style*="height: 56px"] { 
     height: auto !important; min-height: 80px !important; display: flex !important; align-items: center !important; 
     justify-content: center !important; font-size: 18px !important; font-weight: bold !important; 
     color: #333 !important; padding: 30px 20px !important; text-align: center !important; 
 }
+/* フッターエリア */
 div[style*="border-top: 1px solid rgb(66, 165, 245)"] { border-top: 1px solid #eee !important; background: #f9f9f9 !important; padding: 10px !important; }
+/* ダイアログ内ボタン */
 .kb-dialog-button { 
     background-color: #007bff !important; color: #ffffff !important; border-radius: 6px !important; 
     height: 44px !important; line-height: 44px !important; font-size: 16px !important; font-weight: bold !important; 
-    width: calc(100% - 20px) !important; margin: 5px 10px !important; 
+    width: calc(100% - 20px) !important; margin: 5px 10px !important; border: none !important; cursor: pointer;
 }
 
 /* --- 5. エラー表示 & 送信ボタン --- */
-.custom-error-container { margin-top: 10px !important; display: block !important; }
-.error-triangle { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 14px solid rgb(183, 40, 46); margin-left: 1.5em; }
-.error-message { 
-    background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; 
-    display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 21px !important; font-weight: 500 !important; 
+/* 入力項目全般のエラー枠 */
+.error-input { border: 2px solid rgb(183, 40, 46) !important; background-color: #fff6f6 !important; }
+
+/* エラーメッセージ（吹き出し風） */
+.custom-error-container { margin-top: 10px !important; display: block !important; clear: both; }
+.error-triangle { 
+    width: 0; height: 0; 
+    border-left: 12px solid transparent; border-right: 12px solid transparent; 
+    border-bottom: 14px solid rgb(183, 40, 46); 
+    margin-left: 1.5em; 
 }
+.error-message { 
+    background-color: rgb(183, 40, 46) !important; color: #ffffff !important; 
+    border-radius: 4px !important; display: block !important; 
+    line-height: 2.2em !important; padding: 0 0.8em !important; 
+    font-size: 21px !important; font-weight: 500 !important; 
+}
+
+/* 送信ボタン（ベースデザイン） */
 .submit-button, .kb-injector-button { 
     width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; 
     color: #fff !important; padding: 18px !important; border-radius: 12px !important; 
     font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; 
+    cursor: pointer; transition: opacity 0.2s;
 }
-    
+.submit-button:hover, .kb-injector-button:hover { opacity: 0.9; }
