@@ -6,15 +6,17 @@
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
+
         let val = e.target.value;
 
+        // 電話番号：数字のみ最大11桁
         if (fieldId.includes("電話番号")) {
             val = val.replace(/[^\d]/g, ""); 
             if (val.length > 11) val = val.slice(0, 11);
             e.target.value = val;
         }
 
-        // 郵便番号：CSSで枠を作るため、JS側ではハイフンなしの「数字7桁」に徹する
+        // 郵便番号：JSではハイフンを入れず、数字7桁のみにする
         if (fieldId === "郵便番号") {
             val = val.replace(/[^\d]/g, ""); 
             if (val.length > 7) val = val.slice(0, 7);
@@ -25,6 +27,7 @@
     const showError = (fieldId, message) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
+        removeError(fieldId);
         const input = container.querySelector('input, select, textarea');
         if (input) input.classList.add('error-input');
         const errorWrap = document.createElement('div');
@@ -52,7 +55,7 @@
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
-        
+
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
