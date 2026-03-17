@@ -3,24 +3,28 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // ラベル内の「【必須】」の赤字化と「※」以下の小文字化
+    // ラベル内のテキスト装飾（【必須】と※以降）
     const applyCaptionFormatting = () => {
         const captions = document.querySelectorAll('.kb-field-caption');
+        if (captions.length === 0) return false; // まだ要素がなければ戻る
+
         captions.forEach(el => {
             let html = el.innerHTML;
 
-            // 1. 【必須】が含まれる場合、赤文字用クラスの付与（親要素へ）
-            if (html.includes('必須')) {
+            // 1. 【必須】が含まれる場合、赤文字用クラスを付与
+            if (html.includes('必須') && !el.classList.contains('is-required-label')) {
                 el.classList.add('is-required-label');
             }
 
-            // 2. ※が含まれる場合、その行をspanで囲って装飾
+            // 2. ※が含まれる場合、その行以降をspanで囲む
+            // すでに囲まれている場合はスキップ
             if (html.includes('※') && !html.includes('class="kb-note-text"')) {
-                // <br>※ などのパターンを想定し、※以降をスパンで囲む
+                // <br>※ などのパターンを想定し、※から末尾までをスパンで囲む
                 html = html.replace(/(※.*)/g, '<span class="kb-note-text">$1</span>');
                 el.innerHTML = html;
             }
         });
+        return true;
     };
 
     const handleInputControl = (e) => {
@@ -57,7 +61,6 @@
         errorSpan.className = 'error-message';
         errorSpan.innerText = message;
         errorWrap.appendChild(triangle);
-        errorSpan.style.fontSize = "21px"; // 直接指定
         errorWrap.appendChild(errorSpan);
         container.appendChild(errorWrap);
     };
@@ -112,15 +115,26 @@
         if (!isDifferent) targetFieldIds.forEach(id => { if (record[id]) record[id].value = ""; });
     };
 
+    // 初期化とイベント監視
     const timer = setInterval(() => {
         if (typeof kb !== 'undefined' && kb.event) {
             clearInterval(timer);
             document.addEventListener('input', handleInputControl);
+            
             kb.event.on('kb.view.show', (ev) => { 
-                updateVisibility(ev.record); 
-                applyCaptionFormatting(); // 描画時に実行
+                updateVisibility(ev.record);
+                
+                // 描画が完了するまで最大5秒間、100msごとにラベルの装飾を試みる
+                let retryCount = 0;
+                const retryFormatting = setInterval(() => {
+                    const success = applyCaptionFormatting();
+                    retryCount++;
+                    if (success || retryCount > 50) clearInterval(retryFormatting);
+                }, 100);
+
                 return ev; 
             });
+
             kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
             kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
         }
