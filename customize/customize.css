@@ -3,50 +3,53 @@ body { background-color: #f0f2f5 !important; margin: 0; }
 body .kb-injector { max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; background: #ffffff !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
 [field-id] { margin-bottom: 32px !important; clear: both; }
 
-/* ラベル基本（元のテキストを透明にして、注入したタグで上書きする） */
+/* ラベル：標準の【必須】や※を透明にして隠す */
 .kb-field-caption { 
+    color: transparent !important; 
     position: relative !important; 
     font-size: 17px !important; 
     line-height: 1.4 !important; 
-    overflow: hidden !important;
 }
 
-/* 注入した各パーツのスタイル */
-.injected-tag { display: inline-block !important; visibility: visible !important; }
-
-/* 項目名（黒） */
-.custom-label-text { color: #1a1a1a !important; font-weight: 600 !important; }
-
-/* 【必須】（赤） */
-.custom-required-badge { color: #e53935 !important; font-weight: bold !important; margin-left: 4px !important; }
-
-/* ※注釈（控えめ） */
-.custom-note-text { 
-    display: block !important; 
-    font-size: 13px !important; 
-    opacity: 0.6 !important; 
-    font-weight: normal !important; 
-    color: #666 !important; 
-    margin-top: 4px !important; 
+/* 疑似要素で「黒い項目名」を再描画 */
+.kb-field-caption::before {
+    color: #1a1a1a !important;
+    font-weight: 600 !important;
+    visibility: visible !important;
 }
 
-/* --- 2. 出し分けエリア --- */
+/* 共通：【必須】タグのスタイル */
+.kb-field-caption::after {
+    color: #e53935 !important;
+    font-weight: bold !important;
+    margin-left: 6px !important;
+    visibility: visible !important;
+}
+
+/* --- 個別の項目名と装飾の指定（ここを調整） --- */
+[field-id="連絡先電話番号"] .kb-field-caption::before { content: "連絡先電話番号"; }
+[field-id="連絡先電話番号"] .kb-field-caption::after { content: "【必須】"; }
+
+[field-id="モバイルルーターの電話番号"] .kb-field-caption::before { content: "モバイルルーターの電話番号"; }
+[field-id="モバイルルーターの電話番号"] .kb-field-caption::after { content: "【必須】\A ※ハイフン不要"; white-space: pre !important; font-size: 13px; color: #666; opacity: 0.6; }
+
+[field-id="郵便番号"] .kb-field-caption::before { content: "郵便番号"; }
+[field-id="郵便番号"] .kb-field-caption::after { content: "【必須】\A ※ハイフン不要"; white-space: pre !important; font-size: 13px; color: #666; opacity: 0.6; }
+
+[field-id="返送先対象者確認"] .kb-field-caption::before { content: "返送先対象者様のご確認"; }
+[field-id="返送先対象者確認"] .kb-field-caption::after { content: "【必須】"; }
+
+/* --- 以降、安定動作している出し分け・エラー・ボタンの共通CSS --- */
 [field-id="返送先対象者の氏名"],[field-id="返送先対象者の会社名"],[field-id="返送先対象者の電話番号"],[field-id="返送先対象者のメールアドレス"] { display: none !important; }
 .show-target-fields [field-id="返送先対象者の氏名"], .show-target-fields [field-id="返送先対象者の会社名"], .show-target-fields [field-id="返送先対象者の電話番号"], .show-target-fields [field-id="返送先対象者のメールアドレス"] {
     display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
 }
-
-/* --- 3. エラー装飾 --- */
 .custom-error-container { margin-top: 10px !important; display: block !important; position: relative !important; }
 .error-triangle { width: 0 !important; height: 0 !important; border-left: 12px solid transparent !important; border-right: 12px solid transparent !important; border-bottom: 14px solid rgb(183, 40, 46) !important; margin-left: 1.5em !important; display: block !important; visibility: visible !important; }
 body .kb-injector .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 0.25em !important; display: block !important; line-height: 2.2em !important; margin: -1px 0 0 0 !important; padding: 0 0.8em !important; font-size: 21px !important; font-weight: 500 !important; }
 body .kb-injector input.error-input { border-color: rgb(183, 40, 46) !important; background-color: #fff8f8 !important; }
-
-/* --- 4. ポップアップ --- */
 div[style*="rgb(240, 240, 240)"] { background-color: #ffffff !important; border-radius: 12px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; padding-bottom: 60px !important; overflow: hidden !important; min-width: 300px !important; }
 div[style*="height: 56px"] { height: auto !important; min-height: 80px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 18px !important; font-weight: bold !important; color: #333 !important; padding: 30px 20px !important; text-align: center !important; }
 div[style*="border-top: 1px solid rgb(66, 165, 245)"] { border-top: 1px solid #eee !important; background: #f9f9f9 !important; padding: 10px !important; }
 .kb-dialog-button { background-color: #007bff !important; color: #ffffff !important; border-radius: 6px !important; height: 44px !important; line-height: 44px !important; font-size: 16px !important; font-weight: bold !important; width: calc(100% - 20px) !important; margin: 5px 10px !important; }
-
-/* --- 5. ボタン --- */
 .submit-button, .kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; }
