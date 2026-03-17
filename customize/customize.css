@@ -1,4 +1,6 @@
-/* --- 1. ベースデザイン & レイアウト --- */
+/* ============================================================
+   1. ベースデザイン & レイアウト
+   ============================================================ */
 body { background-color: #f0f2f5 !important; margin: 0; }
 body .kb-injector { 
     max-width: 800px !important; margin: 40px auto !important; padding: 32px !important; 
@@ -12,7 +14,9 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
     border-radius: 10px !important; font-size: 16px !important; 
 }
 
-/* --- 2. 郵便番号：1文字1枠デザイン --- */
+/* ============================================================
+   2. 郵便番号：1文字1枠デザイン
+   ============================================================ */
 .postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
 .postal-box-unit {
     width: 42px !important; height: 50px !important; text-align: center !important; font-size: 22px !important;
@@ -30,7 +34,9 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
 /* 郵便番号のエラー枠 */
 .postal-box-unit.error-input { border: 2px solid rgb(183, 40, 46) !important; background-color: #fff6f6 !important; }
 
-/* --- 3. フィールドの出し分け制御 --- */
+/* ============================================================
+   3. フィールドの出し分け制御（返送先が異なる場合）
+   ============================================================ */
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
 [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] {
     display: none !important;
@@ -43,39 +49,97 @@ body.show-target-fields [field-id="返送先対象者のメールアドレス"] 
     margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
 }
 
-/* --- 4. ポップアップ（ダイアログ）のデザイン再現 --- */
-/* ダイアログ外枠 */
-div[style*="rgb(240, 240, 240)"] { 
-    background-color: #ffffff !important; border-radius: 12px !important; 
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; padding-bottom: 60px !important; overflow: hidden !important; 
-}
-/* メッセージエリア */
-div[style*="height: 56px"] { 
-    height: auto !important; min-height: 80px !important; display: flex !important; align-items: center !important; 
-    justify-content: center !important; font-size: 18px !important; font-weight: bold !important; 
-    color: #333 !important; padding: 30px 20px !important; text-align: center !important; 
-}
-/* フッターエリア */
-div[style*="border-top: 1px solid rgb(66, 165, 245)"] { border-top: 1px solid #eee !important; background: #f9f9f9 !important; padding: 10px !important; }
-/* ダイアログ内ボタン */
-.kb-dialog-button { 
-    background-color: #007bff !important; color: #ffffff !important; border-radius: 6px !important; 
-    height: 44px !important; line-height: 44px !important; font-size: 16px !important; font-weight: bold !important; 
-    width: calc(100% - 20px) !important; margin: 5px 10px !important; border: none !important; cursor: pointer;
+/* ============================================================
+   4. ポップアップ（Booster標準ダイアログ）の上書きデザイン
+   ============================================================ */
+/* ダイアログ全体の背景（半透明） */
+.kb-dialog {
+    background-color: rgba(0, 0, 0, 0.6) !important;
 }
 
-/* --- 5. エラー表示 & 送信ボタン --- */
-/* 入力項目全般のエラー枠 */
+/* ダイアログ本体（白い箱） */
+.kb-dialog > div {
+    background-color: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
+    padding: 0 0 60px 0 !important; /* 下部ボタンエリア用の余白 */
+    overflow: hidden !important;
+    width: 450px !important;
+    max-width: 90% !important;
+    height: auto !important;
+}
+
+/* メッセージ表示エリア（「入力内容に誤りがあります」の部分） */
+.kb-dialog > div > div:first-child {
+    height: auto !important;
+    min-height: 100px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #333 !important;
+    padding: 40px 24px !important;
+    text-align: center !important;
+    line-height: 1.5 !important;
+}
+
+/* ボタンが配置されるフッターエリア */
+.kb-dialog div[style*="border-top: 1px solid rgb(66, 165, 245)"],
+.kb-dialog div[style*="border-top: 1px solid"] {
+    border-top: 1px solid #eee !important;
+    background-color: #f9f9f9 !important;
+    height: 60px !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    display: flex !important;
+    padding: 0 !important;
+}
+
+/* OK / Cancel ボタンのデザイン共通 */
+.kb-dialog .kb-dialog-button {
+    background-color: transparent !important;
+    color: #007bff !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    height: 60px !important;
+    line-height: 60px !important;
+    margin: 0 !important;
+    border: none !important;
+    flex: 1 !important; /* ボタンを均等に横並び */
+    cursor: pointer !important;
+    outline: none !important;
+}
+
+/* OKボタン（左側）とCancelボタンの境界線 */
+.kb-dialog .kb-dialog-button:first-child {
+    border-right: 1px solid #eee !important;
+}
+
+/* ホバー効果 */
+.kb-dialog .kb-dialog-button:hover {
+    background-color: #f2f8ff !important;
+}
+
+/* ============================================================
+   5. 入力フィールド直下のエラー表示（赤い吹き出し）
+   ============================================================ */
+/* 入力項目の赤枠 */
 .error-input { border: 2px solid rgb(183, 40, 46) !important; background-color: #fff6f6 !important; }
 
-/* エラーメッセージ（吹き出し風） */
+/* 吹き出しコンテナ */
 .custom-error-container { margin-top: 10px !important; display: block !important; clear: both; }
+
+/* 吹き出しの三角形 */
 .error-triangle { 
     width: 0; height: 0; 
     border-left: 12px solid transparent; border-right: 12px solid transparent; 
     border-bottom: 14px solid rgb(183, 40, 46); 
     margin-left: 1.5em; 
 }
+
+/* 吹き出しのメッセージ本体 */
 .error-message { 
     background-color: rgb(183, 40, 46) !important; color: #ffffff !important; 
     border-radius: 4px !important; display: block !important; 
@@ -83,11 +147,13 @@ div[style*="border-top: 1px solid rgb(66, 165, 245)"] { border-top: 1px solid #e
     font-size: 21px !important; font-weight: 500 !important; 
 }
 
-/* 送信ボタン（ベースデザイン） */
+/* ============================================================
+   6. 送信ボタンのデザイン
+   ============================================================ */
 .submit-button, .kb-injector-button { 
     width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; 
     color: #fff !important; padding: 18px !important; border-radius: 12px !important; 
     font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important; 
-    cursor: pointer; transition: opacity 0.2s;
+    cursor: pointer !important; transition: opacity 0.2s;
 }
-.submit-button:hover, .kb-injector-button:hover { opacity: 0.9; }
+.submit-button:hover, .kb-injector-button:hover { opacity: 0.9 !important; }
