@@ -3,31 +3,47 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // 1. 入力制御（リアルタイムで桁数と文字種を制限）
+    // 文字の装飾（【必須】を赤く、※を小さく）を適用する関数
+    const applyTextFormatting = () => {
+        const elements = document.querySelectorAll('label, .kb-label, p, span, div');
+        elements.forEach(el => {
+            if (el.children.length === 0 || el.tagName === 'LABEL') {
+                let html = el.innerHTML;
+                // 【必須】を専用タグで囲む
+                if (html.includes('【必須】') && !html.includes('class="required-tag"')) {
+                    html = html.replace(/【必須】/g, '<span class="required-tag">【必須】</span>');
+                }
+                // ※を専用タグで囲む
+                if (html.includes('※') && !html.includes('class="note-mark"')) {
+                    html = html.replace(/※/g, '<span class="note-mark">※</span>');
+                }
+                if (el.innerHTML !== html) {
+                    el.innerHTML = html;
+                }
+            }
+        });
+    };
+
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
-
         let val = e.target.value;
-
-        // 電話番号関連：数字のみ最大11桁
         if (fieldId.includes("電話番号")) {
-            val = val.replace(/[^\d]/g, ""); // 数字以外削除
+            val = val.replace(/[^\d]/g, ""); 
             if (val.length > 11) val = val.slice(0, 11);
             e.target.value = val;
         }
-
-        // 郵便番号：自動ハイフン挿入 (123-4567)
         if (fieldId === "郵便番号") {
-            val = val.replace(/[^\d]/g, ""); // 一旦数字のみに
+            val = val.replace(/[^\d]/g, ""); 
             if (val.length > 3) {
                 val = val.slice(0, 3) + "-" + val.slice(3, 7);
+            } else {
+                val = val.slice(0, 3);
             }
             e.target.value = val;
         }
     };
 
-    // エラー表示・消去関数
     const showError = (fieldId, message) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
@@ -55,13 +71,10 @@
         if (existing) existing.remove();
     };
 
-    // 送信前バリデーション
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
-
-        // 電話番号：10桁または11桁
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -71,30 +84,24 @@
                 hasError = true;
             }
         });
-
-        // メール
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         if (!(record["連絡先メールアドレス"]?.value || "").match(mailRegex)) {
-            showError("連絡先メールアドレス", "正しいメールアドレス形式で入力してください");
+            showError("連絡先メールアドレス", "正しい形式で入力してください");
             hasError = true;
         }
         if (isDiff && !(record["返送先対象者のメールアドレス"]?.value || "").match(mailRegex)) {
-            showError("返送先対象者のメールアドレス", "正しいメールアドレス形式で入力してください");
+            showError("返送先対象者のメールアドレス", "正しい形式で入力してください");
             hasError = true;
         }
-
-        // 郵便番号：XXX-XXXX 形式
         if (!(record["郵便番号"]?.value || "").match(/^\d{3}-\d{4}$/)) {
-            showError("郵便番号", "郵便番号を正しく入力してください (例: 123-4567)");
+            showError("郵便番号", "正しく入力してください (例: 123-4567)");
             hasError = true;
         }
-
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です"); hasError = true; }
             });
         }
-
         if (hasError) kb.alert("入力内容に誤りがあります。");
         return !hasError;
     };
@@ -105,25 +112,17 @@
         if (!isDifferent) targetFieldIds.forEach(id => { if (record[id]) record[id].value = ""; });
     };
 
-    // イベント登録
     const timer = setInterval(() => {
         if (typeof kb !== 'undefined' && kb.event) {
             clearInterval(timer);
-            
-            // リアルタイム入力監視を登録
             document.addEventListener('input', handleInputControl);
-
             kb.event.on('kb.view.show', (ev) => { 
                 updateVisibility(ev.record); 
+                applyTextFormatting(); // 読み込み時に装飾を適用
                 return ev; 
             });
-
             kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
-            
-            kb.event.on('kb.create.submit', (ev) => { 
-                if (!validateAll(ev.record)) ev.error = true; 
-                return ev; 
-            });
+            kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
         }
     }, 100);
 })();
