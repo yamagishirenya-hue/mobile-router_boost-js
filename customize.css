@@ -1,4 +1,52 @@
-/* 1. 最初は対象の4項目を強制的に非表示にする */
+/* --- 全体のレイアウト調整 --- */
+body {
+    background-color: #f5f7fa; /* 薄いグレーの背景 */
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+}
+
+/* フォーム全体のコンテナ */
+#injector-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* 各入力行の間隔 */
+[field-id] {
+    margin-bottom: 20px !important;
+}
+
+/* ラベルの強調 */
+[field-id] label, .kb-label {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 0.95rem;
+}
+
+/* 入力フォームのスタイル */
+input, input[type="email"], input[type="tel"], textarea, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px; /* モバイルでのズーム防止 */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    outline: none;
+}
+
+/* --- 返送先フィールド（出し分け対象）の特別デザイン --- */
+/* 最初は非表示 */
 [field-id="返送先対象者の氏名"],
 [field-id="返送先対象者の会社名"],
 [field-id="返送先対象者の電話番号"],
@@ -6,10 +54,33 @@
     display: none !important;
 }
 
-/* 2. 「返送先が異なる」が選択された時だけ表示する（後述のJSと組み合わせ） */
+/* 「異なる」選択時に枠で囲ってグループ化する */
 .show-target-fields [field-id="返送先対象者の氏名"],
 .show-target-fields [field-id="返送先対象者の会社名"],
 .show-target-fields [field-id="返送先対象者の電話番号"],
 .show-target-fields [field-id="返送先対象者のメールアドレス"] {
     display: block !important;
+    background-color: #f9fbfc;
+    padding: 10px 15px;
+    margin-bottom: 0 !important;
+    border-left: 4px solid #007bff; /* 左側に青いアクセント線 */
+}
+
+/* 送信ボタンの装飾 */
+.submit-button, button[type="submit"] {
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+    padding: 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
 }
