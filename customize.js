@@ -8,7 +8,7 @@ const __BOOST_INJECTOR_VALID_SCRIPT__ = true;
 
     const targetFieldIds = [
         "返送先対象者の氏名",
-        "返送先対象者の住所",
+        "返送先対象者の会社名",
         "返送先対象者の電話番号",
         "返送先対象者のメールアドレス"
     ];
@@ -32,9 +32,7 @@ const __BOOST_INJECTOR_VALID_SCRIPT__ = true;
             
             // 表示イベント
             kb.event.on('kb.view.show', (event) => {
-                if (!event.record["返送先対象者確認"].value) {
                     event.record["返送先対象者確認"].value = "ご依頼者様ご本人";
-                }
                 updateVisibility(event.record);
                 return event;
             });
