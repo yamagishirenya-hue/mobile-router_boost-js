@@ -7,14 +7,8 @@ body .kb-injector {
 [field-id] { margin-bottom: 32px !important; clear: both; }
 [field-id] label { font-weight: 600 !important; color: #1a1a1a !important; margin-bottom: 12px !important; display: block !important; font-size: 17px !important; }
 
-/* 入力欄 */
 body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
     width: 100% !important; padding: 14px 16px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 10px !important; font-size: 16px !important;
-}
-
-/* 郵便番号入力欄の擬似的な3-4桁ガイド（プレースホルダー的な装飾） */
-[field-id="郵便番号"] input::placeholder {
-    color: #bbb;
 }
 
 /* --- 2. 出し分けエリアのデザイン --- */
