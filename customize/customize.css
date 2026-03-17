@@ -17,7 +17,7 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
     display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
 }
 
-/* --- 3. エラー項目デザイン --- */
+/* --- 3. エラー項目デザイン（三角形と21px） --- */
 .custom-error-container { margin-top: 10px !important; display: block !important; position: relative !important; }
 .error-triangle { width: 0 !important; height: 0 !important; border-left: 12px solid transparent !important; border-right: 12px solid transparent !important; border-bottom: 14px solid rgb(183, 40, 46) !important; margin-left: 1.5em !important; display: block !important; visibility: visible !important; }
 body .kb-injector .error-message {
@@ -26,17 +26,21 @@ body .kb-injector .error-message {
 }
 body .kb-injector input.error-input { border-color: rgb(183, 40, 46) !important; background-color: #fff8f8 !important; }
 
-/* --- 4. 送信時ポップアップ（ダイアログ）の上書き装飾 --- */
-/* 外枠コンテナ */
+/* --- 4. ポップアップ（ダイアログ）のモダン化 --- */
+/* 外枠：高さを固定せず、中央に配置 */
 div[style*="rgb(240, 240, 240)"] {
-    background-color: #ffffff !important; /* 白背景に変更 */
+    background-color: #ffffff !important;
     border-radius: 12px !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
+    padding-bottom: 60px !important; /* ボタンエリア分の余白 */
     overflow: hidden !important;
+    min-width: 300px !important;
 }
 
-/* メッセージテキスト部分 */
+/* メッセージ：縦長にならないよう高さをautoにする */
 div[style*="height: 56px"] {
+    height: auto !important; /* 56px固定を解除 */
+    min-height: 80px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -44,34 +48,31 @@ div[style*="height: 56px"] {
     font-weight: bold !important;
     color: #333 !important;
     padding: 30px 20px !important;
-    height: auto !important; /* 高さを内容に合わせる */
+    text-align: center !important;
 }
 
-/* ボタンエリアの境界線 */
+/* ボタンエリア：下部に固定 */
 div[style*="border-top: 1px solid rgb(66, 165, 245)"] {
-    border-top: 1px solid #eee !important; /* 目立たない細線に */
-    position: static !important;
+    border-top: 1px solid #eee !important;
+    background: #f9f9f9 !important;
     padding: 10px !important;
 }
 
-/* OKボタン */
+/* ボタン */
 .kb-dialog-button {
-    background-color: #007bff !important; /* 鮮やかな青 */
-    color: #ffffff !important; /* 白文字 */
+    background-color: #007bff !important;
+    color: #ffffff !important;
     border-radius: 6px !important;
     height: 44px !important;
     line-height: 44px !important;
+    font-size: 16px !important;
     font-weight: bold !important;
-    transition: background 0.2s !important;
-    margin-top: 5px !important;
-}
-
-.kb-dialog-button:hover {
-    background-color: #0056b3 !important;
+    width: calc(100% - 20px) !important;
+    margin: 5px 10px !important;
 }
 
 /* --- 5. 送信ボタン --- */
-.submit-button, button[type="submit"] {
+.submit-button, .kb-injector-button {
     width: 100% !important; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
     color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 18px !important; font-weight: 700 !important; margin-top: 40px !important; border: none !important;
 }
