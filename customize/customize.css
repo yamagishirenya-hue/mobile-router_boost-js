@@ -7,24 +7,30 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
 
 /* --- 2. 郵便番号：7つのマス目（修正版） --- */
 [field-id="郵便番号"] input {
-    font-family: monospace !important;
-    letter-spacing: 24px !important; /* 1文字ごとの間隔 */
-    padding-left: 12px !important;  /* 1文字目の位置微調整 */
-    width: 305px !important;         /* 7マス + ハイフン分に固定 */
+    font-family: 'Courier New', Courier, monospace !important; /* 等幅フォントを明示 */
+    font-size: 24px !important;      /* 文字サイズを調整 */
+    letter-spacing: 16px !important; /* (1マスの幅40px) - (文字幅約24px) = 16px */
+    padding-left: 10px !important;   /* 1文字目を最初のマスの真ん中に寄せる */
+    width: 281.5px !important;       /* 40px × 7マス + 最終線の1.5px */
     height: 50px !important;
-    border: 1.5px solid #007bff !important; /* 全体の枠線 */
+    border: 1.5px solid #007bff !important;
     border-radius: 4px !important;
     background-color: #fff !important;
-    /* 縦線のみを背景で描画（7マス分） */
-    background-image: 
-        linear-gradient(to right, #007bff 1.5px, transparent 1.5px), /* 縦線 */
-        linear-gradient(to right, transparent 128px, #333 128px, #333 138px, transparent 138px); /* ハイフン */
-    background-size: 42px 100%, 100% 2px;
-    background-repeat: repeat-x, no-repeat;
-    background-position: 42px 0, 0 50%;
+    
+    /* 40pxごとに1.5pxの縦線を引く */
+    background-image: linear-gradient(to right, #007bff 1.5px, transparent 1.5px) !important;
+    background-size: 40px 100% !important;
+    background-repeat: repeat-x !important;
+    background-position: 40px 0 !important; /* 1本目の線を40px目に配置 */
+    
     box-sizing: border-box !important;
 }
 
+/* エラー時の色変更 */
+[field-id="郵便番号"] input.error-input {
+    border-color: rgb(183, 40, 46) !important;
+    background-image: linear-gradient(to right, rgb(183, 40, 46) 1.5px, transparent 1.5px) !important;
+}
 /* 郵便番号のエラー時 */
 [field-id="郵便番号"] input.error-input {
     border-color: rgb(183, 40, 46) !important;
