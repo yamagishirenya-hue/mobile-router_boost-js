@@ -3,30 +3,47 @@
 
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // ラベル内のテキスト装飾（【必須】と※以降）
-    const applyCaptionFormatting = () => {
+    // 専用タグを新規追加する関数
+    const injectCustomDecorations = () => {
         const captions = document.querySelectorAll('.kb-field-caption');
-        if (captions.length === 0) return false; // まだ要素がなければ戻る
+        if (captions.length === 0) return false;
 
         captions.forEach(el => {
-            let html = el.innerHTML;
+            const text = el.innerText;
+            // すでに加工済みの場合はスキップ
+            if (el.querySelector('.injected-tag')) return;
 
-            // 1. 【必須】が含まれる場合、赤文字用クラスを付与
-            if (html.includes('必須') && !el.classList.contains('is-required-label')) {
-                el.classList.add('is-required-label');
+            // 1. 【必須】ラベルの追加
+            if (text.includes('必須')) {
+                const reqTag = document.createElement('span');
+                reqTag.className = 'injected-tag custom-required-badge';
+                reqTag.innerText = '【必須】';
+                el.appendChild(reqTag);
+                // 元のテキストから「【必須】」を（見かけ上）消すために透明化
+                el.style.color = 'transparent';
+                // 必要な文字だけ再構築して表示
+                const labelText = document.createElement('span');
+                labelText.className = 'injected-tag custom-label-text';
+                labelText.innerText = text.replace(/【必須】/g, '');
+                el.prepend(labelText);
             }
 
-            // 2. ※が含まれる場合、その行以降をspanで囲む
-            // すでに囲まれている場合はスキップ
-            if (html.includes('※') && !html.includes('class="kb-note-text"')) {
-                // <br>※ などのパターンを想定し、※から末尾までをスパンで囲む
-                html = html.replace(/(※.*)/g, '<span class="kb-note-text">$1</span>');
-                el.innerHTML = html;
+            // 2. ※注釈の追加
+            if (text.includes('※')) {
+                const noteText = text.match(/※.*/);
+                if (noteText) {
+                    const noteTag = document.createElement('div');
+                    noteTag.className = 'injected-tag custom-note-text';
+                    noteTag.innerText = noteText[0];
+                    el.appendChild(noteTag);
+                    // 元のテキスト内の※以降はCSSで隠す
+                }
             }
         });
         return true;
     };
 
+    // --- 以下、既存の安定動作しているロジック ---
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
@@ -115,26 +132,20 @@
         if (!isDifferent) targetFieldIds.forEach(id => { if (record[id]) record[id].value = ""; });
     };
 
-    // 初期化とイベント監視
     const timer = setInterval(() => {
         if (typeof kb !== 'undefined' && kb.event) {
             clearInterval(timer);
             document.addEventListener('input', handleInputControl);
-            
             kb.event.on('kb.view.show', (ev) => { 
                 updateVisibility(ev.record);
-                
-                // 描画が完了するまで最大5秒間、100msごとにラベルの装飾を試みる
-                let retryCount = 0;
-                const retryFormatting = setInterval(() => {
-                    const success = applyCaptionFormatting();
-                    retryCount++;
-                    if (success || retryCount > 50) clearInterval(retryFormatting);
+                // 描画を待ってタグを注入
+                let retry = 0;
+                const task = setInterval(() => {
+                    if (injectCustomDecorations() || retry > 50) clearInterval(task);
+                    retry++;
                 }, 100);
-
                 return ev; 
             });
-
             kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
             kb.event.on('kb.create.submit', (ev) => { if (!validateAll(ev.record)) ev.error = true; return ev; });
         }
