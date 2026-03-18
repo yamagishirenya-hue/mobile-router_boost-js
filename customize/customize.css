@@ -12,22 +12,6 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea {
     border-radius: 10px !important; font-size: 16px !important; 
 }
 
-/* --- 2. 郵便番号：1文字1枠デザイン --- */
-.postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
-.postal-box-unit {
-    width: 42px !important; height: 50px !important; text-align: center !important; font-size: 22px !important;
-    font-weight: bold !important; color: #444 !important; border: 1px solid #ccc !important;
-    border-radius: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; outline: none !important;
-}
-.postal-box-unit + .postal-box-unit { border-left: none !important; }
-.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
-.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
-.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
-.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
-.postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; color: #555 !important; font-size: 20px !important; }
-.postal-box-unit:focus { border-color: #007bff !important; box-shadow: 0 0 5px rgba(0,123,255,0.5) !important; z-index: 10 !important; }
-.postal-box-unit.error-input { border-color: #b7282e !important; background-color: #fff6f6 !important; }
-
 /* --- 3. フィールドの出し分け制御 --- */
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
 [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] {
