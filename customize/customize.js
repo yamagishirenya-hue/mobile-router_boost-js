@@ -6,7 +6,26 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの監視（見切れ対策 & 文言の強制書き換え）
+     * 1. 【最重要】Boosterのポップアップ関数を強制的に書き換える (関数ジャック)
+     */
+    const overrideKbAlert = () => {
+        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
+            const originalAlert = kb.alert;
+            kb.alert = function(msg) {
+                // 引数（システムメッセージ）を無視して、自作メッセージを表示
+                let customMsg = MSG_CONFIRM;
+                if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
+                    customMsg = MSG_ERROR;
+                }
+                return originalAlert.apply(this, [customMsg]);
+            };
+            kb.alert._isOverridden = true;
+            console.log("Booster Alert Overridden");
+        }
+    };
+
+    /**
+     * 2. ポップアップの見た目修正（MutationObserver）
      */
     const observePopup = () => {
         const targetNode = document.body;
@@ -20,28 +39,16 @@
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType !== 1) return;
                     
-                    // メッセージエリアと枠を特定（セレクタを広めに設定）
-                    const msgArea = node.querySelector('div[style*="height:"]') || node.querySelector('div[style*="overflow: hidden auto"]');
+                    // ポップアップの要素を特定（より広い条件で探す）
                     const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
+                    const msgArea = node.querySelector('div[style*="height:"]') || node.querySelector('div[style*="overflow: hidden auto"]');
                     
-                    if (msgArea && popupBox) {
-                        // スタイル修正（見切れ対策）
+                    if (popupBox && msgArea) {
+                        // デザイン修正（CSSで見切れないようにする）
                         msgArea.style.height = 'auto';
                         msgArea.style.minHeight = '60px';
                         msgArea.style.overflow = 'visible';
                         popupBox.style.height = 'auto';
-
-                        // 文言の差し替え判定
-                        const txt = msgArea.innerText;
-                        // すでに書き換え済みなら何もしない
-                        if (txt === MSG_ERROR || txt === MSG_CONFIRM) return;
-
-                        if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
-                            msgArea.innerText = MSG_ERROR;
-                        } else {
-                            // 送信前確認などの場合
-                            msgArea.innerText = MSG_CONFIRM;
-                        }
                     }
                 });
             });
@@ -50,7 +57,7 @@
     };
 
     /**
-     * 2. 郵便番号欄のクリーンアップ
+     * 3. 郵便番号欄のクリーンアップ（1文字1枠の残像を消す）
      */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
@@ -59,7 +66,7 @@
         if (oldContainer) oldContainer.remove();
 
         const originalInput = parentField.querySelector('input');
-        if (originalInput && (originalInput.style.display === 'none' || originalInput.style.position === 'absolute')) {
+        if (originalInput) {
             originalInput.style.display = 'block';
             originalInput.style.position = 'static';
             originalInput.style.opacity = '1';
@@ -69,7 +76,7 @@
     };
 
     /**
-     * 3. 入力制御（ハイフン整形 & 数字制限）
+     * 4. 入力制限（ハイフン整形 & 数字制限）
      */
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
@@ -79,19 +86,14 @@
         let val = e.target.value;
         if (fieldId === "郵便番号") {
             let digits = val.replace(/[^\d]/g, "");
-            if (digits.length <= 3) {
-                val = digits;
-            } else {
-                val = digits.slice(0, 3) + "-" + digits.slice(3, 7);
-            }
-            e.target.value = val;
+            e.target.value = digits.length <= 3 ? digits : digits.slice(0, 3) + "-" + digits.slice(3, 7);
         } else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         }
     };
 
     /**
-     * 4. エラー表示生成
+     * 5. エラー表示（赤い帯）の制御
      */
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
@@ -114,9 +116,10 @@
     };
 
     /**
-     * 5. バリデーション実行（ポップアップ呼び出しを復活）
+     * 6. バリデーション実行
      */
     const validateAll = (record) => {
+        console.log("バリデーション実行開始");
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
@@ -139,15 +142,6 @@
             }
         });
 
-        // メール
-        const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        ["連絡先メールアドレス", isDiff ? "返送先対象者のメールアドレス" : null].filter(v => v).forEach(id => {
-            if (record[id]?.value && !record[id].value.match(mailRegex)) {
-                showError(id, "形式を確認してください");
-                hasError = true;
-            }
-        });
-
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) {
@@ -157,13 +151,9 @@
             });
         }
 
-        // 【ここが重要】エラーがあればポップアップを表示
         if (hasError) {
-            if (typeof kb !== 'undefined' && kb.alert) {
-                kb.alert(MSG_ERROR);
-            } else {
-                alert(MSG_ERROR);
-            }
+            console.log("エラーあり：ポップアップを呼び出します");
+            kb.alert(MSG_ERROR); // ジャック済みの関数を呼び出す
         }
 
         return !hasError;
@@ -174,10 +164,15 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // --- 起動 ---
+    // --- 監視・実行 ---
     observePopup();
     document.addEventListener('input', handleInputControl);
-    setInterval(resetPostalInput, 1000);
+    
+    // 定期的にアラートの上書きと郵便番号のリセットを確認
+    setInterval(() => {
+        overrideKbAlert();
+        resetPostalInput();
+    }, 1000);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
