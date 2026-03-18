@@ -7,9 +7,45 @@
     const TARGET_MESSAGE = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
+    /**
+     * ポップアップの監視と文言・デザイン制御
+     */
+    const observePopup = () => {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType !== 1) return;
 
-    // --- 郵便番号: 1文字1枠UIの生成と同期 ---
-    const initPostalCodeUI = () => {
+                    // メッセージエリアとポップアップ外枠を取得
+                    const msgArea = node.querySelector('div[style*="height: 56px"]');
+                    const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
+
+                    if (msgArea && popupBox) {
+                        const originalText = msgArea.innerText;
+
+                        // 1. 文言の内容によってクラスとメッセージを切り分ける
+                        if (originalText.includes("誤り") || originalText.includes("必須") || originalText.includes("入力してください")) {
+                            // エラー系の場合
+                            msgArea.innerText = MSG_ERROR;
+                            popupBox.classList.add('kb-popup-error');
+                            popupBox.classList.remove('kb-popup-confirm');
+                        } else {
+                            // それ以外（確認系）の場合
+                            msgArea.innerText = MSG_CONFIRM;
+                            popupBox.classList.add('kb-popup-confirm');
+                            popupBox.classList.remove('kb-popup-error');
+                        }
+                    }
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    };
+
+    /**
+     * 郵便番号UI
+     */
+   const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
 
