@@ -1,27 +1,52 @@
 /* --- 1. ベースデザイン --- */
 * { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important; }
-body .kb-injector { max-width: 800px !important; margin: 10px auto !important; padding: 24px !important; background: #ffffff !important; border-radius: 12px !important; }
-[field-id] { margin-bottom: 16px !important; clear: both; }
+body { background-color: #f0f2f5 !important; margin: 0; }
+body .kb-injector { max-width: 800px !important; margin: 10px auto !important; padding: 24px !important; background: #ffffff !important; border-radius: 12px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
 
 /* 項目名 (21px) */
-.kb-field-caption { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 8px !important; font-weight: 700 !important; font-size: 21px !important; }
+[field-id] { margin-bottom: 16px !important; clear: both; }
+.kb-field-caption { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 8px !important; font-weight: 700 !important; color: #333333 !important; margin-bottom: 8px !important; font-size: 21px !important; line-height: 1.4 !important; }
+.kb-field-caption span[style*="color:#e53935"] { display: inline !important; font-size: 21px !important; }
+.kb-field-caption div { font-size: 14px !important; color: #757575 !important; font-weight: normal !important; width: 100%; }
 
-/* --- 2. ポップアップ「塗りつぶし」修正 --- */
-/* 外枠を強制的に伸縮させる */
+/* 入力欄 */
+body .kb-injector input, body .kb-injector select, body .kb-injector textarea { font-family: inherit !important; width: 100% !important; padding: 12px 14px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 8px !important; font-size: 18px !important; }
+
+/* --- 2. 【復活】出し分け制御 --- */
+/* 初期状態では隠す */
+[field-id="返送先対象者の氏名"], 
+[field-id="返送先対象者の会社名"], 
+[field-id="返送先対象者の電話番号"], 
+[field-id="返送先対象者のメールアドレス"] { 
+    display: none !important;
+}
+
+/* bodyに特定のクラスがついた時だけ表示 */
+body.show-target-fields [field-id="返送先対象者の氏名"], 
+body.show-target-fields [field-id="返送先対象者の会社名"], 
+body.show-target-fields [field-id="返送先対象者の電話番号"], 
+body.show-target-fields [field-id="返送先対象者のメールアドレス"] { 
+    display: block !important; 
+    background-color: #f8fbff !important; 
+    padding: 15px 20px !important; 
+    border-left: 5px solid #007bff !important; 
+}
+
+/* --- 3. ポップアップデザイン修正 (縦幅をコンパクトに) --- */
+/* 外枠 */
 div[style*="rgb(240, 240, 240)"] { 
     height: auto !important; 
-    min-height: 200px !important;
+    min-height: 150px !important; /* 200pxから縮小 */
     max-height: 90vh !important;
     overflow: visible !important;
     border-radius: 16px !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
 }
 
-/* メッセージエリア：画像にある 139px を強制的に auto に塗りつぶす */
+/* メッセージエリア */
 div[style*="height:"][style*="overflow: hidden auto"] { 
     height: auto !important; 
-    min-height: 100px !important; 
-    padding: 40px 24px !important; 
+    min-height: 60px !important; 
+    padding: 25px 24px !important; /* 40pxから縮小して縦長感を解消 */
     font-size: 22px !important; 
     font-weight: bold !important;
     color: #333 !important;
@@ -30,20 +55,19 @@ div[style*="height:"][style*="overflow: hidden auto"] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    overflow: visible !important; /* hidden を打ち消し */
 }
 
-/* ボタンコンテナ：bottom: 0px を剥がして、メッセージの下に正しく配置する */
+/* ボタンコンテナ */
 div[style*="position: absolute;"][style*="bottom: 0px"] { 
     position: relative !important; 
     bottom: auto !important; 
     left: auto !important;
-    margin-top: 20px !important;
     border-top: 1px solid #eee !important; 
     padding: 15px !important;
     display: flex !important;
     justify-content: center !important;
     width: 100% !important;
+    background: #fdfdfd !important;
 }
 
 .kb-dialog-button { 
@@ -59,11 +83,9 @@ div[style*="position: absolute;"][style*="bottom: 0px"] {
     color: #fff !important;
 }
 
-/* --- 3. 郵便番号UI --- */
+/* --- 4. 郵便番号UI & エラー表示 --- */
 .postal-box-container { display: flex !important; align-items: center !important; margin-top: 8px !important; }
-.postal-box-unit { width: 48px !important; height: 50px !important; text-align: center !important; font-size: 22px !important; font-weight: bold !important; border: 1px solid #ccc !important; }
-
-/* --- 4. エラー表示 & 送信ボタン --- */
-.custom-error-container { margin-top: 10px !important; display: block !important; }
+.postal-box-unit { width: 48px !important; height: 50px !important; text-align: center !important; font-size: 24px !important; font-weight: bold !important; border: 1px solid #ccc !important; }
+.custom-error-container { margin-top: 10px !important; }
 .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 1.8em !important; padding: 6px 12px !important; font-size: 16px !important; }
-.kb-injector-button { width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 18px !important; border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; border: none !important; }
+.kb-injector-button { width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 18px !important; border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; }
