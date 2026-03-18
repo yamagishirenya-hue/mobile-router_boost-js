@@ -55,7 +55,7 @@ div[style*="border-top: 1px solid rgb(66, 165, 245)"] { border-top: 1px solid #e
 .kb-dialog-button { 
     background-color: #007bff !important; color: #ffffff !important; border-radius: 6px !important; 
     height: 44px !important; line-height: 44px !important; font-size: 16px !important; font-weight: bold !important; 
-    width: calc(100% - 20px) !important; margin: 5px 10px !important; 
+    width: calc(100% - 20px) !important; margin: 5px 10px !important;　border: none !important;outline: none !important;
 }
 
 /* --- 5. エラー表示 & 送信ボタン --- */
