@@ -1,7 +1,7 @@
 (function() {
     "use strict";
 
-    const TARGET_MESSAGE = "入力内容に誤りがあります。赤枠の項目を確認してください。";
+    const TARGET_MESSAGE = "入力内容に誤りがあります。<br>赤枠の項目を確認してください。";
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     // --- 1. Boosterの標準アラート関数をジャックして文言を統一 ---
