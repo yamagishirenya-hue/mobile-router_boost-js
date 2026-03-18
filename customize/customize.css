@@ -5,8 +5,18 @@ body .kb-injector { max-width: 800px !important; margin: 10px auto !important; p
 [field-id] { margin-bottom: 16px !important; clear: both; }
 .kb-unuse { display: none !important; }
 
-/* 項目名 (21px) */
-.kb-field-caption { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 8px !important; font-weight: 700 !important; color: #333333 !important; margin-bottom: 8px !important; font-size: 21px !important; line-height: 1.4 !important; }
+/* 項目名 (21px) & ガタつき防止 */
+.kb-field-caption { 
+    display: flex !important; 
+    align-items: center !important; 
+    flex-wrap: wrap; 
+    gap: 8px !important; 
+    font-weight: 700 !important; 
+    color: #333333 !important; 
+    margin-bottom: 8px !important; 
+    font-size: 21px !important; 
+    line-height: 1.4 !important; 
+}
 .kb-field-caption span[style*="color:#e53935"] { display: inline !important; font-size: 21px !important; }
 .kb-field-caption div { font-size: 14px !important; color: #757575 !important; font-weight: normal !important; width: 100%; }
 
@@ -25,30 +35,36 @@ body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
 body.show-target-fields [field-id="返送先対象者の氏名"], body.show-target-fields [field-id="返送先対象者の会社名"], body.show-target-fields [field-id="返送先対象者の電話番号"], body.show-target-fields [field-id="返送先対象者のメールアドレス"] { display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; border-left: 5px solid #007bff !important; }
 
-/* --- 4. ポップアップデザイン修正 (文字デザイン重視) --- */
-div[style*="rgb(240, 240, 240)"] { background-color: #ffffff !important; border-radius: 16px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important; overflow: hidden !important; height: auto !important; }
+/* --- 4. ポップアップデザイン修正 (見切れ・bottom:0px対策) --- */
+div[style*="rgb(240, 240, 240)"] { 
+    background-color: #ffffff !important; 
+    border-radius: 16px !important; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important; 
+    overflow: hidden !important; 
+    height: auto !important; 
+}
 
-/* ポップアップ内メッセージエリア */
+/* メッセージエリア */
 div[style*="height: 56px"] { 
     height: auto !important; 
-    min-height: 110px !important; 
-    padding: 35px 24px !important; 
-    font-size: 20px !important; /* 文字を大きく */
+    min-height: 100px !important; 
+    padding: 40px 24px !important; 
+    font-size: 22px !important; /* 文字を大きく */
     font-weight: bold !important;
     color: #333 !important;
-    line-height: 1.6 !important; /* 行間を広げて見やすく */
+    line-height: 1.6 !important;
     text-align: center !important;
-    white-space: pre-wrap !important; /* JSの\nを改行として認識させる */
+    white-space: pre-wrap !important; /* JSの\nを改行として認識 */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
 }
 
-/* ボタンコンテナの見切れ対策 */
+/* ボタンコンテナ：物理的にbottom:0pxを解除して見切れを防ぐ */
 div[style*="border-top: 1px solid rgb(66, 165, 245)"] { 
-    position: relative !important; 
-    bottom: auto !important; 
+    position: relative !important; /* absoluteを上書き */
+    bottom: auto !important;      /* 0pxを解除 */
     left: auto !important;
     border-top: 1px solid #eee !important; 
     padding: 12px !important; 
@@ -58,8 +74,8 @@ div[style*="border-top: 1px solid rgb(66, 165, 245)"] {
 }
 
 .kb-dialog-button { 
-    background-color: #007bff !important; color: #ffffff !important; border-radius: 6px !important; 
-    height: 46px !important; line-height: 46px !important; font-size: 17px !important; 
+    background-color: #007bff !important; color: #ffffff !important; border-radius: 8px !important; 
+    height: 48px !important; line-height: 48px !important; font-size: 18px !important; 
     font-weight: bold !important; border: none !important; flex: 1 !important; margin: 5px !important; 
 }
 
