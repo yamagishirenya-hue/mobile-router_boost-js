@@ -1,42 +1,153 @@
 /* --- 1. ベースデザイン --- */
-* { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important; }
+* { 
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important; 
+}
 body { background-color: #f0f2f5 !important; margin: 0; }
-body .kb-injector { max-width: 800px !important; margin: 10px auto !important; padding: 24px !important; background: #ffffff !important; border-radius: 12px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; }
-
-[field-id] { margin-bottom: 24px !important; clear: both; }
-.kb-unuse { display: none !important; }
+body .kb-injector { 
+    max-width: 800px !important; 
+    margin: 10px auto !important; 
+    padding: 24px !important; 
+    background: #ffffff !important; 
+    border-radius: 12px !important; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
+    box-sizing: border-box !important; 
+}
 
 /* 項目名 (21px) */
-.kb-field-caption { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 8px !important; font-weight: 700 !important; font-size: 21px !important; }
+[field-id] { margin-bottom: 24px !important; clear: both; }
+.kb-field-caption { 
+    display: flex !important; 
+    align-items: center !important; 
+    flex-wrap: wrap; 
+    gap: 8px !important; 
+    font-weight: 700 !important; 
+    color: #333333 !important; 
+    margin-bottom: 8px !important; 
+    font-size: 21px !important; 
+    line-height: 1.4 !important; 
+}
+.kb-field-caption span[style*="color:#e53935"] { display: inline !important; font-size: 21px !important; }
+.kb-field-caption div { font-size: 14px !important; color: #757575 !important; font-weight: normal !important; width: 100%; }
 
-/* 入力欄（すべてのテキストボックスを統一） */
+/* 入力欄（郵便番号を含むすべてのテキストボックスを統一） */
 body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
-    width: 100% !important; padding: 12px 14px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 8px !important; font-size: 18px !important; 
+    width: 100% !important; 
+    padding: 12px 14px !important; 
+    border: 1.5px solid #e0e4e8 !important; 
+    border-radius: 8px !important; 
+    font-size: 18px !important; 
 }
 
 /* --- 2. 出し分け制御 --- */
-[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { 
+/* 初期状態は非表示 */
+[field-id="返送先対象者の氏名"], 
+[field-id="返送先対象者の会社名"], 
+[field-id="返送先対象者の電話番号"], 
+[field-id="返送先対象者のメールアドレス"] { 
     display: none !important;
 }
+/* 返送先が異なる場合に表示 */
 body.show-target-fields [field-id="返送先対象者の氏名"], 
 body.show-target-fields [field-id="返送先対象者の会社名"], 
 body.show-target-fields [field-id="返送先対象者の電話番号"], 
 body.show-target-fields [field-id="返送先対象者のメールアドレス"] { 
-    display: block !important; background-color: #f8fbff !important; padding: 15px 20px !important; border-left: 5px solid #007bff !important; 
+    display: block !important; 
+    background-color: #f8fbff !important; 
+    padding: 15px 20px !important; 
+    border-left: 5px solid #007bff !important; 
 }
 
-/* --- 3. ポップアップ修正 --- */
-div[style*="rgb(240, 240, 240)"] { height: auto !important; min-height: 150px !important; overflow: visible !important; border-radius: 16px !important; }
-div[style*="height:"][style*="overflow: hidden auto"] { height: auto !important; min-height: 60px !important; padding: 25px 24px !important; font-size: 22px !important; font-weight: bold !important; text-align: center !important; white-space: pre-wrap !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow: visible !important; }
-div[style*="position: absolute;"][style*="bottom: 0px"] { position: relative !important; bottom: auto !important; left: auto !important; border-top: 1px solid #eee !important; padding: 15px !important; display: flex !important; justify-content: center !important; width: 100% !important; background: #fdfdfd !important; }
-.kb-dialog-button { height: 48px !important; line-height: 48px !important; font-size: 18px !important; font-weight: bold !important; border-radius: 8px !important; border: none !important; flex: 1 !important; margin: 0 10px !important; background-color: #007bff !important; color: #fff !important; }
-
-/* --- 4. エラー表示の三角形 caret --- */
-div[field-id] .error-message, div[field-id] .kintoneplugin-alert-v2 { position: relative !important; margin-top: 10px !important; overflow: visible !important; }
-div[field-id] .error-message::before, div[field-id] .kintoneplugin-alert-v2::before {
-    content: "" !important; position: absolute !important; top: -10px !important; left: 20px !important; border-left: 10px solid transparent !important; border-right: 10px solid transparent !important; border-bottom: 10px solid #b7282e !important; display: block !important;
+/* --- 3. ポップアップ (見切れ防止・コンパクト化) --- */
+div[style*="rgb(240, 240, 240)"] { 
+    height: auto !important; 
+    min-height: 150px !important; 
+    overflow: visible !important; 
+    border-radius: 16px !important; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
 }
-.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 1.8em !important; padding: 6px 12px !important; font-size: 16px !important; }
+
+/* メッセージエリア：インラインの139px等を強制上書き */
+div[style*="height:"][style*="overflow: hidden auto"] { 
+    height: auto !important; 
+    min-height: 60px !important; 
+    padding: 25px 24px !important; 
+    font-size: 22px !important; 
+    font-weight: bold !important; 
+    color: #333 !important; 
+    text-align: center !important; 
+    white-space: pre-wrap !important; 
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: center !important; 
+    overflow: visible !important;
+}
+
+/* ボタンエリア：bottom: 0px を解除 */
+div[style*="position: absolute;"][style*="bottom: 0px"] { 
+    position: relative !important; 
+    bottom: auto !important; 
+    left: auto !important; 
+    border-top: 1px solid #eee !important; 
+    padding: 15px !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    width: 100% !important; 
+    background: #fdfdfd !important;
+}
+
+.kb-dialog-button { 
+    height: 48px !important; 
+    line-height: 48px !important; 
+    font-size: 18px !important; 
+    font-weight: bold !important; 
+    border-radius: 8px !important; 
+    border: none !important; 
+    flex: 1 !important; 
+    margin: 0 10px !important; 
+    background-color: #007bff !important; 
+    color: #fff !important; 
+}
+
+/* --- 4. エラー表示の三角形 (caret) 復活 --- */
+div[field-id] .error-message, 
+div[field-id] .kintoneplugin-alert-v2 { 
+    position: relative !important; 
+    margin-top: 10px !important; 
+    overflow: visible !important; 
+}
+div[field-id] .error-message::before, 
+div[field-id] .kintoneplugin-alert-v2::before {
+    content: "" !important; 
+    position: absolute !important; 
+    top: -10px !important; 
+    left: 20px !important; 
+    width: 0 !important; 
+    height: 0 !important; 
+    border-left: 10px solid transparent !important; 
+    border-right: 10px solid transparent !important; 
+    border-bottom: 10px solid #b7282e !important; 
+    display: block !important; 
+    z-index: 1 !important;
+}
+.error-message { 
+    background-color: rgb(183, 40, 46) !important; 
+    color: #ffffff !important; 
+    border-radius: 4px !important; 
+    display: block !important; 
+    line-height: 1.8em !important; 
+    padding: 6px 12px !important; 
+    font-size: 16px !important; 
+}
 
 /* --- 5. 送信ボタン --- */
-.kb-injector-button { width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 18px !important; border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; }
+.kb-injector-button { 
+    width: 100% !important; 
+    background: #e69138 !important; 
+    color: #fff !important; 
+    padding: 18px !important; 
+    border-radius: 8px !important; 
+    font-size: 20px !important; 
+    font-weight: 700 !important; 
+    margin-top: 16px !important; 
+    border: none !important; 
+}
