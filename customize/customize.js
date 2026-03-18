@@ -2,9 +2,9 @@
     "use strict";
 
     const CONFIRM_MESSAGE = "入力内容に問題はありませんか？\nよろしければOKを押してください。";
-    const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
+    const ERROR_POP_MESSAGE = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
 
-    // --- 1. メッセージ書き換え (MutationObserverで安全に注入) ---
+    // --- 1. メッセージ書き換え (MutationObserver) ---
     const observePopup = () => {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
@@ -12,7 +12,12 @@
                     if (node.nodeType === 1) {
                         const msgElement = node.querySelector('div[style*="height: 56px"]');
                         if (msgElement) {
-                            msgElement.innerText = CONFIRM_MESSAGE;
+                            // Boosterの標準エラーか、送信前確認かを判別して書き換える
+                            if (msgElement.innerText.includes("入力内容") || msgElement.innerText.includes("必須")) {
+                                msgElement.innerText = ERROR_POP_MESSAGE;
+                            } else {
+                                msgElement.innerText = CONFIRM_MESSAGE;
+                            }
                         }
                     }
                 });
@@ -51,17 +56,25 @@
             });
             container.appendChild(box);
             boxes.push(box);
-            if (i === 2) {
-                const hyphen = document.createElement('span');
-                hyphen.className = 'postal-box-hyphen';
-                hyphen.innerText = '-';
-                container.appendChild(hyphen);
-            }
         }
         parentField.querySelector('.kb-field-value').appendChild(container);
     };
 
-    // --- 3. エラー表示 ---
+    // --- 3. 入力制限 (数字のみ強制) ---
+    const handleInputControl = (e) => {
+        const fieldWrap = e.target.closest('[field-id]');
+        if (!fieldWrap) return;
+        const fieldId = fieldWrap.getAttribute('field-id');
+
+        if (fieldId && (fieldId.includes("電話番号") || fieldId === "郵便番号")) {
+            let val = e.target.value.replace(/[^\d]/g, "");
+            const max = fieldId === "郵便番号" ? 7 : 11;
+            if (val.length > max) val = val.slice(0, max);
+            e.target.value = val;
+        }
+    };
+
+    // --- 4. エラー表示 ---
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
@@ -74,31 +87,22 @@
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
         removeError(fieldId);
-        
         const input = container.querySelector('input, select, textarea') || container.querySelector('.postal-box-unit');
         if (input) input.classList.add('error-input');
-        
         const errorWrap = document.createElement('div');
         errorWrap.className = 'custom-error-container';
         errorWrap.innerHTML = '<div class="error-triangle"></div><div class="error-message">' + message + '</div>';
         container.appendChild(errorWrap);
     };
 
-    // --- 4. バリデーション ---
+    // --- 5. バリデーション ---
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
-        // 郵便番号
-        const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
-        if (zipVal && zipVal.length !== 7) {
-            showError("郵便番号", "7桁の数字を入力してください");
-            hasError = true;
-        }
-
-        // 電話番号
+        // 電話番号桁数
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -109,16 +113,25 @@
             }
         });
 
+        // 郵便番号桁数
+        const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
+        if (zipVal && zipVal.length !== 7) {
+            showError("郵便番号", "7桁の数字を入力してください");
+            hasError = true;
+        }
+
         return !hasError;
     };
 
-    // --- 5. 監視とイベント ---
+    // --- 6. 出し分け制御 ---
     const updateVisibility = (record) => {
         const isDifferent = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
+    // --- 初期化 & 監視 ---
     observePopup();
+    document.addEventListener('input', handleInputControl);
     setInterval(initPostalCodeUI, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
@@ -134,11 +147,10 @@
 
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) {
-                // エラーがある場合は確認メッセージではなく標準の警告が出るように
-                ev.error = true; 
+                ev.error = true;
             } else {
-                // エラーがない場合のみ、確認ダイアログを表示（Injectorの標準機能を利用）
-                // ※ Injector側の設定で「保存確認ポップアップ」が有効なら自動で書き換わります
+                // ここで本来は kb.confirm を呼びたいが、Booster側の仕様に合わせて
+                // 文言の書き換え（observePopup）に任せます。
             }
             return ev;
         });
