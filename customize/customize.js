@@ -1,33 +1,31 @@
 (function() {
     "use strict";
-
     // メッセージの定義
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
-    
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
-
     /**
-     * ポップアップの監視と文言・デザイン制御
-     */
+    * ポップアップの監視と文言・デザイン制御
+    */
     const observePopup = () => {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType !== 1) return;
-
                     // メッセージエリアを取得
                     const msgArea = node.querySelector('div[style*="height: 56px"]');
                     const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
-
                     if (msgArea && popupBox) {
-                        const originalText = msgArea.innerText;
-
+                    const originalText = msgArea.innerText;
                         // 文言の内容によってメッセージを切り分ける
                         if (originalText.includes("誤り") || originalText.includes("必須") || originalText.includes("入力してください")) {
                             msgArea.innerText = MSG_ERROR;
+                            popupBox.classList.add('kb-popup-error');
+                            popupBox.classList.remove('kb-popup-confirm');
                         } else {
                             msgArea.innerText = MSG_CONFIRM;
+                            popupBox.classList.add('kb-popup-confirm');
+                            popupBox.classList.remove('kb-popup-error');
                         }
                     }
                 });
@@ -35,28 +33,23 @@
         });
         observer.observe(document.body, { childList: true, subtree: true });
     };
-
     /**
-     * 郵便番号UI
-     */
+    * 郵便番号UI
+    */
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
-
         const valueContainer = parentField.querySelector('.kb-field-value');
         const originalInput = valueContainer ? valueContainer.querySelector('input') : null;
-
         if (!originalInput || parentField.querySelector('.postal-box-container')) return;
-        
         originalInput.style.position = 'absolute';
         originalInput.style.opacity = '0';
         originalInput.style.height = '0';
         originalInput.style.pointerEvents = 'none';
-
         const container = document.createElement('div');
         container.className = 'postal-box-container';
         const boxes = [];
-
+        
         for (let i = 0; i < 7; i++) {
             const box = document.createElement('input');
             box.type = 'text';
@@ -64,19 +57,16 @@
             box.className = 'postal-box-unit';
             box.inputMode = 'numeric';
             box.value = originalInput.value[i] || "";
-
             box.addEventListener('input', (e) => {
                 box.value = box.value.replace(/[^\d]/g, "");
                 if (box.value && i < 6) boxes[i + 1].focus();
                 syncValue();
             });
-
             box.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && !box.value && i > 0) {
                     boxes[i - 1].focus();
                 }
             });
-
             container.appendChild(box);
             boxes.push(box);
             if (i === 2) {
@@ -86,21 +76,18 @@
                 container.appendChild(hyphen);
             }
         }
-
+        
         const syncValue = () => {
-            originalInput.value = boxes.map(b => b.value).join('');
-            originalInput.dispatchEvent(new Event('input', { bubbles: true }));
-            originalInput.dispatchEvent(new Event('change', { bubbles: true }));
+        originalInput.value = boxes.map(b => b.value).join('');
+        originalInput.dispatchEvent(new Event('input', { bubbles: true }));
+        originalInput.dispatchEvent(new Event('change', { bubbles: true }));
         };
-
         valueContainer.appendChild(container);
     };
-
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
         const fieldId = fieldWrap.getAttribute('field-id');
-
         let val = e.target.value;
         if (fieldId && (fieldId.includes("電話番号") || fieldId === "郵便番号")) {
             val = val.replace(/[^\d]/g, "");
@@ -109,7 +96,6 @@
             e.target.value = val;
         }
     };
-
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
@@ -117,34 +103,27 @@
         const existing = container.querySelector('.custom-error-container');
         if (existing) existing.remove();
     };
-
     const showError = (fieldId, message) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
         removeError(fieldId);
-
         if (fieldId === "郵便番号") {
             container.querySelectorAll('.postal-box-unit').forEach(el => el.classList.add('error-input'));
         } else {
             const input = container.querySelector('input, select, textarea');
             if (input) input.classList.add('error-input');
         }
-
         const errorWrap = document.createElement('div');
         errorWrap.className = 'custom-error-container';
         errorWrap.innerHTML = `<div class="error-triangle"></div><span class="error-message">${message}</span>`;
         container.appendChild(errorWrap);
     };
-
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
-
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
-
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
-        
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
             if (val && (val.length < 10 || val.length > 11)) {
@@ -152,13 +131,20 @@
                 hasError = true;
             }
         });
-
+        const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+        if (record["連絡先メールアドレス"]?.value && !record["連絡先メールアドレス"].value.match(mailRegex)) {
+            showError("連絡先メールアドレス", "形式を確認してください");
+            hasError = true;
+        }
+        if (isDiff && record["返送先対象者のメールアドレス"]?.value && !record["返送先対象者のメールアドレス"].value.match(mailRegex)) {
+            showError("返送先対象者のメールアドレス", "形式を確認してください");
+            hasError = true;
+        }
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal.length !== 7) {
             showError("郵便番号", "7桁の数字を入力してください");
             hasError = true;
         }
-
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) {
@@ -167,38 +153,33 @@
                 }
             });
         }
-
-        // ここでは kb.alert(MSG_ERROR) などを直接呼ばず、標準のバリデーションに任せます。
-        // （その文言を observePopup が書き換えます）
+        if (hasError) {
+            kb.alert(TARGET_MESSAGE);
+        }
         return !hasError;
     };
-
     const updateVisibility = (record) => {
         const isDifferent = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
-
     // --- 初期化・監視開始 ---
     observePopup(); // これを忘れると文言が書き換わりません
+    
     document.addEventListener('input', handleInputControl);
-
     const timer = setInterval(() => {
         if (document.querySelector('[field-id="郵便番号"]')) {
-            initPostalCodeUI();
+        initPostalCodeUI();
         }
     }, 500);
-
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
             updateVisibility(ev.record);
             return ev;
         });
-
         kb.event.on('kb.change.返送先対象者確認', (ev) => {
             updateVisibility(ev.record);
             return ev;
         });
-
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) {
                 ev.error = true;
