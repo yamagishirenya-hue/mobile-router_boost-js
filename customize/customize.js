@@ -32,6 +32,12 @@
         btn.innerText = 'OK';
         btn.onclick = () => overlay.remove();
 
+        const btn = document.createElement('button');
+        btn.className = 'kb-dialog-button';
+        btn.innerText = 'OK';
+        btn.style.border = 'none'; // JS側でも明示的にボーダーを消す
+        btn.onclick = () => overlay.remove();
+
         footer.appendChild(btn);
         dialog.appendChild(content);
         dialog.appendChild(footer);
