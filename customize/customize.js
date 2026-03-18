@@ -1,11 +1,22 @@
 (function() {
     "use strict";
 
-    // 自作バリデーション用のメッセージ（改行あり）
+    // 改行を含めたターゲットメッセージ (\n が改行になります)
     const TARGET_MESSAGE = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 郵便番号: 1文字1枠UIの生成と同期 ---
+    // --- 1. Boosterの標準アラート関数をジャックして文言を統一 ---
+    const overrideKbAlert = () => {
+        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
+            const originalAlert = kb.alert;
+            kb.alert = function(msg) {
+                return originalAlert.apply(this, [TARGET_MESSAGE]);
+            };
+            kb.alert._isOverridden = true;
+        }
+    };
+
+    // --- 2. 郵便番号: 1文字1枠UIの生成と同期 ---
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
@@ -15,7 +26,6 @@
 
         if (!originalInput || parentField.querySelector('.postal-box-container')) return;
 
-        // 元の入力を隠す
         originalInput.style.position = 'absolute';
         originalInput.style.opacity = '0';
         originalInput.style.height = '0';
@@ -64,7 +74,7 @@
         valueContainer.appendChild(container);
     };
 
-    // --- 入力制限（電話番号・郵便番号） ---
+    // --- 3. 入力制限（電話番号・郵便番号） ---
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
@@ -79,7 +89,7 @@
         }
     };
 
-    // --- エラー表示制御 ---
+    // --- 4. エラー表示制御 ---
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
@@ -106,7 +116,7 @@
         container.appendChild(errorWrap);
     };
 
-    // --- バリデーション実行 ---
+    // --- 5. バリデーション実行 ---
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
@@ -161,10 +171,11 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // --- 監視・イベント登録 ---
+    // --- 実行と監視 ---
     document.addEventListener('input', handleInputControl);
 
     const timer = setInterval(() => {
+        overrideKbAlert();
         if (document.querySelector('[field-id="郵便番号"]')) {
             initPostalCodeUI();
         }
