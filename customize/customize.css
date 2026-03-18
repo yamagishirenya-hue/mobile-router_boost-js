@@ -1,147 +1,170 @@
-/* --- 1. ベースデザイン & フォント --- */
-* {
+/* --- 1. ベースデザイン & レイアウト --- */
+body { 
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important;
+    background-color: #f0f2f5 !important; 
+    margin: 0; 
 }
-
-body { background-color: #f0f2f5 !important; margin: 0; }
 
 body .kb-injector { 
-    max-width: 850px !important; 
-    margin: 20px auto !important; 
-    padding: 32px !important; 
+    max-width: 800px !important; 
+    margin: 10px auto !important; /* 上下の外余白をさらに 20px -> 10px に縮小 */
+    padding: 24px !important; /* 内余白を少し減らす 32px -> 24px */
     background: #ffffff !important; 
-    border-radius: 12px !important; 
+    border-radius: 12px !important; /* 画像に合わせて角丸を少し鋭く 16px -> 12px */
     box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
+    box-sizing: border-box !important; 
 }
 
-/* フィールドの間隔 */
-[field-id] { margin-bottom: 24px !important; clear: both; }
+/* 各フィールドの間の余白をさらに 20px -> 16px に詰める */
+[field-id] { margin-bottom: 16px !important; clear: both; }
+
+/* 管理用フィールドが場所を取らないように完全に消す */
 .kb-unuse { display: none !important; }
 
-/* 項目名（文字サイズアップ：18px） */
+/* --- ガタつき修正 & 文字サイズ調整 --- */
 .kb-field-caption { 
-    display: block !important;
+    display: flex !important; /* 横並びにする */
+    align-items: center !important; /* 上下中央揃え */
+    gap: 8px !important; /* 【必須】と項目名の距離を画像に合わせる */
     font-weight: 700 !important; 
     color: #333333 !important; 
-    margin-bottom: 10px !important; 
-    font-size: 18px !important; 
-    line-height: 1.5 !important;
+    margin-bottom: 6px !important; /* 下マージンを減らす 8px -> 6px */
+    display: block !important; 
+    font-size: 15px !important; /* 項目名の文字サイズを少し下げる 16px -> 15px */
+    line-height: 1.4 !important;
 }
 
-/* 【必須】ラベル（16px） */
+/* 【必須】のインラインスタイルを上書き */
 .kb-field-caption span[style*="color:#e53935"] {
     display: inline !important;
-    font-size: 16px !important; 
-    margin-right: 4px !important;
+    margin-right: 0 !important; /* ガタつき防止 */
+    font-size: 14px !important; /* 少し小さく */
 }
 
-/* 入力欄（文字サイズアップ：17px） */
+/* ※ハイフン不要などの注釈の文字サイズとマージン */
+.kb-field-caption div {
+    font-size: 12px !important; /* 文字サイズをメリハリつける 13px -> 12px */
+    margin-top: 0 !important; /* ガタつき防止 */
+    color: #757575 !important;
+    font-weight: normal !important;
+}
+
 body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
+    font-family: inherit !important; 
     width: 100% !important; 
-    padding: 12px 16px !important; 
+    padding: 10px 14px !important; /* 内余白を減らす 12px 16px -> 10px 14px */
     border: 1.5px solid #e0e4e8 !important; 
-    border-radius: 8px !important; 
-    font-size: 17px !important; 
+    border-radius: 6px !important; /* 角丸を鋭く 8px -> 6px */
+    font-size: 15px !important; /* 入力文字サイズを項目名に合わせる 16px -> 15px */
 }
 
-/* --- 2. 出し分け制御 (CSSでの保険) --- */
-[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
-[field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { 
-    display: none !important;
+/* --- 2. 郵便番号:1文字1枠デザイン --- */
+.postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
+.postal-box-unit { 
+    font-family: inherit !important;
+    width: 42px !important; height: 50px !important; text-align: center !important; 
+    font-size: 22px !important; font-weight: bold !important; color: #444 !important; 
+    border: 1px solid #ccc !important; border-radius: 0 !important; margin: 0 !important; 
+    padding: 0 !important; background: #fff !important; outline: none !important;
 }
+.postal-box-unit + .postal-box-unit { border-left: none !important; }
+.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
+.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
+.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
+.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
+.postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; color: #555 !important; font-size: 20px !important; }
+.postal-box-unit.error-input { border-color: #b7282e !important; background-color: #fff6f6 !important; }
+
+/* --- 3. フィールドの出し分け制御 --- */
+[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
+[field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
 
 body.show-target-fields [field-id="返送先対象者の氏名"], 
 body.show-target-fields [field-id="返送先対象者の会社名"], 
 body.show-target-fields [field-id="返送先対象者の電話番号"], 
 body.show-target-fields [field-id="返送先対象者のメールアドレス"] { 
-    display: block !important; 
-    background-color: #f8fbff !important; 
-    padding: 15px 20px !important; 
-    border-left: 5px solid #007bff !important;
+    display: block !important; background-color: #f8fbff !important; 
+    padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
 }
 
-/* --- 3. 郵便番号デザイン --- */
-.postal-box-container { display: flex !important; align-items: center !important; margin-top: 8px !important; }
-.postal-box-unit { 
-    width: 48px !important; height: 50px !important; text-align: center !important; 
-    font-size: 22px !important; font-weight: bold !important; border: 1px solid #ccc !important;
-}
-.postal-box-unit + .postal-box-unit { border-left: none !important; }
-.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
-.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; margin-left: 10px !important; }
-
-/* --- 4. ポップアップ(ダイアログ)修正 --- */
+/* --- 4. ポップアップ(ダイアログ)のデザイン --- */
 div[style*="rgb(240, 240, 240)"] { 
     background-color: #ffffff !important; 
-    border-radius: 16px !important; 
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important; 
-    min-width: 320px !important;
-    overflow: hidden !important;
+    border-radius: 12px !important; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; 
+    padding-bottom: 60px !important; 
+    overflow: hidden !important; 
 }
 
-/* メッセージエリア：重なりを防止するために高さを自動にし、余白を確保 */
 div[style*="height: 56px"] { 
     height: auto !important; 
-    min-height: 80px !important; 
-    padding: 40px 24px !important; 
-    font-size: 18px !important; 
-    font-weight: bold !important;
-    color: #333 !important;
-    text-align: center !important;
-    display: block !important;
-    white-space: pre-wrap !important;
+    min-height: 120px !important; 
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: center !important; 
+    font-size: 0 !important; 
+    color: transparent !important;
+    padding: 20px !important; 
+    text-align: center !important; 
     box-sizing: border-box !important;
+    white-space: pre-wrap !important;
 }
 
-/* ボタンエリア：ボタンが綺麗に並ぶように調整 */
+div[style*="height: 56px"]::before {
+    content: "入力内容に誤りがあります。\a 赤枠の項目を確認してください。" !important; 
+    font-size: 18px !important; 
+    font-weight: bold !important; 
+    color: #333 !important;
+    line-height: 1.5 !important;
+    display: block !important;
+}
+
 div[style*="border-top: 1px solid rgb(66, 165, 245)"] { 
     border-top: 1px solid #eee !important; 
-    padding: 12px !important; 
-    display: flex !important;
-    justify-content: center !important;
-    gap: 10px !important;
-    background: #fdfdfd !important;
+    background: #f9f9f9 !important; 
+    padding: 10px !important; 
 }
 
 .kb-dialog-button { 
-    height: 44px !important; 
-    line-height: 44px !important; 
+    background-color: #007bff !important; 
+    color: #ffffff !important; 
+    border-radius: 6px !important; 
+    height: 48px !important; 
+    line-height: 48px !important; 
     font-size: 16px !important; 
     font-weight: bold !important; 
-    border-radius: 6px !important; 
+    width: calc(100% - 20px) !important; 
+    margin: 5px 10px !important; 
     border: none !important;
-    flex: 1 !important; /* ボタンの幅を均等にする */
-    min-width: 100px !important;
-    margin: 0 !important;
-    cursor: pointer !important;
-}
-
-/* OKボタン */
-div[style*="border-top"] > div:nth-child(1) .kb-dialog-button {
-    background-color: #42a5f5 !important;
-    color: #fff !important;
-}
-
-/* Cancelボタン */
-div[style*="border-top"] > div:nth-child(2) .kb-dialog-button {
-    background-color: #9e9e9e !important;
-    color: #fff !important;
 }
 
 /* --- 5. エラー表示 & 送信ボタン --- */
 .custom-error-container { margin-top: 10px !important; display: block !important; }
 .error-triangle { 
-    width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; 
-    border-bottom: 12px solid rgb(183, 40, 46); margin-left: 1.5em; 
+    width: 0; height: 0; border-left: 12px solid transparent; 
+    border-right: 12px solid transparent; border-bottom: 14px solid rgb(183, 40, 46); 
+    margin-left: 1.5em; 
 }
 .error-message { 
     background-color: rgb(183, 40, 46) !important; color: #ffffff !important; 
-    border-radius: 4px !important; display: block !important; line-height: 1.8em !important; 
-    padding: 6px 12px !important; font-size: 16px !important; font-weight: 500 !important; 
+    border-radius: 4px !important; display: block !important; line-height: 2.2em !important; 
+    padding: 0 0.8em !important; font-size: 18px !important; font-weight: 500 !important; 
 }
 
-.kb-injector-button { 
-    width: 100% !important; background: #e69138 !important; color: #fff !important; 
-    padding: 16px !important; border-radius: 8px !important; font-size: 20px !important; 
-    font-weight: 700 !important; border: none !important; 
+/* 送信ボタンの位置をさらに上げる調整 */
+.submit-button, .kb-injector-button { 
+    width: 100% !important; 
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important; 
+    color: #fff !important; 
+    padding: 14px !important; /* 縦パディングを少し減らす 16px -> 14px */
+    border-radius: 12px !important; 
+    font-size: 18px !important; 
+    font-weight: 700 !important; 
+    margin-top: 16px !important; /* 20px -> 16px に縮小 */
+    border: none !important; 
+}
+
+/* フッター自体の余白を減らす */
+.kb-injector-footer {
+    margin-top: -10px !important; /* フォームに近づける */
 }
