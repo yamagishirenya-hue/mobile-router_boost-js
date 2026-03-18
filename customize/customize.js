@@ -11,16 +11,13 @@
         const valueContainer = parentField.querySelector('.kb-field-value');
         const originalInput = valueContainer ? valueContainer.querySelector('input') : null;
 
-        // すでに作成済み、または入力欄がない場合は何もしない
         if (!originalInput || parentField.querySelector('.postal-box-container')) return;
 
-        // 1. 元の入力を隠す（Boosterのバリデーションに影響しないよう不可視化）
         originalInput.style.position = 'absolute';
         originalInput.style.opacity = '0';
         originalInput.style.height = '0';
         originalInput.style.pointerEvents = 'none';
 
-        // 2. 新しい入力枠のコンテナ作成
         const container = document.createElement('div');
         container.className = 'postal-box-container';
         const boxes = [];
@@ -31,7 +28,6 @@
             box.maxLength = 1;
             box.className = 'postal-box-unit';
             box.inputMode = 'numeric';
-            // 初期値を反映
             box.value = originalInput.value[i] || "";
 
             box.addEventListener('input', (e) => {
@@ -58,7 +54,6 @@
 
         const syncValue = () => {
             originalInput.value = boxes.map(b => b.value).join('');
-            // Booster側のイベントを発火させる
             originalInput.dispatchEvent(new Event('input', { bubbles: true }));
             originalInput.dispatchEvent(new Event('change', { bubbles: true }));
         };
@@ -113,10 +108,8 @@
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
-        // 全エラー表示リセット
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
-        // 電話番号バリデーション
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         
@@ -128,7 +121,6 @@
             }
         });
 
-        // メールアドレス形式バリデーション
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         if (record["連絡先メールアドレス"]?.value && !record["連絡先メールアドレス"].value.match(mailRegex)) {
             showError("連絡先メールアドレス", "形式を確認してください");
@@ -139,14 +131,12 @@
             hasError = true;
         }
 
-        // 郵便番号バリデーション
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal.length !== 7) {
             showError("郵便番号", "7桁の数字を入力してください");
             hasError = true;
         }
 
-        // 返送先が異なる場合の必須チェック
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) {
@@ -156,8 +146,8 @@
             });
         }
 
-        // --- 修正ポイント: kb.alert を使用 ---
         if (hasError) {
+            // 自作バリデーションでもBooster標準デザインの警告を出す
             kb.alert("入力内容に誤りがあります。赤枠の項目を確認してください。");
         }
 
@@ -172,7 +162,6 @@
     // --- 監視・イベント登録 ---
     document.addEventListener('input', handleInputControl);
 
-    // 500msごとにDOMを監視して郵便番号UIを適用
     const timer = setInterval(() => {
         if (document.querySelector('[field-id="郵便番号"]')) {
             initPostalCodeUI();
@@ -180,22 +169,19 @@
     }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
-        // 画面表示イベント
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
             updateVisibility(ev.record);
             return ev;
         });
 
-        // フィールド値変更イベント
         kb.event.on('kb.change.返送先対象者確認', (ev) => {
             updateVisibility(ev.record);
             return ev;
         });
 
-        // レコード保存（送信ボタン押下時）イベント
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
+            // 自作バリデーションを実行
             if (!validateAll(ev.record)) {
-                // validateAll 内で kb.alert を実行しているため、ここでは error=true のみセット
                 ev.error = true;
             }
             return ev;
