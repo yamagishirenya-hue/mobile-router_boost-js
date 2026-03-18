@@ -1,19 +1,18 @@
 (function() {
     "use strict";
 
-    const TARGET_MESSAGE = "入力内容に誤りがあります。<br>赤枠の項目を確認してください。";
+    // 改行を含めたターゲットメッセージ (\n が改行になります)
+    const TARGET_MESSAGE = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     // --- 1. Boosterの標準アラート関数をジャックして文言を統一 ---
-    // これにより kb.alert() が呼ばれた際、引数が何であれ TARGET_MESSAGE に差し替えられます
     const overrideKbAlert = () => {
         if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
-                // 引数を TARGET_MESSAGE に強制変更して実行
                 return originalAlert.apply(this, [TARGET_MESSAGE]);
             };
-            kb.alert._isOverridden = true; // 二重適用防止
+            kb.alert._isOverridden = true;
         }
     };
 
@@ -176,9 +175,7 @@
     document.addEventListener('input', handleInputControl);
 
     const timer = setInterval(() => {
-        // 関数ジャックを実行（kbが定義されるまで繰り返す）
         overrideKbAlert();
-
         if (document.querySelector('[field-id="郵便番号"]')) {
             initPostalCodeUI();
         }
