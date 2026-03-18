@@ -168,17 +168,3 @@ div[style*="border-top: 1px solid rgb(66, 165, 245)"] {
 .kb-injector-footer {
     margin-top: -10px !important; /* フォームに近づける */
 }
-/* プラグイン標準の赤いエラー吹き出し（z-index 999995の要素）を隠す */
-.kb-field-value > div[style*="z-index: 999995"] {
-    display: none !important;
-}
-
-/* 項目名のガタつきを直すための微調整（flexを有効にする） */
-.kb-field-caption { 
-    display: flex !important; 
-    align-items: center !important; 
-    flex-wrap: wrap; 
-    gap: 8px !important;
-    /* 元のCSSにある display: block !important; が flex を打ち消しているので、
-       もし効かなければ block の行を削除するかコメントアウトしてください */
-}
