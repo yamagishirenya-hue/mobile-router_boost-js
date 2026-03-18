@@ -39,6 +39,46 @@
         document.body.appendChild(overlay);
     };
 
+    // --- 郵便番号：1文字1枠UIの生成と同期 ---
+    const initPostalCodeUI = () => {
+        const parentField = document.querySelector('[field-id="郵便番号"]');
+        if (!parentField) return;
+        const valueContainer = parentField.querySelector('.kb-field-value');
+        const originalInput = valueContainer ? valueContainer.querySelector('input') : null;
+        if (!originalInput || parentField.querySelector('.postal-box-container')) return;
+
+        originalInput.style.display = 'none';
+        const container = document.createElement('div');
+        container.className = 'postal-box-container';
+
+        const boxes = [];
+        for (let i = 0; i < 7; i++) {
+            const box = document.createElement('input');
+            box.type = 'text'; box.maxLength = 1; box.className = 'postal-box-unit'; box.inputMode = 'numeric';
+            box.addEventListener('input', () => {
+                box.value = box.value.replace(/[^\d]/g, "");
+                if (box.value && i < 6) boxes[i + 1].focus();
+                syncValue();
+            });
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+            });
+            container.appendChild(box);
+            boxes.push(box);
+            if (i === 2) {
+                const hyphen = document.createElement('span');
+                hyphen.className = 'postal-box-hyphen'; hyphen.innerText = '-';
+                container.appendChild(hyphen);
+            }
+        }
+        const syncValue = () => {
+            originalInput.value = boxes.map(b => b.value).join('');
+            originalInput.dispatchEvent(new Event('input', { bubbles: true }));
+            originalInput.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        valueContainer.appendChild(container);
+    };
+
     const handleInputControl = (e) => {
         const fieldId = e.target.closest('[field-id]')?.getAttribute('field-id');
         if (!fieldId) return;
