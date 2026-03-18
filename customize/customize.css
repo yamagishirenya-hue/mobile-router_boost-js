@@ -1,4 +1,4 @@
-/* --- 1. フォント & ベースデザイン --- */
+/* --- 1. ベースデザイン & レイアウト --- */
 * {
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important;
 }
@@ -6,7 +6,7 @@
 body { background-color: #f0f2f5 !important; margin: 0; }
 
 body .kb-injector { 
-    max-width: 850px !important; /* 少し幅を広げました */
+    max-width: 850px !important; 
     margin: 20px auto !important; 
     padding: 32px !important; 
     background: #ffffff !important; 
@@ -15,123 +15,85 @@ body .kb-injector {
     box-sizing: border-box !important; 
 }
 
-/* 各フィールドの余白 */
+/* フィールドの間隔 */
 [field-id] { margin-bottom: 24px !important; clear: both; }
 .kb-unuse { display: none !important; }
 
-/* 項目名（キャプション）のサイズアップ */
+/* 項目名（文字サイズアップ） */
 .kb-field-caption { 
     display: block !important;
     font-weight: 700 !important; 
     color: #333333 !important; 
-    margin-bottom: 10px !important; 
-    font-size: 18px !important; /* 大きくしました */
+    margin-bottom: 8px !important; 
+    font-size: 18px !important; 
     line-height: 1.5 !important;
 }
 
 /* 【必須】ラベル */
 .kb-field-caption span[style*="color:#e53935"] {
-    display: inline-block !important;
-    font-size: 16px !important; /* 大きくしました */
-    margin-right: 6px !important;
+    display: inline !important;
+    font-size: 16px !important; 
+    margin-right: 4px !important;
 }
 
-/* 注釈（※ハイフン不要など） */
-.kb-field-caption div {
-    font-size: 14px !important; /* 大きくしました */
-    font-weight: normal !important;
-    color: #666 !important;
-    margin-top: 4px !important;
-}
-
-/* 入力欄のサイズアップ */
+/* 入力欄（文字サイズアップ） */
 body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
     width: 100% !important; 
-    padding: 14px 16px !important; 
+    padding: 12px 16px !important; 
     border: 1.5px solid #e0e4e8 !important; 
     border-radius: 8px !important; 
-    font-size: 17px !important; /* 大きくしました */
-    box-sizing: border-box !important;
+    font-size: 17px !important; 
 }
 
-/* --- 2. ポップアップ(ダイアログ)の崩れ修正 --- */
+/* --- 2. 郵便番号:1文字1枠デザイン --- */
+.postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
+.postal-box-unit { 
+    width: 46px !important; height: 50px !important; text-align: center !important; 
+    font-size: 22px !important; font-weight: bold !important; color: #444 !important; 
+    border: 1px solid #ccc !important; border-radius: 0 !important; margin: 0 !important; 
+}
+.postal-box-unit + .postal-box-unit { border-left: none !important; }
+.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
+.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
+.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
+.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
+.postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; color: #555 !important; font-size: 20px !important; }
+.postal-box-unit.error-input { border-color: #b7282e !important; background-color: #fff6f6 !important; }
+
+/* --- 3. 出し分け（これが消えていたため復活） --- */
+[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
+[field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
+
+body.show-target-fields [field-id="返送先対象者の氏名"], 
+body.show-target-fields [field-id="返送先対象者の会社名"], 
+body.show-target-fields [field-id="返送先対象者の電話番号"], 
+body.show-target-fields [field-id="返送先対象者のメールアドレス"] { 
+    display: block !important; background-color: #f8fbff !important; 
+    padding: 10px 20px !important; margin-bottom: 0 !important; border-left: 5px solid #007bff !important;
+}
+
+/* --- 4. ポップアップ(ダイアログ)修正 --- */
 div[style*="rgb(240, 240, 240)"] { 
-    background-color: #ffffff !important; 
-    border-radius: 16px !important; 
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important; 
-    overflow: visible !important; /* 切れないように修正 */
+    background-color: #ffffff !important; border-radius: 12px !important; overflow: hidden !important; padding-bottom: 20px !important;
 }
-
-/* メッセージ表示エリアの修正 */
 div[style*="height: 56px"] { 
-    height: auto !important; /* 固定解除 */
-    min-height: 100px !important; 
-    display: flex !important; 
-    align-items: center !important; 
-    justify-content: center !important; 
-    font-size: 0 !important; /* 元の文字を隠す */
-    padding: 40px 20px !important; 
-    text-align: center !important; 
-    white-space: pre-wrap !important;
-    overflow: visible !important;
+    height: auto !important; min-height: 100px !important; 
+    display: flex !important; align-items: center !important; justify-content: center !important; 
+    font-size: 0 !important; padding: 20px !important; text-align: center !important; white-space: pre-wrap !important;
 }
-
-/* 確認メッセージの文言とデザイン */
 div[style*="height: 56px"]::before {
     content: "入力内容に問題はありませんか？\aよろしければOKを押してください。" !important; 
-    font-size: 20px !important; 
-    font-weight: bold !important; 
-    color: #333 !important;
-    line-height: 1.6 !important;
-    display: block !important;
+    font-size: 19px !important; font-weight: bold !important; color: #333 !important; line-height: 1.5 !important; display: block !important;
 }
-
-/* ボタンエリア */
-div[style*="border-top: 1px solid rgb(66, 165, 245)"] { 
-    border-top: 1px solid #eee !important; 
-    padding: 15px !important; 
-    background: #fdfdfd !important;
-    border-radius: 0 0 16px 16px !important;
-}
-
-/* ポップアップ内のボタン */
 .kb-dialog-button { 
-    height: 50px !important; 
-    line-height: 50px !important; 
-    font-size: 18px !important; 
-    font-weight: bold !important; 
-    border-radius: 8px !important; 
-    margin: 8px 10px !important;
-    border: none !important;
-    width: calc(100% - 20px) !important;
+    height: 44px !important; line-height: 44px !important; font-size: 16px !important; border-radius: 6px !important; width: calc(100% - 20px) !important; margin: 5px 10px !important; border: none !important;
 }
 
-/* OKボタンの色（画像の上側のボタン） */
-div[style*="border-top"] > div:nth-child(1) .kb-dialog-button {
-    background-color: #42a5f5 !important;
-}
+/* --- 5. エラー表示 & 送信ボタン --- */
+.custom-error-container { margin-top: 10px !important; }
+.error-message { font-size: 18px !important; padding: 6px 12px !important; }
 
-/* --- 3. 郵便番号 & エラー表示 --- */
-.postal-box-unit { 
-    width: 50px !important; height: 55px !important; 
-    font-size: 24px !important; border: 1px solid #ccc !important;
-}
-
-.custom-error-container { margin-top: 12px !important; }
-.error-message { 
-    font-size: 18px !important; /* 大きくしました */
-    padding: 8px 16px !important; 
-}
-
-/* --- 4. 送信ボタン --- */
 .kb-injector-button { 
-    width: 100% !important; 
-    background: #e69138 !important; /* 画像のオレンジ系に変更 */
-    color: #fff !important; 
-    padding: 18px !important; 
-    border-radius: 8px !important; 
-    font-size: 20px !important; 
-    font-weight: 700 !important; 
-    border: none !important; 
-    cursor: pointer !important;
+    width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 18px !important; 
+    border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; 
 }
