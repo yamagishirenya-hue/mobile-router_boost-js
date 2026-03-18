@@ -75,52 +75,54 @@ body.show-target-fields [field-id="返送先対象者のメールアドレス"] 
     display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; border-left: 5px solid #007bff !important;
 }
 
-/* --- 4. ポップアップ(ダイアログ)修正：見切れ防止の要 --- */
+/* --- 4. ポップアップ(ダイアログ) 見切れ解消 --- */
 div[style*="rgb(240, 240, 240)"] { 
     background-color: #ffffff !important; 
     border-radius: 16px !important; 
     box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important; 
-    overflow: visible !important; /* 子要素のはみ出しを許可 */
+    overflow: hidden !important; 
+    height: auto !important; /* 全体の高さを可変に */
 }
 
-/* メッセージエリア：高さを自動にして上下に余白をたっぷり取る */
+/* メッセージエリア */
 div[style*="height: 56px"] { 
     height: auto !important; 
-    min-height: 100px !important; 
-    padding: 40px 24px !important; /* 上下左右に余白を作り、文字がボタンに被るのを防ぐ */
-    font-size: 22px !important; 
+    min-height: 80px !important; 
+    padding: 30px 24px !important; 
+    font-size: 20px !important; 
     font-weight: bold !important;
     color: #333 !important;
     text-align: center !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     white-space: pre-wrap !important;
     box-sizing: border-box !important;
 }
 
+/* 【重要】見切れの直接原因：ボタンコンテナのbottom:0を解除 */
 div[style*="border-top: 1px solid rgb(66, 165, 245)"] { 
+    position: relative !important; /* absoluteから変更 */
+    bottom: auto !important; /* bottom: 0を無効化 */
+    left: auto !important;
     border-top: 1px solid #eee !important; 
-    padding: 15px !important; 
+    padding: 10px !important; 
     background: #fdfdfd !important;
-    border-radius: 0 0 16px 16px !important;
+    display: flex !important; /* ボタンを綺麗に並べる */
+    justify-content: center !important;
 }
 
 .kb-dialog-button { 
     background-color: #007bff !important; 
     color: #ffffff !important; 
-    border-radius: 8px !important; 
-    height: 50px !important; 
-    line-height: 50px !important; 
-    font-size: 18px !important; 
+    border-radius: 6px !important; 
+    height: 44px !important; 
+    line-height: 44px !important; 
+    font-size: 16px !important; 
     font-weight: bold !important; 
     border: none !important; 
-    width: calc(100% - 20px) !important; 
-    margin: 5px 10px !important;
+    flex: 1 !important; /* 幅を均等に */
+    margin: 5px !important;
 }
 
-/* --- 5. エラーメッセージ & 送信ボタン --- */
+/* --- 5. エラー表示 & 送信ボタン --- */
 .custom-error-container { margin-top: 10px !important; }
-.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 1.8em !important; padding: 6px 12px !important; font-size: 18px !important; font-weight: 500 !important; }
-.kb-injector-button { width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 18px !important; border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; }
-.kb-injector-footer { margin-top: -10px !important; }
+.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 1.8em !important; padding: 6px 12px !important; font-size: 16px !important; font-weight: 500 !important; }
+.kb-injector-button { width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 16px !important; border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; }
