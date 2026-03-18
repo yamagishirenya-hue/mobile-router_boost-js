@@ -81,7 +81,7 @@ div[style*="height: 56px"] {
 }
 
 div[style*="height: 56px"]::before {
-    content: "入力内容に誤りがあります。赤枠の項目を確認してください。" !important; /* 強制表示 */
+    content: "入力内容に誤りがあります。<br>赤枠の項目を確認してください。" !important; /* 強制表示 */
     font-size: 20px !important; /* テキストサイズを復元 */
     font-weight: bold !important; 
     color: #333 !important;
