@@ -6,12 +6,10 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの監視（安全策を追加）
+     * 1. ポップアップの監視（見切れ対策 & 文言の強制書き換え）
      */
     const observePopup = () => {
         const targetNode = document.body;
-        
-        // 【修正】bodyが見つからない場合は、DOMContentLoadedイベントを待ってから再実行
         if (!targetNode) {
             window.addEventListener('DOMContentLoaded', observePopup);
             return;
@@ -22,19 +20,26 @@
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType !== 1) return;
                     
+                    // メッセージエリアと枠を特定（セレクタを広めに設定）
                     const msgArea = node.querySelector('div[style*="height:"]') || node.querySelector('div[style*="overflow: hidden auto"]');
                     const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
                     
                     if (msgArea && popupBox) {
+                        // スタイル修正（見切れ対策）
                         msgArea.style.height = 'auto';
                         msgArea.style.minHeight = '60px';
                         msgArea.style.overflow = 'visible';
-                        if (popupBox) popupBox.style.height = 'auto';
+                        popupBox.style.height = 'auto';
 
+                        // 文言の差し替え判定
                         const txt = msgArea.innerText;
-                        if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力")) {
+                        // すでに書き換え済みなら何もしない
+                        if (txt === MSG_ERROR || txt === MSG_CONFIRM) return;
+
+                        if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
                             msgArea.innerText = MSG_ERROR;
                         } else {
+                            // 送信前確認などの場合
                             msgArea.innerText = MSG_CONFIRM;
                         }
                     }
@@ -45,12 +50,11 @@
     };
 
     /**
-     * 2. 郵便番号欄のリセット（過去の残像対策）
+     * 2. 郵便番号欄のクリーンアップ
      */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
-
         const oldContainer = parentField.querySelector('.postal-box-container');
         if (oldContainer) oldContainer.remove();
 
@@ -65,7 +69,7 @@
     };
 
     /**
-     * 3. 入力制御（郵便番号のハイフン & 電話番号数字制限）
+     * 3. 入力制御（ハイフン整形 & 数字制限）
      */
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
@@ -73,7 +77,6 @@
         const fieldId = fieldWrap.getAttribute('field-id');
 
         let val = e.target.value;
-
         if (fieldId === "郵便番号") {
             let digits = val.replace(/[^\d]/g, "");
             if (digits.length <= 3) {
@@ -82,14 +85,13 @@
                 val = digits.slice(0, 3) + "-" + digits.slice(3, 7);
             }
             e.target.value = val;
-        } 
-        else if (fieldId && fieldId.includes("電話番号")) {
+        } else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         }
     };
 
     /**
-     * 4. エラー表示制御
+     * 4. エラー表示生成
      */
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
@@ -112,19 +114,21 @@
     };
 
     /**
-     * 5. バリデーション実行
+     * 5. バリデーション実行（ポップアップ呼び出しを復活）
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
+        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) {
             showError("郵便番号", "7桁の数字を入力してください");
             hasError = true;
         }
 
+        // 電話番号
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -135,6 +139,7 @@
             }
         });
 
+        // メール
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         ["連絡先メールアドレス", isDiff ? "返送先対象者のメールアドレス" : null].filter(v => v).forEach(id => {
             if (record[id]?.value && !record[id].value.match(mailRegex)) {
@@ -151,6 +156,16 @@
                 }
             });
         }
+
+        // 【ここが重要】エラーがあればポップアップを表示
+        if (hasError) {
+            if (typeof kb !== 'undefined' && kb.alert) {
+                kb.alert(MSG_ERROR);
+            } else {
+                alert(MSG_ERROR);
+            }
+        }
+
         return !hasError;
     };
 
@@ -159,10 +174,9 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // --- 実行開始 ---
-    observePopup(); // 安全策付きで実行
+    // --- 起動 ---
+    observePopup();
     document.addEventListener('input', handleInputControl);
-    
     setInterval(resetPostalInput, 1000);
 
     if (typeof kb !== 'undefined' && kb.event) {
