@@ -6,9 +6,17 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * ポップアップの監視（インラインスタイル解除・文言修正）
+     * 1. ポップアップの監視（安全策を追加）
      */
     const observePopup = () => {
+        const targetNode = document.body;
+        
+        // 【修正】bodyが見つからない場合は、DOMContentLoadedイベントを待ってから再実行
+        if (!targetNode) {
+            window.addEventListener('DOMContentLoaded', observePopup);
+            return;
+        }
+
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
@@ -18,7 +26,6 @@
                     const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
                     
                     if (msgArea && popupBox) {
-                        // 強制的にスタイルをautoに塗り替えて見切れを直す
                         msgArea.style.height = 'auto';
                         msgArea.style.minHeight = '60px';
                         msgArea.style.overflow = 'visible';
@@ -34,21 +41,19 @@
                 });
             });
         });
-        observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(targetNode, { childList: true, subtree: true });
     };
 
     /**
-     * 郵便番号欄のリセット（過去の残像を消す）
+     * 2. 郵便番号欄のリセット（過去の残像対策）
      */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
 
-        // 過去のスクリプトで作られた不要な箱があれば消去
         const oldContainer = parentField.querySelector('.postal-box-container');
         if (oldContainer) oldContainer.remove();
 
-        // 元の入力欄を強制的に見える状態に固定
         const originalInput = parentField.querySelector('input');
         if (originalInput && (originalInput.style.display === 'none' || originalInput.style.position === 'absolute')) {
             originalInput.style.display = 'block';
@@ -60,7 +65,7 @@
     };
 
     /**
-     * 入力種制限 & 郵便番号の自動ハイフン (XXX-XXXX)
+     * 3. 入力制御（郵便番号のハイフン & 電話番号数字制限）
      */
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
@@ -69,7 +74,6 @@
 
         let val = e.target.value;
 
-        // 郵便番号
         if (fieldId === "郵便番号") {
             let digits = val.replace(/[^\d]/g, "");
             if (digits.length <= 3) {
@@ -79,14 +83,13 @@
             }
             e.target.value = val;
         } 
-        // 電話番号
         else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         }
     };
 
     /**
-     * エラー表示・非表示
+     * 4. エラー表示制御
      */
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
@@ -109,21 +112,19 @@
     };
 
     /**
-     * バリデーション実行
+     * 5. バリデーション実行
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
-        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) {
             showError("郵便番号", "7桁の数字を入力してください");
             hasError = true;
         }
 
-        // 電話番号
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -134,7 +135,6 @@
             }
         });
 
-        // メール形式
         const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         ["連絡先メールアドレス", isDiff ? "返送先対象者のメールアドレス" : null].filter(v => v).forEach(id => {
             if (record[id]?.value && !record[id].value.match(mailRegex)) {
@@ -143,7 +143,6 @@
             }
         });
 
-        // 必須チェック
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) {
@@ -161,10 +160,9 @@
     };
 
     // --- 実行開始 ---
-    observePopup();
+    observePopup(); // 安全策付きで実行
     document.addEventListener('input', handleInputControl);
     
-    // 郵便番号欄のクリーンアップを定期実行（Boosterの描画対策）
     setInterval(resetPostalInput, 1000);
 
     if (typeof kb !== 'undefined' && kb.event) {
