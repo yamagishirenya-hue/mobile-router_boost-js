@@ -1,30 +1,21 @@
 (function() {
     "use strict";
 
-    // 確認用のメッセージ (\nで改行)
-    const TARGET_MESSAGE = "入力内容に問題はありませんか？\nよろしければOKを押してください。";
+    // メッセージ設定
+    const CONFIRM_MESSAGE = "入力内容に問題はありませんか？\nよろしければOKを押してください。";
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
-    // --- 1. アラートジャック ---
-    const overrideKbAlert = () => {
-        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
-            const originalAlert = kb.alert;
-            kb.alert = function(msg) {
-                // 引数に関わらず確認メッセージを表示
-                return originalAlert.apply(this, [TARGET_MESSAGE]);
-            };
-            kb.alert._isOverridden = true;
-        }
-    };
-
-    // --- 2. 郵便番号UI ---
+    // --- 郵便番号: 1文字1枠UI ---
     const initPostalCodeUI = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField || parentField.querySelector('.postal-box-container')) return;
         const originalInput = parentField.querySelector('.kb-field-value input');
         if (!originalInput) return;
 
-        originalInput.style.display = 'none';
+        originalInput.style.position = 'absolute';
+        originalInput.style.opacity = '0';
+        originalInput.style.height = '0';
+
         const container = document.createElement('div');
         container.className = 'postal-box-container';
         const boxes = [];
@@ -57,7 +48,21 @@
         parentField.querySelector('.kb-field-value').appendChild(container);
     };
 
-    // --- 3. エラー表示 ---
+    // --- 入力制限（文字種制限） ---
+    const handleInputControl = (e) => {
+        const fieldWrap = e.target.closest('[field-id]');
+        if (!fieldWrap) return;
+        const fieldId = fieldWrap.getAttribute('field-id');
+
+        if (fieldId && (fieldId.includes("電話番号") || fieldId === "郵便番号")) {
+            let val = e.target.value.replace(/[^\d]/g, "");
+            const max = fieldId === "郵便番号" ? 7 : 11;
+            if (val.length > max) val = val.slice(0, max);
+            e.target.value = val;
+        }
+    };
+
+    // --- エラー表示制御 ---
     const removeError = (fieldId) => {
         const container = document.querySelector(`[field-id="${fieldId}"]`);
         if (!container) return;
@@ -78,16 +83,23 @@
         container.appendChild(errorWrap);
     };
 
-    // --- 4. バリデーション実行 ---
+    // --- バリデーション（桁数チェック等） ---
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
+        // 郵便番号桁数
+        const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
+        if (zipVal && zipVal.length !== 7) {
+            showError("郵便番号", "7桁の数字を入力してください");
+            hasError = true;
+        }
+
+        // 電話番号桁数
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
-        
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
             if (val && (val.length < 10 || val.length > 11)) {
@@ -96,36 +108,18 @@
             }
         });
 
-        const mailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        if (record["連絡先メールアドレス"]?.value && !record["連絡先メールアドレス"].value.match(mailRegex)) {
-            showError("連絡先メールアドレス", "形式を確認してください");
-            hasError = true;
-        }
-
-        const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
-        if (zipVal.length !== 7) {
-            showError("郵便番号", "7桁の数字を入力してください");
-            hasError = true;
-        }
-
-        if (hasError) {
-            kb.alert(TARGET_MESSAGE);
-        }
         return !hasError;
     };
 
+    // --- 出し分け制御 ---
     const updateVisibility = (record) => {
         const isDifferent = record["返送先対象者確認"]?.value === "返送先が異なる";
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // --- 監視・イベント登録 ---
-    setInterval(() => {
-        overrideKbAlert();
-        if (document.querySelector('[field-id="郵便番号"]')) {
-            initPostalCodeUI();
-        }
-    }, 500);
+    // --- 実行と監視 ---
+    document.addEventListener('input', handleInputControl);
+    setInterval(initPostalCodeUI, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
@@ -139,13 +133,14 @@
         });
 
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
+            // 1. 自作バリデーション
             if (!validateAll(ev.record)) {
+                kb.alert("入力内容に誤りがあります。\n赤枠の項目を確認してください。");
                 ev.error = true;
-            } else {
-                // エラーがない場合でも、一度ポップアップを出す設定にする
-                // ただし kb.confirm がない場合 kb.alert で代替
-                kb.alert(TARGET_MESSAGE);
+                return ev;
             }
+            // 2. 問題なければ確認ポップアップを出す
+            kb.alert(CONFIRM_MESSAGE);
             return ev;
         });
     }
