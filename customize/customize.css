@@ -1,50 +1,123 @@
-/* --- 1. ベースデザイン --- */
-* { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important; }
+/* --- 1. ベースデザイン & フォント --- */
+* {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important;
+}
+
 body { background-color: #f0f2f5 !important; margin: 0; }
-body .kb-injector { max-width: 800px !important; margin: 10px auto !important; padding: 24px !important; background: #ffffff !important; border-radius: 12px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; box-sizing: border-box !important; }
+
+body .kb-injector { 
+    max-width: 800px !important; 
+    margin: 10px auto !important; 
+    padding: 24px !important; 
+    background: #ffffff !important; 
+    border-radius: 12px !important; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
+    box-sizing: border-box !important; 
+}
+
 [field-id] { margin-bottom: 16px !important; clear: both; }
 .kb-unuse { display: none !important; }
 
-/* 項目名 */
-.kb-field-caption { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 8px !important; font-weight: 700 !important; color: #333333 !important; margin-bottom: 6px !important; font-size: 21px !important; line-height: 1.4 !important; }
-.kb-field-caption span[style*="color:#e53935"] { display: inline !important; font-size: 21px !important; }
-.kb-field-caption div { font-size: 12px !important; color: #757575 !important; font-weight: normal !important; width: 100%; }
+/* 項目名（21pxに拡大） */
+.kb-field-caption { 
+    display: flex !important; 
+    align-items: center !important; 
+    flex-wrap: wrap; 
+    gap: 8px !important; 
+    font-weight: 700 !important; 
+    color: #333333 !important; 
+    margin-bottom: 8px !important; 
+    font-size: 21px !important; 
+    line-height: 1.4 !important;
+}
 
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea { font-family: inherit !important; width: 100% !important; padding: 10px 14px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 6px !important; font-size: 15px !important; }
+.kb-field-caption span[style*="color:#e53935"] {
+    display: inline !important;
+    font-size: 21px !important; 
+}
+
+.kb-field-caption div {
+    font-size: 14px !important; 
+    color: #757575 !important;
+    font-weight: normal !important;
+    width: 100%;
+}
+
+/* 入力欄（文字サイズ拡大） */
+body .kb-injector input, body .kb-injector select, body .kb-injector textarea { 
+    font-family: inherit !important; 
+    width: 100% !important; 
+    padding: 12px 14px !important; 
+    border: 1.5px solid #e0e4e8 !important; 
+    border-radius: 8px !important; 
+    font-size: 18px !important; 
+}
 
 /* --- 2. 郵便番号UI --- */
 .postal-box-container { display: flex !important; align-items: center !important; gap: 0 !important; margin-top: 8px !important; }
-.postal-box-unit { font-family: inherit !important; width: 42px !important; height: 50px !important; text-align: center !important; font-size: 22px !important; font-weight: bold !important; color: #444 !important; border: 1px solid #ccc !important; border-radius: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; outline: none !important;}
+.postal-box-unit { 
+    font-family: inherit !important;
+    width: 42px !important; height: 50px !important; text-align: center !important; 
+    font-size: 22px !important; font-weight: bold !important; color: #444 !important; 
+    border: 1px solid #ccc !important; border-radius: 0 !important; margin: 0 !important; 
+}
 .postal-box-unit + .postal-box-unit { border-left: none !important; }
-.postal-box-unit:first-of-type { border-radius: 4px 0 0 4px !important; }
-.postal-box-unit:last-of-type { border-radius: 0 4px 4px 0 !important; }
-.postal-box-unit:nth-of-type(3) { border-radius: 0 4px 4px 0 !important; border-right: 1px solid #ccc !important; }
-.postal-box-unit:nth-of-type(4) { border-radius: 4px 0 0 4px !important; border-left: 1px solid #ccc !important; }
-.postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; color: #555 !important; font-size: 20px !important; }
+.postal-box-hyphen { margin: 0 10px !important; font-weight: bold !important; font-size: 20px !important; }
 .postal-box-unit.error-input { border-color: #b7282e !important; background-color: #fff6f6 !important; }
 
-/* --- 3. 出し分け --- */
-[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
-body.show-target-fields [field-id="返送先対象者の氏名"], body.show-target-fields [field-id="返送先対象者の会社名"], body.show-target-fields [field-id="返送先対象者の電話番号"], body.show-target-fields [field-id="返送先対象者のメールアドレス"] { display: block !important; background-color: #f8fbff !important; padding: 10px 20px !important; border-left: 5px solid #007bff !important; }
+/* --- 3. 出し分け制御 (CSS) --- */
+[field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], 
+[field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
 
-/* --- 4. ポップアップデザイン（切り分け） --- */
-div[style*="rgb(240, 240, 240)"] { background-color: #ffffff !important; border-radius: 12px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; overflow: hidden !important; }
-div[style*="height: 56px"] { height: auto !important; min-height: 120px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 21px !important; font-weight: bold !important; padding: 20px !important; text-align: center !important; white-space: pre-wrap !important; box-sizing: border-box !important; }
-div[style*="border-top: 1px solid rgb(66, 165, 245)"] { border-top: 1px solid #eee !important; background: #f9f9f9 !important; padding: 10px !important; }
+body.show-target-fields [field-id="返送先対象者の氏名"], 
+body.show-target-fields [field-id="返送先対象者の会社名"], 
+body.show-target-fields [field-id="返送先対象者の電話番号"], 
+body.show-target-fields [field-id="返送先対象者のメールアドレス"] { 
+    display: block !important; background-color: #f8fbff !important; 
+    padding: 10px 20px !important; border-left: 5px solid #007bff !important;
+}
 
-/* A. 【エラー用】のデザイン (赤系) */
-.kb-popup-error div[style*="height: 56px"] { color: #b7282e !important; background-color: #fff6f6 !important; }
-.kb-popup-error .kb-dialog-button { background-color: #b7282e !important; color: #fff !important; }
+/* --- 4. ポップアップ（デザイン修正） --- */
+div[style*="rgb(240, 240, 240)"] { 
+    background-color: #ffffff !important; border-radius: 12px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; overflow: hidden !important; 
+}
 
-/* B. 【確認用】のデザイン (青・オレンジ系) */
-.kb-popup-confirm div[style*="height: 56px"] { color: #333 !important; background-color: #ffffff !important; }
-.kb-popup-confirm .kb-dialog-button { background-color: #007bff !important; color: #fff !important; }
+/* メッセージエリア：高さを自動にして文字切れを防止 */
+div[style*="height: 56px"] { 
+    height: auto !important; 
+    min-height: 100px !important; 
+    padding: 30px 20px !important; 
+    font-size: 21px !important; 
+    font-weight: bold !important;
+    color: #333 !important;
+    text-align: center !important;
+    white-space: pre-wrap !important;
+}
 
-.kb-dialog-button { border-radius: 6px !important; height: 48px !important; font-size: 18px !important; font-weight: bold !important; border: none !important; width: calc(100% - 20px) !important; margin: 10px !important; cursor: pointer !important; }
+div[style*="border-top: 1px solid rgb(66, 165, 245)"] { 
+    border-top: 1px solid #eee !important; 
+    background: #f9f9f9 !important; 
+    padding: 15px !important; 
+}
 
-/* --- 5. エラーメッセージ & 送信ボタン --- */
+.kb-dialog-button { 
+    background-color: #007bff !important; 
+    color: #ffffff !important; 
+    border-radius: 6px !important; 
+    height: 48px !important; 
+    font-size: 18px !important; 
+    font-weight: bold !important; 
+    border: none !important; 
+    width: calc(100% - 20px) !important; 
+    margin: 5px 10px !important;
+}
+
+/* --- 5. エラー表示 & 送信ボタン --- */
 .custom-error-container { margin-top: 10px !important; }
 .error-triangle { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 14px solid rgb(183, 40, 46); margin-left: 1.5em; }
-.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 2.2em !important; padding: 0 0.8em !important; font-size: 18px !important; font-weight: 500 !important; }
-.kb-injector-button { width: 100% !important; background: linear-gradient(135deg, #e69138 0%, #d47a1e 100%) !important; color: #fff !important; padding: 18px !important; border-radius: 12px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; }
-.kb-injector-footer { margin-top: -10px !important; }
+.error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; display: block !important; line-height: 2em !important; padding: 4px 12px !important; font-size: 18px !important; font-weight: 500 !important; }
+
+.kb-injector-button { 
+    width: 100% !important; background: #e69138 !important; color: #fff !important; padding: 18px !important; 
+    border-radius: 8px !important; font-size: 20px !important; font-weight: 700 !important; margin-top: 16px !important; border: none !important; 
+}
