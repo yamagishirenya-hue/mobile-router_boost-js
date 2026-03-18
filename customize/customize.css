@@ -66,19 +66,26 @@ div[style*="rgb(240, 240, 240)"] {
     overflow: hidden !important; 
 }
 
-/* メッセージエリア (デフォルトの"入力内容に誤りがあります"部分) */
+/* メッセージエリア (標準のメッセージを隠して、自作の文言を強制表示) */
 div[style*="height: 56px"] { 
     height: auto !important; 
     min-height: 80px !important; 
     display: flex !important; 
     align-items: center !important; 
     justify-content: center !important; 
-    font-size: 20px !important; /* 少し大きく */
-    font-weight: bold !important; 
-    color: #333 !important; 
-    padding: 40px 20px !important; /* 余白を調整 */
+    font-size: 0 !important; /* 元のテキスト（"入力内容に誤りがあります"等）を消す */
+    color: transparent !important;
+    padding: 40px 20px !important; 
     text-align: center !important; 
     box-sizing: border-box !important;
+}
+
+div[style*="height: 56px"]::before {
+    content: "入力内容に誤りがあります。赤枠の項目を確認してください。" !important; /* 強制表示 */
+    font-size: 20px !important; /* テキストサイズを復元 */
+    font-weight: bold !important; 
+    color: #333 !important;
+    display: block !important;
 }
 
 /* ボタンエリアの境界線 */
