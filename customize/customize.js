@@ -7,60 +7,47 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの監視
+     * 1. ポップアップの直接チェック（定期実行で確実性を担保）
      */
-    const observePopup = () => {
-        const targetNode = document.body;
-        if (!targetNode) {
-            const retry = setInterval(() => {
-                if (document.body) {
-                    clearInterval(retry);
-                    observePopup();
-                }
-            }, 100);
-            return;
-        }
+    const checkPopup = () => {
+        // ポップアップのメッセージエリアを特定
+        const msgArea = document.querySelector('div[style*="overflow: hidden auto"], div[style*="height: 162px"]');
+        const popupBox = document.querySelector('div[style*="rgb(240, 240, 240)"]');
+        
+        if (!msgArea || !popupBox) return;
 
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType !== 1) return;
-                    
-                    // --- 通常のアラートエリア（確認・エラー） ---
-                    const msgArea = node.querySelector('div[style*="height:"]') || node.querySelector('div[style*="overflow: hidden auto"]');
-                    const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
-                    
-                    if (msgArea && popupBox) {
-                        msgArea.style.setProperty('height', 'auto', 'important');
-                        msgArea.style.setProperty('min-height', '60px', 'important');
-                        msgArea.style.setProperty('overflow', 'visible', 'important');
-                        popupBox.style.setProperty('height', 'auto', 'important');
+        // スタイル修正（見切れ防止）
+        msgArea.style.setProperty('height', 'auto', 'important');
+        msgArea.style.setProperty('min-height', '60px', 'important');
+        msgArea.style.setProperty('overflow', 'visible', 'important');
+        popupBox.style.setProperty('height', 'auto', 'important');
 
-                        const txt = msgArea.innerText.trim();
-                        
-                        // 送信完了(Done!)の判定をより確実に（テキスト内容で判定）
-                        if (txt === "Done!") {
-                            msgArea.innerText = MSG_COMPLETE;
-                            msgArea.style.fontSize = '24px';
-                            
-                            // OKボタンに「完了後の遷移」を仕込む
-                            const okBtn = popupBox.querySelector('.kb-dialog-button');
-                            if (okBtn) {
-                                okBtn.addEventListener('click', () => {
-                                    // 入力画面へ自遷移（現在のURLへリロード）
-                                    location.href = location.href;
-                                }, { once: true });
-                            }
-                        } else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
-                            if (txt !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
-                        } else if (txt !== MSG_COMPLETE && txt !== MSG_CONFIRM && txt.length > 0) {
-                            msgArea.innerText = MSG_CONFIRM;
-                        }
-                    }
+        const txt = msgArea.innerText.trim();
+
+        // --- 送信完了(Done!) の処理 ---
+        if (txt === "Done!" || txt === MSG_COMPLETE) {
+            if (msgArea.innerText !== MSG_COMPLETE) {
+                msgArea.innerText = MSG_COMPLETE;
+                msgArea.style.fontSize = '24px';
+            }
+
+            // OKボタンを探して遷移を仕込む
+            const okBtn = popupBox.querySelector('.kb-dialog-button');
+            if (okBtn && !okBtn._hasListener) {
+                okBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // 入力画面へ自遷移（リロード）
+                    window.location.reload();
                 });
-            });
-        });
-        observer.observe(targetNode, { childList: true, subtree: true });
+                okBtn._hasListener = true; // 二重登録防止
+            }
+        } 
+        // --- エラー・確認メッセージの処理 ---
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+        } else if (txt !== MSG_COMPLETE && txt !== MSG_CONFIRM && txt.length > 0) {
+            if (msgArea.innerText !== MSG_CONFIRM) msgArea.innerText = MSG_CONFIRM;
+        }
     };
 
     /**
@@ -181,9 +168,14 @@
     };
 
     // --- 実行 ---
-    observePopup();
     document.addEventListener('input', handleInputControl);
-    setInterval(() => { overrideKbAlert(); resetPostalInput(); }, 1000);
+    
+    // 全ての定期チェックを統合
+    setInterval(() => { 
+        checkPopup();      // ポップアップの文言・遷移・見切れ
+        overrideKbAlert(); // アラートジャック
+        resetPostalInput(); // 郵便番号リセット
+    }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
