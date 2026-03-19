@@ -12,8 +12,14 @@
      * ポップアップの役割を判定して、文言とクラスを付与する
      */
     const updatePopupByContent = (element) => {
+        // 対象が要素でない場合はスキップ
+        if (!element || element.nodeType !== 1) return;
+
         // ポップアップの外枠（グレー背景のdiv）を特定
-        const popup = element.closest('div[style*="rgb(240, 240, 240)"]') || element.querySelector('div[style*="rgb(240, 240, 240)"]');
+        // 渡された要素自体、またはその子要素、または親要素にポップアップがないか探す
+        const popup = element.closest('div[style*="rgb(240, 240, 240)"]') || 
+                      element.querySelector('div[style*="rgb(240, 240, 240)"]');
+        
         if (!popup) return;
 
         // メッセージが書かれているエリアを特定
@@ -61,6 +67,9 @@
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
+
+        // 【修正】初期表示時にも既に存在するポップアップを一度だけチェックする
+        updatePopupByContent(document.body);
     };
 
     /**
@@ -122,6 +131,7 @@
 
     // --- 実行 ---
     initObserver();
+    
     document.addEventListener('input', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
