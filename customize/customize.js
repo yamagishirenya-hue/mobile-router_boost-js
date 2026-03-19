@@ -7,47 +7,54 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの直接チェック（定期実行で確実性を担保）
+     * 1. ポップアップの直接チェック（力技での文字検索方式）
      */
     const checkPopup = () => {
-        // ポップアップのメッセージエリアを特定
-        const msgArea = document.querySelector('div[style*="overflow: hidden auto"], div[style*="height: 162px"]');
-        const popupBox = document.querySelector('div[style*="rgb(240, 240, 240)"]');
+        // 画面内の全DIVから、Boosterのポップアップらしきものを探す
+        const allDivs = document.querySelectorAll('div');
         
-        if (!msgArea || !popupBox) return;
+        allDivs.forEach(div => {
+            const txt = div.innerText ? div.innerText.trim() : "";
+            
+            // --- A. 送信完了(Done!) の検知 ---
+            if (txt === "Done!" || txt === MSG_COMPLETE) {
+                // 文言書き換え
+                if (div.innerText !== MSG_COMPLETE) {
+                    div.innerText = MSG_COMPLETE;
+                    div.style.setProperty('font-size', '22px', 'important');
+                    div.style.setProperty('height', 'auto', 'important');
+                    div.style.setProperty('overflow', 'visible', 'important');
+                }
 
-        // スタイル修正（見切れ防止）
-        msgArea.style.setProperty('height', 'auto', 'important');
-        msgArea.style.setProperty('min-height', '60px', 'important');
-        msgArea.style.setProperty('overflow', 'visible', 'important');
-        popupBox.style.setProperty('height', 'auto', 'important');
-
-        const txt = msgArea.innerText.trim();
-
-        // --- 送信完了(Done!) の処理 ---
-        if (txt === "Done!" || txt === MSG_COMPLETE) {
-            if (msgArea.innerText !== MSG_COMPLETE) {
-                msgArea.innerText = MSG_COMPLETE;
-                msgArea.style.fontSize = '24px';
+                // 親の白い枠を探してサイズ調整
+                const parentBox = div.closest('div[style*="rgb(240, 240, 240)"]');
+                if (parentBox) {
+                    parentBox.style.setProperty('height', 'auto', 'important');
+                    parentBox.style.setProperty('min-height', '200px', 'important');
+                    
+                    // OKボタンに遷移を仕込む
+                    const okBtn = parentBox.querySelector('.kb-dialog-button');
+                    if (okBtn && !okBtn._hasListener) {
+                        okBtn.style.setProperty('cursor', 'pointer', 'important');
+                        okBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            // 入力画面へ自遷移（現在のURLにリロード）
+                            window.location.href = window.location.origin + window.location.pathname + window.location.search;
+                        });
+                        okBtn._hasListener = true;
+                    }
+                }
+            } 
+            
+            // --- B. エラー・確認メッセージの検知 ---
+            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+                // 長すぎるシステムメッセージを自作に差し替え
+                if (txt.length > 50 && txt !== MSG_ERROR && txt !== MSG_CONFIRM) {
+                    div.innerText = txt.includes("送信") ? MSG_CONFIRM : MSG_ERROR;
+                    div.style.setProperty('height', 'auto', 'important');
+                }
             }
-
-            // OKボタンを探して遷移を仕込む
-            const okBtn = popupBox.querySelector('.kb-dialog-button');
-            if (okBtn && !okBtn._hasListener) {
-                okBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // 入力画面へ自遷移（リロード）
-                    window.location.reload();
-                });
-                okBtn._hasListener = true; // 二重登録防止
-            }
-        } 
-        // --- エラー・確認メッセージの処理 ---
-        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
-            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
-        } else if (txt !== MSG_COMPLETE && txt !== MSG_CONFIRM && txt.length > 0) {
-            if (msgArea.innerText !== MSG_CONFIRM) msgArea.innerText = MSG_CONFIRM;
-        }
+        });
     };
 
     /**
@@ -170,11 +177,11 @@
     // --- 実行 ---
     document.addEventListener('input', handleInputControl);
     
-    // 全ての定期チェックを統合
+    // 0.5秒おきに状態をチェック
     setInterval(() => { 
-        checkPopup();      // ポップアップの文言・遷移・見切れ
-        overrideKbAlert(); // アラートジャック
-        resetPostalInput(); // 郵便番号リセット
+        checkPopup();
+        overrideKbAlert();
+        resetPostalInput();
     }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
