@@ -33,7 +33,7 @@
             msgArea.style.setProperty('font-size', '20px', 'important');
         } 
         // 2. エラー系
-        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+        else if (txt.includes("誤り") || txt.includes("必須")) {
             if (msgArea.innerText !== MSG_ERROR) {
                 msgArea.innerText = MSG_ERROR;
             }
