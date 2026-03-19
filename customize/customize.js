@@ -7,54 +7,51 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの直接チェック（力技での文字検索方式）
+     * 1. ポップアップの直接チェック（ピンポイント監視版）
      */
     const checkPopup = () => {
-        // 画面内の全DIVから、Boosterのポップアップらしきものを探す
-        const allDivs = document.querySelectorAll('div');
-        
-        allDivs.forEach(div => {
-            const txt = div.innerText ? div.innerText.trim() : "";
-            
-            // --- A. 送信完了(Done!) の検知 ---
-            if (txt === "Done!" || txt === MSG_COMPLETE) {
-                // 文言書き換え
-                if (div.innerText !== MSG_COMPLETE) {
-                    div.innerText = MSG_COMPLETE;
-                    div.style.setProperty('font-size', '22px', 'important');
-                    div.style.setProperty('height', 'auto', 'important');
-                    div.style.setProperty('overflow', 'visible', 'important');
-                }
+        // Boosterのポップアップ外枠（グレー背景のdiv）を特定
+        const popupBox = document.querySelector('div[style*="rgb(240, 240, 240)"]');
+        if (!popupBox) return;
 
-                // 親の白い枠を探してサイズ調整
-                const parentBox = div.closest('div[style*="rgb(240, 240, 240)"]');
-                if (parentBox) {
-                    parentBox.style.setProperty('height', 'auto', 'important');
-                    parentBox.style.setProperty('min-height', '200px', 'important');
-                    
-                    // OKボタンに遷移を仕込む
-                    const okBtn = parentBox.querySelector('.kb-dialog-button');
-                    if (okBtn && !okBtn._hasListener) {
-                        okBtn.style.setProperty('cursor', 'pointer', 'important');
-                        okBtn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            // 入力画面へ自遷移（現在のURLにリロード）
-                            window.location.href = window.location.origin + window.location.pathname + window.location.search;
-                        });
-                        okBtn._hasListener = true;
-                    }
-                }
-            } 
-            
-            // --- B. エラー・確認メッセージの検知 ---
-            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
-                // 長すぎるシステムメッセージを自作に差し替え
-                if (txt.length > 50 && txt !== MSG_ERROR && txt !== MSG_CONFIRM) {
-                    div.innerText = txt.includes("送信") ? MSG_CONFIRM : MSG_ERROR;
-                    div.style.setProperty('height', 'auto', 'important');
-                }
+        // その中のメッセージエリア（height: 162pxなど）を特定
+        const msgArea = popupBox.querySelector('div[style*="overflow: hidden auto"], div[style*="height:"]');
+        if (!msgArea) return;
+
+        // スタイル修正（見切れ防止）
+        msgArea.style.setProperty('height', 'auto', 'important');
+        msgArea.style.setProperty('min-height', '60px', 'important');
+        msgArea.style.setProperty('overflow', 'visible', 'important');
+        popupBox.style.setProperty('height', 'auto', 'important');
+
+        const txt = msgArea.innerText ? msgArea.innerText.trim() : "";
+
+        // --- A. 送信完了(Done!) の処理 ---
+        if (txt === "Done!" || txt === MSG_COMPLETE) {
+            if (msgArea.innerText !== MSG_COMPLETE) {
+                msgArea.innerText = MSG_COMPLETE;
+                msgArea.style.fontSize = '22px';
             }
-        });
+
+            // OKボタンに遷移を仕込む
+            const okBtn = popupBox.querySelector('.kb-dialog-button');
+            if (okBtn && !okBtn._hasListener) {
+                okBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // 現在のページ（入力画面）をリロードして戻る
+                    window.location.reload();
+                }, { once: true });
+                okBtn._hasListener = true;
+            }
+        } 
+        // --- B. エラー・確認メッセージの処理 ---
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+            if (msgArea.innerText !== MSG_ERROR && txt.length > 20) {
+                msgArea.innerText = MSG_ERROR;
+            }
+        } else if (txt !== MSG_COMPLETE && txt !== MSG_CONFIRM && txt.length > 5) {
+            if (msgArea.innerText !== MSG_CONFIRM) msgArea.innerText = MSG_CONFIRM;
+        }
     };
 
     /**
@@ -111,34 +108,33 @@
     };
 
     /**
-     * 5. エラー表示
-     */
-    const removeError = (fieldId) => {
-        const container = document.querySelector(`[field-id="${fieldId}"]`);
-        if (!container) return;
-        container.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
-        const existing = container.querySelector('.custom-error-container');
-        if (existing) existing.remove();
-    };
-
-    const showError = (fieldId, message) => {
-        const container = document.querySelector(`[field-id="${fieldId}"]`);
-        if (!container) return;
-        removeError(fieldId);
-        const input = container.querySelector('input, select, textarea');
-        if (input) input.classList.add('error-input');
-        const errorWrap = document.createElement('div');
-        errorWrap.className = 'custom-error-container';
-        errorWrap.innerHTML = `<div class="error-triangle"></div><div class="error-message">${message}</div>`;
-        container.appendChild(errorWrap);
-    };
-
-    /**
-     * 6. バリデーション
+     * 5. バリデーション
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
+        
+        // エラー解除用
+        const removeError = (id) => {
+            const container = document.querySelector(`[field-id="${id}"]`);
+            if (!container) return;
+            container.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
+            const existing = container.querySelector('.custom-error-container');
+            if (existing) existing.remove();
+        };
+        // エラー表示用
+        const showError = (id, message) => {
+            const container = document.querySelector(`[field-id="${id}"]`);
+            if (!container) return;
+            removeError(id);
+            const input = container.querySelector('input, select, textarea');
+            if (input) input.classList.add('error-input');
+            const errorWrap = document.createElement('div');
+            errorWrap.className = 'custom-error-container';
+            errorWrap.innerHTML = `<div class="error-triangle"></div><div class="error-message">${message}</div>`;
+            container.appendChild(errorWrap);
+        };
+
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
@@ -177,9 +173,9 @@
     // --- 実行 ---
     document.addEventListener('input', handleInputControl);
     
-    // 0.5秒おきに状態をチェック
+    // 定期チェック
     setInterval(() => { 
-        checkPopup();
+        checkPopup(); 
         overrideKbAlert();
         resetPostalInput();
     }, 500);
