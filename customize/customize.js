@@ -3,11 +3,11 @@
 
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
-    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。"
+    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの監視（エラー回避策を強化）
+     * 1. ポップアップの監視
      */
     const observePopup = () => {
         const targetNode = document.body;
@@ -26,39 +26,36 @@
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType !== 1) return;
                     
-                    // --- 通常のアラートエリアを探す ---
+                    // --- 通常のアラートエリア（確認・エラー） ---
                     const msgArea = node.querySelector('div[style*="height:"]') || node.querySelector('div[style*="overflow: hidden auto"]');
                     const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
                     
                     if (msgArea && popupBox) {
-                        msgArea.style.height = 'auto';
-                        msgArea.style.minHeight = '60px';
-                        msgArea.style.overflow = 'visible';
-                        popupBox.style.height = 'auto';
+                        msgArea.style.setProperty('height', 'auto', 'important');
+                        msgArea.style.setProperty('min-height', '60px', 'important');
+                        msgArea.style.setProperty('overflow', 'visible', 'important');
+                        popupBox.style.setProperty('height', 'auto', 'important');
 
-                        const txt = msgArea.innerText;
-                        if (txt === MSG_ERROR || txt === MSG_CONFIRM) return;
-                        if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
-                            msgArea.innerText = MSG_ERROR;
-                        } else if (txt !== "Done!") {
+                        const txt = msgArea.innerText.trim();
+                        
+                        // 送信完了(Done!)の判定をより確実に（テキスト内容で判定）
+                        if (txt === "Done!") {
+                            msgArea.innerText = MSG_COMPLETE;
+                            msgArea.style.fontSize = '24px';
+                            
+                            // OKボタンに「完了後の遷移」を仕込む
+                            const okBtn = popupBox.querySelector('.kb-dialog-button');
+                            if (okBtn) {
+                                okBtn.addEventListener('click', () => {
+                                    // 入力画面へ自遷移（現在のURLへリロード）
+                                    location.href = location.href;
+                                }, { once: true });
+                            }
+                        } else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+                            if (txt !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+                        } else if (txt !== MSG_COMPLETE && txt !== MSG_CONFIRM && txt.length > 0) {
                             msgArea.innerText = MSG_CONFIRM;
                         }
-                    }
-
-                    // --- 送信完了(Done!)ポップアップの強制スタイル解除 ---
-                    const doneMsg = node.querySelector('div[style*="height: 162px"]');
-                    if (doneMsg) {
-                        doneMsg.style.setProperty('height', 'auto', 'important');
-                        doneMsg.style.setProperty('min-height', '100px', 'important');
-                        doneMsg.style.setProperty('overflow', 'visible', 'important');
-                        doneMsg.style.display = 'flex';
-                        doneMsg.style.alignItems = 'center';
-                        doneMsg.style.justifyContent = 'center';
-                        doneMsg.style.fontSize = '24px';
-                        doneMsg.innerText = MSG_COMPLETE;
-                        
-                        const parent = doneMsg.closest('div[style*="rgb(240, 240, 240)"]');
-                        if (parent) parent.style.setProperty('height', 'auto', 'important');
                     }
                 });
             });
@@ -76,6 +73,8 @@
                 let customMsg = MSG_CONFIRM;
                 if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
                     customMsg = MSG_ERROR;
+                } else if (msg === "Done!") {
+                    customMsg = MSG_COMPLETE;
                 }
                 return originalAlert.apply(this, [customMsg]);
             };
@@ -102,7 +101,7 @@
     };
 
     /**
-     * 4. 入力制御（ハイフン & 数字制限）
+     * 4. 入力制御
      */
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
