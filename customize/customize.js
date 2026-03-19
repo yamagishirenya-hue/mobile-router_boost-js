@@ -9,67 +9,64 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * ポップアップの役割を判定して、文言とクラスを付与する
+     * ポップアップの文言とデザインをその場で書き換える
      */
-    const updatePopupByContent = (element) => {
-        // 対象が要素でない場合はスキップ
-        if (!element || element.nodeType !== 1) return;
-
+    const updatePopupByContent = () => {
         // ポップアップの外枠（グレー背景のdiv）を特定
-        // 渡された要素自体、またはその子要素、または親要素にポップアップがないか探す
-        const popup = element.closest('div[style*="rgb(240, 240, 240)"]') || 
-                      element.querySelector('div[style*="rgb(240, 240, 240)"]');
-        
+        const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
         if (!popup) return;
 
         // メッセージが書かれているエリアを特定
-        const msgArea = popup.querySelector('div[style*="overflow"]');
+        const msgArea = popup.querySelector('div[style*="overflow"]') || popup.querySelector('div[style*="height: 172px"]');
         if (!msgArea) return;
 
         const txt = msgArea.innerText.trim();
 
-        // 1. 送信完了系 (Done! または既に書き換え済みのMSG_COMPLETE)
-        if (txt === "Done!" || txt === MSG_COMPLETE) {
-            if (msgArea.innerText !== MSG_COMPLETE) {
-                msgArea.innerText = MSG_COMPLETE;
-                msgArea.classList.add('custom-msg-complete');
-            }
+        // 1. 送信完了系 (Done!)
+        if (txt === "Done!") {
+            msgArea.innerText = MSG_COMPLETE;
+            msgArea.style.setProperty('height', 'auto', 'important');
+            msgArea.style.setProperty('min-height', '100px', 'important');
+            msgArea.style.setProperty('display', 'flex', 'important');
+            msgArea.style.setProperty('align-items', 'center', 'important');
+            msgArea.style.setProperty('justify-content', 'center', 'important');
+            msgArea.style.setProperty('font-size', '20px', 'important');
         } 
-        // 2. エラー系 (キーワード判定)
+        // 2. エラー系
         else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
             if (msgArea.innerText !== MSG_ERROR) {
                 msgArea.innerText = MSG_ERROR;
-                msgArea.classList.add('custom-msg-error');
             }
         } 
-        // 3. 確認系 (それ以外、または「送信」という言葉を含む場合)
-        else if (txt.length > 0 && txt !== MSG_CONFIRM) {
+        // 3. 確認系
+        else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE) {
             msgArea.innerText = MSG_CONFIRM;
-            msgArea.classList.add('custom-msg-confirm');
         }
+
+        // ポップアップ全体の高さを自動調整
+        popup.style.setProperty('height', 'auto', 'important');
     };
 
     /**
-     * MutationObserverの開始（bodyが利用可能になるまで待機）
+     * kb.alertをラップして、呼び出しと同時に書き換えを実行する
      */
-    const initObserver = () => {
-        if (!document.body) {
-            setTimeout(initObserver, 100);
-            return;
+    const overrideKbAlert = () => {
+        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
+            const originalAlert = kb.alert;
+            kb.alert = function(msg) {
+                let customMsg = msg;
+                if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
+                    customMsg = MSG_ERROR;
+                } else if (msg === "Done!") {
+                    customMsg = MSG_COMPLETE;
+                }
+                const result = originalAlert.apply(this, [customMsg]);
+                // 呼び出し直後にDOMを微調整
+                setTimeout(updatePopupByContent, 50);
+                return result;
+            };
+            kb.alert._isOverridden = true;
         }
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) updatePopupByContent(node);
-                });
-            });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        // 【修正】初期表示時にも既に存在するポップアップを一度だけチェックする
-        updatePopupByContent(document.body);
     };
 
     /**
@@ -129,9 +126,7 @@
         return !hasError;
     };
 
-    // --- 実行 ---
-    initObserver();
-    
+    // --- 実行 ＆ 監視 ---
     document.addEventListener('input', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
@@ -145,12 +140,20 @@
         }
     });
 
-    setInterval(resetPostalInput, 1000);
+    // 0.5秒ごとにポップアップの状態を監視（Done!対策）
+    setInterval(() => {
+        updatePopupByContent();
+        overrideKbAlert();
+        resetPostalInput();
+    }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) {
                 ev.error = true;
+            } else {
+                // バリデーション成功時、次に表示される確認ポップアップのために監視を早める
+                setTimeout(updatePopupByContent, 100);
             }
             return ev;
         });
