@@ -1,93 +1,147 @@
 (function() {
     "use strict";
 
+    // メッセージ定義
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
+    
+    const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * ポップアップの種類を判定して文言を書き換える
+     * ポップアップの役割を判定して、文言とクラスを付与する
      */
-    const rewritePopupContent = (node) => {
-        // ポップアップの外枠（グレーの背景）を特定
-        const popup = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
+    const updatePopupByContent = (element) => {
+        // ポップアップの外枠（グレー背景のdiv）を特定
+        const popup = element.closest('div[style*="rgb(240, 240, 240)"]') || element.querySelector('div[style*="rgb(240, 240, 240)"]');
         if (!popup) return;
 
         // メッセージが書かれているエリアを特定
         const msgArea = popup.querySelector('div[style*="overflow"]');
         if (!msgArea) return;
 
-        const originalText = msgArea.innerText.trim();
+        const txt = msgArea.innerText.trim();
 
         // 1. 送信完了系 (Done! または既に書き換え済みのMSG_COMPLETE)
-        if (originalText === "Done!" || originalText === MSG_COMPLETE) {
-            msgArea.innerText = MSG_COMPLETE;
-            msgArea.classList.add('custom-popup-complete');
+        if (txt === "Done!" || txt === MSG_COMPLETE) {
+            if (msgArea.innerText !== MSG_COMPLETE) {
+                msgArea.innerText = MSG_COMPLETE;
+                msgArea.classList.add('custom-msg-complete');
+            }
         } 
-        // 2. エラー系 (必須、誤り、入力などのキーワードを含む場合)
-        else if (originalText.includes("必須") || originalText.includes("誤り") || originalText.includes("入力") || originalText.includes("確認")) {
-            msgArea.innerText = MSG_ERROR;
-            msgArea.classList.add('custom-popup-error');
+        // 2. エラー系 (キーワード判定)
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+            if (msgArea.innerText !== MSG_ERROR) {
+                msgArea.innerText = MSG_ERROR;
+                msgArea.classList.add('custom-msg-error');
+            }
         } 
         // 3. 確認系 (それ以外、または「送信」という言葉を含む場合)
-        else if (originalText.length > 0 && originalText !== MSG_ERROR && originalText !== MSG_CONFIRM) {
+        else if (txt.length > 0 && txt !== MSG_CONFIRM) {
             msgArea.innerText = MSG_CONFIRM;
-            msgArea.classList.add('custom-popup-confirm');
+            msgArea.classList.add('custom-msg-confirm');
         }
     };
 
     /**
-     * 画面の監視（新しい要素が追加されたらチェック）
+     * MutationObserverの開始（bodyが利用可能になるまで待機）
      */
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) rewritePopupContent(node);
+    const initObserver = () => {
+        if (!document.body) {
+            setTimeout(initObserver, 100);
+            return;
+        }
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) updatePopupByContent(node);
+                });
             });
         });
-    });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(document.body, { childList: true, subtree: true });
+    };
 
-    // 既存のkb.alertも上書き（予備）
-    const overrideKbAlert = () => {
-        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
-            const originalAlert = kb.alert;
-            kb.alert = function(msg) {
-                let customMsg = MSG_CONFIRM;
-                if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
-                    customMsg = MSG_ERROR;
-                } else if (msg === "Done!") {
-                    customMsg = MSG_COMPLETE;
-                }
-                return originalAlert.apply(this, [customMsg]);
-            };
-            kb.alert._isOverridden = true;
+    /**
+     * 郵便番号のリセット（1文字1枠の残像を消す）
+     */
+    const resetPostalInput = () => {
+        const parentField = document.querySelector('[field-id="郵便番号"]');
+        if (!parentField) return;
+        const oldContainer = parentField.querySelector('.postal-box-container');
+        if (oldContainer) oldContainer.remove();
+        const originalInput = parentField.querySelector('input');
+        if (originalInput) {
+            originalInput.style.display = 'block';
+            originalInput.style.position = 'static';
+            originalInput.style.opacity = '1';
+            originalInput.style.height = 'auto';
+            originalInput.style.pointerEvents = 'auto';
         }
     };
 
-    // 郵便番号のリセットとアラート上書きを定期実行
-    setInterval(() => {
-        overrideKbAlert();
-        const zipField = document.querySelector('[field-id="郵便番号"]');
-        if (zipField) {
-            const oldContainer = zipField.querySelector('.postal-box-container');
-            if (oldContainer) oldContainer.remove();
-            const input = zipField.querySelector('input');
-            if (input) {
-                input.style.display = 'block';
-                input.style.position = 'static';
-                input.style.opacity = '1';
-                input.style.height = 'auto';
-            }
-        }
-    }, 1000);
+    /**
+     * バリデーション
+     */
+    const validateAll = (record) => {
+        let hasError = false;
+        const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
-    // バリデーション等のイベント設定
+        // エラー解除
+        document.querySelectorAll('[field-id]').forEach(el => {
+            const container = el;
+            container.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
+            const existing = container.querySelector('.custom-error-container');
+            if (existing) existing.remove();
+        });
+
+        // 郵便番号
+        const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
+        if (zipVal && zipVal.length !== 7) hasError = true;
+
+        // 電話番号
+        const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
+        if (isDiff) telIds.push("返送先対象者の電話番号");
+        telIds.forEach(id => {
+            const val = (record[id]?.value || "").replace(/[^\d]/g, "");
+            if (val && (val.length < 10 || val.length > 11)) hasError = true;
+        });
+
+        if (isDiff) {
+            targetFieldIds.forEach(id => {
+                if (!(record[id]?.value || "").trim()) hasError = true;
+            });
+        }
+
+        if (hasError && typeof kb !== 'undefined' && kb.alert) {
+            kb.alert(MSG_ERROR);
+        }
+        return !hasError;
+    };
+
+    // --- 実行 ---
+    initObserver();
+    document.addEventListener('input', (e) => {
+        const fieldWrap = e.target.closest('[field-id]');
+        if (!fieldWrap) return;
+        const fieldId = fieldWrap.getAttribute('field-id');
+        let val = e.target.value;
+        if (fieldId === "郵便番号") {
+            let digits = val.replace(/[^\d]/g, "");
+            e.target.value = digits.length <= 3 ? digits : digits.slice(0, 3) + "-" + digits.slice(3, 7);
+        } else if (fieldId && fieldId.includes("電話番号")) {
+            e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
+        }
+    });
+
+    setInterval(resetPostalInput, 1000);
+
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
-            // ここにバリデーションロジックを入れる（以前のコードのvalidateAll相当）
-            // 問題があれば ev.error = true;
+            if (!validateAll(ev.record)) {
+                ev.error = true;
+            }
             return ev;
         });
     }
