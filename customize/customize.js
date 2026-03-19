@@ -7,7 +7,7 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * 1. ポップアップの監視（文言書き換え ＆ 完了後の遷移）
+     * 1. ポップアップの監視（メッセージエリアの置換のみ実行）
      */
     const observePopup = () => {
         const targetNode = document.body;
@@ -25,52 +25,42 @@
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType !== 1) return;
-                    
-                    // --- A. 通常のアラート / 確認エリア ---
-                    const msgArea = node.querySelector('div[style*="height:"]') || node.querySelector('div[style*="overflow: hidden auto"]');
-                    const popupBox = node.closest('div[style*="rgb(240, 240, 240)"]') || node.querySelector('div[style*="rgb(240, 240, 240)"]');
-                    
-                    if (msgArea && popupBox) {
-                        msgArea.style.height = 'auto';
-                        msgArea.style.minHeight = '60px';
-                        msgArea.style.overflow = 'visible';
-                        popupBox.style.height = 'auto';
 
-                        const txt = msgArea.innerText.trim();
-                        if (txt === MSG_ERROR || txt === MSG_CONFIRM || txt === MSG_COMPLETE) return;
+                    // --- 送信完了(Done!) エリアの特定 ---
+                    // 送付いただいたHTMLの「height: 172px」を持つdivを直接探します
+                    const doneMsg = node.querySelector('div[style*="height: 172px"]') || (node.style && node.style.height === '172px' ? node : null);
+                    
+                    if (doneMsg && doneMsg.innerText.trim() === "Done!") {
+                        // メッセージの書き換え
+                        doneMsg.innerText = MSG_COMPLETE;
+                        
+                        // デザインの強制修正（CSS側でも制御しますがJSでも補強します）
+                        doneMsg.style.setProperty('height', 'auto', 'important');
+                        doneMsg.style.setProperty('min-height', '120px', 'important');
+                        doneMsg.style.setProperty('display', 'flex', 'important');
+                        doneMsg.style.setProperty('align-items', 'center', 'important');
+                        doneMsg.style.setProperty('justify-content', 'center', 'important');
+                        doneMsg.style.setProperty('font-size', '22px', 'important');
+                        doneMsg.style.setProperty('font-weight', 'bold', 'important');
+                        doneMsg.style.setProperty('text-align', 'center', 'important');
+                        doneMsg.style.setProperty('white-space', 'pre-wrap', 'important');
 
-                        if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
-                            msgArea.innerText = MSG_ERROR;
-                        } else if (txt !== "Done!") {
-                            msgArea.innerText = MSG_CONFIRM;
+                        // 外枠の高さも自動調整
+                        const parent = doneMsg.parentElement;
+                        if (parent) {
+                            parent.style.setProperty('height', 'auto', 'important');
+                            parent.style.setProperty('padding-bottom', '3em', 'important'); // ボタン位置の確保
                         }
                     }
 
-                    // --- B. 送信完了(Done!) ポップアップの特別処理 ---
-                    const doneMsg = node.querySelector('div[style*="height: 162px"]') || (node.innerText && node.innerText.trim() === "Done!" ? node : null);
-                    if (doneMsg && doneMsg.innerText.trim() === "Done!") {
-                        // メッセージ書き換え
-                        doneMsg.innerText = MSG_COMPLETE;
-                        doneMsg.style.setProperty('height', 'auto', 'important');
-                        doneMsg.style.setProperty('min-height', '100px', 'important');
-                        doneMsg.style.setProperty('overflow', 'visible', 'important');
-                        doneMsg.style.display = 'flex';
-                        doneMsg.style.alignItems = 'center';
-                        doneMsg.style.justifyContent = 'center';
-                        doneMsg.style.fontSize = '24px';
-                        
-                        const parent = doneMsg.closest('div[style*="rgb(240, 240, 240)"]');
-                        if (parent) {
-                            parent.style.setProperty('height', 'auto', 'important');
-                            
-                            // OKボタンを探して「ページ更新」のイベントを付与
-                            const okBtn = parent.querySelector('.kb-dialog-button');
-                            if (okBtn) {
-                                okBtn.addEventListener('click', () => {
-                                    // 入力画面（自分自身）へ遷移＝リロード
-                                    window.location.reload();
-                                }, { once: true });
-                            }
+                    // --- エラー・確認メッセージの処理 ---
+                    const msgArea = node.querySelector('div[style*="overflow: hidden auto"]') || node.querySelector('div[style*="height:"]');
+                    if (msgArea && msgArea.innerText.trim() !== MSG_COMPLETE && msgArea.innerText.trim() !== "Done!") {
+                        const txt = msgArea.innerText.trim();
+                        if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力") || txt.includes("確認")) {
+                            msgArea.innerText = MSG_ERROR;
+                        } else if (txt.length > 0 && txt !== MSG_CONFIRM) {
+                            msgArea.innerText = MSG_CONFIRM;
                         }
                     }
                 });
@@ -80,26 +70,7 @@
     };
 
     /**
-     * 2. アラート関数のジャック
-     */
-    const overrideKbAlert = () => {
-        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
-            const originalAlert = kb.alert;
-            kb.alert = function(msg) {
-                let customMsg = MSG_CONFIRM;
-                if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
-                    customMsg = MSG_ERROR;
-                } else if (msg === "Done!") {
-                    customMsg = MSG_COMPLETE;
-                }
-                return originalAlert.apply(this, [customMsg]);
-            };
-            kb.alert._isOverridden = true;
-        }
-    };
-
-    /**
-     * 3. 郵便番号のリセット（残像対策）
+     * 2. 郵便番号のリセット（1文字1枠の残像対策）
      */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
@@ -111,13 +82,11 @@
             originalInput.style.display = 'block';
             originalInput.style.position = 'static';
             originalInput.style.opacity = '1';
-            originalInput.style.height = 'auto';
-            originalInput.style.pointerEvents = 'auto';
         }
     };
 
     /**
-     * 4. 入力制限
+     * 3. 入力制御（数字制限など）
      */
     const handleInputControl = (e) => {
         const fieldWrap = e.target.closest('[field-id]');
@@ -133,34 +102,29 @@
     };
 
     /**
-     * 5. エラー表示生成
-     */
-    const removeError = (fieldId) => {
-        const container = document.querySelector(`[field-id="${fieldId}"]`);
-        if (!container) return;
-        container.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
-        const existing = container.querySelector('.custom-error-container');
-        if (existing) existing.remove();
-    };
-
-    const showError = (fieldId, message) => {
-        const container = document.querySelector(`[field-id="${fieldId}"]`);
-        if (!container) return;
-        removeError(fieldId);
-        const input = container.querySelector('input, select, textarea');
-        if (input) input.classList.add('error-input');
-        const errorWrap = document.createElement('div');
-        errorWrap.className = 'custom-error-container';
-        errorWrap.innerHTML = `<div class="error-triangle"></div><div class="error-message">${message}</div>`;
-        container.appendChild(errorWrap);
-    };
-
-    /**
-     * 6. バリデーション
+     * 4. バリデーション
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
+
+        const removeError = (id) => {
+            const container = document.querySelector(`[field-id="${id}"]`);
+            if (!container) return;
+            const existing = container.querySelector('.custom-error-container');
+            if (existing) existing.remove();
+        };
+
+        const showError = (id, message) => {
+            const container = document.querySelector(`[field-id="${id}"]`);
+            if (!container) return;
+            removeError(id);
+            const errorWrap = document.createElement('div');
+            errorWrap.className = 'custom-error-container';
+            errorWrap.innerHTML = `<div class="error-triangle"></div><div class="error-message">${message}</div>`;
+            container.appendChild(errorWrap);
+        };
+
         document.querySelectorAll('[field-id]').forEach(el => removeError(el.getAttribute('field-id')));
 
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
@@ -187,7 +151,9 @@
                 }
             });
         }
-        if (hasError) kb.alert(MSG_ERROR);
+        if (hasError) {
+            if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_ERROR);
+        }
         return !hasError;
     };
 
@@ -196,10 +162,10 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
-    // --- 実行 ＆ タイマー監視 ---
+    // --- 実行 ---
     observePopup();
     document.addEventListener('input', handleInputControl);
-    setInterval(() => { overrideKbAlert(); resetPostalInput(); }, 1000);
+    setInterval(resetPostalInput, 1000);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
