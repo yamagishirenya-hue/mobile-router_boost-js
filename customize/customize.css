@@ -2,30 +2,36 @@
 * { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif !important; }
 body .kb-injector { max-width: 800px !important; margin: 10px auto !important; padding: 24px !important; background: #ffffff !important; border-radius: 12px !important; }
 
-/* 項目名と注釈(※)の改行対応 */
-.kb-field-caption { display: block !important; font-weight: 700 !important; font-size: 21px !important; margin-bottom: 8px !important; }
-
-
-body .kb-injector input, body .kb-injector select, body .kb-injector textarea { width: 100% !important; padding: 12px 14px !important; border: 1.5px solid #e0e4e8 !important; border-radius: 8px !important; font-size: 18px !important; }
-
 /* --- 2. 出し分け --- */
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
 body.show-target-fields [field-id="返送先対象者の氏名"], body.show-target-fields [field-id="返送先対象者の会社名"], body.show-target-fields [field-id="返送先対象者の電話番号"], body.show-target-fields [field-id="返送先対象者のメールアドレス"] { display: block !important; background-color: #f8fbff !important; padding: 15px 20px !important; border-left: 5px solid #007bff !important; }
 
-/* --- 3. ポップアップ修正 --- */
-div[style*="rgb(240, 240, 240)"] { height: auto !important; min-height: 180px !important; border-radius: 16px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important; }
+/* --- 3. ポップアップ修正 (OKボタン以外) --- */
+/* グレーの外枠を伸縮可能にする */
+div[style*="rgb(240, 240, 240)"] { 
+    height: auto !important; 
+    min-height: 200px !important; 
+    border-radius: 16px !important; 
+    box-shadow: 0 15px 50px rgba(0,0,0,0.2) !important;
+    padding-bottom: 3.5em !important; /* ボタンが重ならないよう下部に余白を確保 */
+}
+
+/* メッセージエリアのデザイン修正 */
+div[style*="height: 172px"], 
 div[style*="overflow: hidden auto"] { 
-    height: auto !important; min-height: 80px !important; 
-    padding: 30px 20px !important; font-size: 22px !important; font-weight: bold !important; 
-    text-align: center !important; white-space: pre-wrap !important; 
-    display: flex !important; align-items: center !important; justify-content: center !important;
+    height: auto !important; 
+    min-height: 120px !important; 
+    padding: 30px 20px !important; 
+    font-size: 22px !important; 
+    font-weight: bold !important; 
+    text-align: center !important; 
+    white-space: pre-wrap !important; 
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
 }
-div[style*="position: absolute;"][style*="bottom: 0px"] { 
-    position: relative !important; bottom: auto !important; 
-    border-top: 1px solid #eee !important; padding: 15px !important; 
-    display: flex !important; justify-content: center !important; background: #fdfdfd !important;
-}
-.kb-dialog-button { height: 48px !important; font-size: 18px !important; font-weight: bold !important; border-radius: 8px !important; background-color: #007bff !important; color: #fff !important; flex: 1 !important; margin: 0 10px !important; border: none !important; }
 
 /* --- 4. エラー表示 --- */
 div[field-id] .error-message { position: relative !important; margin-top: 10px !important; background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; padding: 6px 12px !important; font-size: 16px !important; }
