@@ -3,6 +3,7 @@
 
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
+    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。"
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
@@ -54,6 +55,7 @@
                         doneMsg.style.alignItems = 'center';
                         doneMsg.style.justifyContent = 'center';
                         doneMsg.style.fontSize = '24px';
+                        doneMsg.innerText = MSG_COMPLETE;
                         
                         const parent = doneMsg.closest('div[style*="rgb(240, 240, 240)"]');
                         if (parent) parent.style.setProperty('height', 'auto', 'important');
