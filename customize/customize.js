@@ -24,7 +24,7 @@
         const txt = msgArea.innerText.trim();
 
         // 1. 送信完了系 (Done!)
-        if (txt === "Done!") {
+        if (txt === "Done!" ||txt === MSG_COMPLETE) {
             msgArea.innerText = MSG_COMPLETE;
             msgArea.style.setProperty('height', 'auto', 'important');
             msgArea.style.setProperty('min-height', '100px', 'important');
