@@ -9,14 +9,15 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * ポップアップの文言とデザインをその場で書き換える
+     * ポップアップの文言とデザインを書き換える
+     * 完了ポップアップ（Done!）の場合は、OKボタンにリロード処理を付与する
      */
     const updatePopupByContent = () => {
-        // ポップアップの外枠（グレー背景のdiv）を特定
+        // ポップアップの外枠を特定
         const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
         if (!popup) return;
 
-        // メッセージが書かれているエリアを特定
+        // メッセージエリアを特定
         const msgArea = popup.querySelector('div[style*="overflow"]') || popup.querySelector('div[style*="height: 172px"]');
         if (!msgArea) return;
 
@@ -31,15 +32,26 @@
             msgArea.style.setProperty('align-items', 'center', 'important');
             msgArea.style.setProperty('justify-content', 'center', 'important');
             msgArea.style.setProperty('font-size', '20px', 'important');
+
+            // OKボタンを探して、強制リロードのイベントを付与する
+            const okBtn = popup.querySelector('.kb-dialog-button');
+            if (okBtn && !okBtn.dataset.listenerAttached) {
+                okBtn.addEventListener('click', function() {
+                    // 入力画面（自画面）へ遷移させるためリロードを実行
+                    window.location.reload();
+                });
+                okBtn.dataset.listenerAttached = "true";
+            }
         } 
-        // 2. エラー系
+        // 2. エラー系（「確認」「送信」を除外）
         else if (txt.includes("誤り") || txt.includes("必須")) {
             if (msgArea.innerText !== MSG_ERROR) {
                 msgArea.innerText = MSG_ERROR;
             }
         } 
         // 3. 確認系
-        else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE) {
+        else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
+            // エラーでも完了でもないテキストがある場合は送信確認とみなす
             msgArea.innerText = MSG_CONFIRM;
         }
 
@@ -48,20 +60,19 @@
     };
 
     /**
-     * kb.alertをラップして、呼び出しと同時に書き換えを実行する
+     * kb.alertをラップ
      */
     const overrideKbAlert = () => {
         if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
-                if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
+                if (msg && (msg.includes("誤り") || msg.includes("必須"))) {
                     customMsg = MSG_ERROR;
                 } else if (msg === "Done!") {
                     customMsg = MSG_COMPLETE;
                 }
                 const result = originalAlert.apply(this, [customMsg]);
-                // 呼び出し直後にDOMを微調整
                 setTimeout(updatePopupByContent, 50);
                 return result;
             };
@@ -70,7 +81,7 @@
     };
 
     /**
-     * 郵便番号のリセット（1文字1枠の残像を消す）
+     * 郵便番号のリセット
      */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
@@ -94,7 +105,6 @@
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
-        // エラー解除
         document.querySelectorAll('[field-id]').forEach(el => {
             const container = el;
             container.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
@@ -102,11 +112,9 @@
             if (existing) existing.remove();
         });
 
-        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) hasError = true;
 
-        // 電話番号
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -140,7 +148,7 @@
         }
     });
 
-    // 0.5秒ごとにポップアップの状態を監視（Done!対策）
+    // 0.5秒ごとにポップアップの状態を監視
     setInterval(() => {
         updatePopupByContent();
         overrideKbAlert();
@@ -152,7 +160,6 @@
             if (!validateAll(ev.record)) {
                 ev.error = true;
             } else {
-                // バリデーション成功時、次に表示される確認ポップアップのために監視を早める
                 setTimeout(updatePopupByContent, 100);
             }
             return ev;
