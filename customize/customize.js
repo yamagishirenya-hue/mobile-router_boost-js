@@ -26,7 +26,7 @@
         if (selectedValue === "au(KDDI)") targetId = "company_kddi";
         if (selectedValue === "docomo") targetId = "company_docomo";
         if (selectedValue === "Softbank") targetId = "company_softbank";
-        if (selectedValue === "") targetId = "non_company";
+        if (selectedValue == "") targetId = "non_company";
         const targetEl = document.getElementById(targetId);
         if (targetId === non_company) {
             if (targetEl) targetEl.style.setProperty('display', 'none', 'important');
