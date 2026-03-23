@@ -10,26 +10,21 @@
 
     /**
      * 1. キャリア案内文の表示制御
-     * セレクトボックスの選択肢に合わせて、特定のIDを持つ案内を表示します
      */
     const updateCarrierGuidance = (selectedValue) => {
-        // 制御対象のIDリスト（未選択時の案内も含める）
         const allSectionIds = ["company_kddi", "company_docomo", "company_softbank", "non_company"];
         
-        // 一旦すべての要素を非表示にする
         allSectionIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.setProperty('display', 'none', 'important');
         });
 
-        // 選択された値に基づいて表示するターゲットを決定
         let targetId = "";
         if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
-        else if (selectedValue === "") targetId = "non_company"; // 未選択時
+        else if (selectedValue === "") targetId = "non_company";
 
-        // ターゲットが存在すれば表示する
         if (targetId) {
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.style.setProperty('display', 'block', 'important');
@@ -37,7 +32,32 @@
     };
 
     /**
-     * 2. ポップアップの監視・書き換え
+     * 2. 送信ボタンの活性・非活性制御
+     * 「同意しません。」が選択されている場合はボタンを無効化します
+     */
+    const updateSubmitButtonState = () => {
+        const submitBtn = document.querySelector('.kb-injector-button');
+        if (!submitBtn) return;
+
+        const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
+        
+        // 「同意します。」がチェックされている時だけ有効化
+        if (agreeRadio && agreeRadio.checked) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = "1";
+            submitBtn.style.cursor = "pointer";
+            submitBtn.style.pointerEvents = "auto";
+        } else {
+            // 未選択、または「同意しません。」がチェックされている時は無効化
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = "0.5";
+            submitBtn.style.cursor = "not-allowed";
+            submitBtn.style.pointerEvents = "none";
+        }
+    };
+
+    /**
+     * 3. ポップアップの監視・書き換え
      */
     const updatePopupByContent = () => {
         const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
@@ -48,7 +68,6 @@
 
         const txt = msgArea.innerText.trim();
 
-        // 送信完了(Done!)
         if (txt === "Done!" || txt === MSG_COMPLETE) {
             msgArea.innerText = MSG_COMPLETE;
             msgArea.style.setProperty('height', 'auto', 'important');
@@ -64,11 +83,9 @@
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        // エラー系
         else if (txt.includes("誤り") || txt.includes("必須")) {
             if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
         } 
-        // 確認系
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
         }
@@ -76,7 +93,7 @@
     };
 
     /**
-     * 3. 各種リセット・オーバーライド
+     * 4. 各種リセット・オーバーライド
      */
     const overrideKbAlert = () => {
         if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
@@ -107,7 +124,7 @@
     };
 
     /**
-     * 4. バリデーション
+     * 5. バリデーション
      */
     const validateAll = (record) => {
         let hasError = false;
@@ -140,9 +157,13 @@
 
     // --- メインイベントリスナー ---
     document.addEventListener('change', (e) => {
-        // キャリア選択のセレクトボックスが変更された時
+        // キャリア選択のセレクトボックス
         if (e.target.tagName === 'SELECT') {
             updateCarrierGuidance(e.target.value);
+        }
+        // 修理費用のラジオボタン
+        if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') {
+            updateSubmitButtonState();
         }
     });
 
@@ -164,9 +185,16 @@
         updatePopupByContent();
         overrideKbAlert();
         resetPostalInput();
+        updateSubmitButtonState(); // ボタン状態を常に最新に保つ
     }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
+        kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
+            updateCarrierGuidance(ev.record["キャリア選択"]?.value || ""); // 初期表示時の出し分け
+            updateSubmitButtonState(); // 初期表示時のボタン状態
+            return ev;
+        });
+
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) ev.error = true;
             else setTimeout(updatePopupByContent, 100);
