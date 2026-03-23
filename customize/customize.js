@@ -24,7 +24,7 @@
 
         // 選択された値に基づいて表示するターゲットを決定
         let targetId = "";
-        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
+        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company"; // 未選択時
