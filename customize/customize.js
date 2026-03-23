@@ -13,24 +13,25 @@
      * セレクトボックスの選択肢に合わせて、特定のIDを持つ案内を表示します
      */
     const updateCarrierGuidance = (selectedValue) => {
-        const companyIds = ["company_kddi", "company_docomo", "company_softbank"];
+        // 制御対象のIDリスト（未選択時の案内も含める）
+        const allSectionIds = ["company_kddi", "company_docomo", "company_softbank", "non_company"];
         
-        // 一旦すべてを隠す
-        companyIds.forEach(id => {
+        // 一旦すべての要素を非表示にする
+        allSectionIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.setProperty('display', 'none', 'important');
         });
 
-        // 選択されたキャリアのみを表示する
+        // 選択された値に基づいて表示するターゲットを決定
         let targetId = "";
         if (selectedValue === "au(KDDI)") targetId = "company_kddi";
-        if (selectedValue === "docomo") targetId = "company_docomo";
-        if (selectedValue === "Softbank") targetId = "company_softbank";
-        if (selectedValue == "") targetId = "non_company";
-        const targetEl = document.getElementById(targetId);
-        if (targetId === non_company) {
-            if (targetEl) targetEl.style.setProperty('display', 'none', 'important');
-        } else if(targetId){
+        else if (selectedValue === "docomo") targetId = "company_docomo";
+        else if (selectedValue === "Softbank") targetId = "company_softbank";
+        else if (selectedValue === "") targetId = "non_company"; // 未選択時
+
+        // ターゲットが存在すれば表示する
+        if (targetId) {
+            const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.style.setProperty('display', 'block', 'important');
         }
     };
@@ -141,7 +142,6 @@
     document.addEventListener('change', (e) => {
         // キャリア選択のセレクトボックスが変更された時
         if (e.target.tagName === 'SELECT') {
-            // valueが含まれているか、もしくは特定のクラス等で判定
             updateCarrierGuidance(e.target.value);
         }
     });
