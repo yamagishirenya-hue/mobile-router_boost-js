@@ -9,22 +9,44 @@
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
-     * ポップアップの文言とデザインを書き換える
-     * 完了ポップアップ（Done!）の場合は、OKボタンにリロード処理を付与する
+     * 1. キャリア案内文の表示制御
+     * セレクトボックスの選択肢に合わせて、特定のIDを持つ案内を表示します
+     */
+    const updateCarrierGuidance = (selectedValue) => {
+        const companyIds = ["company_kddi", "company_docomo", "company_softbank"];
+        
+        // 一旦すべてを隠す
+        companyIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.setProperty('display', 'none', 'important');
+        });
+
+        // 選択されたキャリアのみを表示する
+        let targetId = "";
+        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
+        if (selectedValue === "docomo") targetId = "company_docomo";
+        if (selectedValue === "Softbank") targetId = "company_softbank";
+
+        if (targetId) {
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.style.setProperty('display', 'block', 'important');
+        }
+    };
+
+    /**
+     * 2. ポップアップの監視・書き換え
      */
     const updatePopupByContent = () => {
-        // ポップアップの外枠を特定
         const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
         if (!popup) return;
 
-        // メッセージエリアを特定
         const msgArea = popup.querySelector('div[style*="overflow"]') || popup.querySelector('div[style*="height: 172px"]');
         if (!msgArea) return;
 
         const txt = msgArea.innerText.trim();
 
-        // 1. 送信完了系 (Done!)
-        if (txt === "Done!" ||txt === MSG_COMPLETE) {
+        // 送信完了(Done!)
+        if (txt === "Done!" || txt === MSG_COMPLETE) {
             msgArea.innerText = MSG_COMPLETE;
             msgArea.style.setProperty('height', 'auto', 'important');
             msgArea.style.setProperty('min-height', '100px', 'important');
@@ -33,45 +55,33 @@
             msgArea.style.setProperty('justify-content', 'center', 'important');
             msgArea.style.setProperty('font-size', '20px', 'important');
 
-            // OKボタンを探して、強制リロードのイベントを付与する
             const okBtn = popup.querySelector('.kb-dialog-button');
             if (okBtn && !okBtn.dataset.listenerAttached) {
-                okBtn.addEventListener('click', function() {
-                    // 入力画面（自画面）へ遷移させるためリロードを実行
-                    window.location.reload();
-                });
+                okBtn.addEventListener('click', () => window.location.reload());
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        // 2. エラー系（「確認」「送信」を除外）
+        // エラー系
         else if (txt.includes("誤り") || txt.includes("必須")) {
-            if (msgArea.innerText !== MSG_ERROR) {
-                msgArea.innerText = MSG_ERROR;
-            }
+            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
         } 
-        // 3. 確認系
+        // 確認系
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
-            // エラーでも完了でもないテキストがある場合は送信確認とみなす
             msgArea.innerText = MSG_CONFIRM;
         }
-
-        // ポップアップ全体の高さを自動調整
         popup.style.setProperty('height', 'auto', 'important');
     };
 
     /**
-     * kb.alertをラップ
+     * 3. 各種リセット・オーバーライド
      */
     const overrideKbAlert = () => {
         if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
-                if (msg && (msg.includes("誤り") || msg.includes("必須"))) {
-                    customMsg = MSG_ERROR;
-                } else if (msg === "Done!") {
-                    customMsg = MSG_COMPLETE;
-                }
+                if (msg && (msg.includes("誤り") || msg.includes("必須"))) customMsg = MSG_ERROR;
+                else if (msg === "Done!") customMsg = MSG_COMPLETE;
                 const result = originalAlert.apply(this, [customMsg]);
                 setTimeout(updatePopupByContent, 50);
                 return result;
@@ -80,35 +90,29 @@
         }
     };
 
-    /**
-     * 郵便番号のリセット
-     */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
         if (!parentField) return;
         const oldContainer = parentField.querySelector('.postal-box-container');
         if (oldContainer) oldContainer.remove();
-        const originalInput = parentField.querySelector('input');
-        if (originalInput) {
-            originalInput.style.display = 'block';
-            originalInput.style.position = 'static';
-            originalInput.style.opacity = '1';
-            originalInput.style.height = 'auto';
-            originalInput.style.pointerEvents = 'auto';
+        const input = parentField.querySelector('input');
+        if (input) {
+            input.style.display = 'block';
+            input.style.position = 'static';
+            input.style.opacity = '1';
         }
     };
 
     /**
-     * バリデーション
+     * 4. バリデーション
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
         document.querySelectorAll('[field-id]').forEach(el => {
-            const container = el;
-            container.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
-            const existing = container.querySelector('.custom-error-container');
+            el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
+            const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
 
@@ -127,28 +131,33 @@
                 if (!(record[id]?.value || "").trim()) hasError = true;
             });
         }
-
-        if (hasError && typeof kb !== 'undefined' && kb.alert) {
-            kb.alert(MSG_ERROR);
-        }
+        if (hasError && typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_ERROR);
         return !hasError;
     };
 
-    // --- 実行 ＆ 監視 ---
+    // --- メインイベントリスナー ---
+    document.addEventListener('change', (e) => {
+        // キャリア選択のセレクトボックスが変更された時
+        if (e.target.tagName === 'SELECT') {
+            // valueが含まれているか、もしくは特定のクラス等で判定
+            updateCarrierGuidance(e.target.value);
+        }
+    });
+
     document.addEventListener('input', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
         const fieldId = fieldWrap.getAttribute('field-id');
         let val = e.target.value;
         if (fieldId === "郵便番号") {
-            let digits = val.replace(/[^\d]/g, "");
-            e.target.value = digits.length <= 3 ? digits : digits.slice(0, 3) + "-" + digits.slice(3, 7);
+            let d = val.replace(/[^\d]/g, "");
+            e.target.value = d.length <= 3 ? d : d.slice(0, 3) + "-" + d.slice(3, 7);
         } else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         }
     });
 
-    // 0.5秒ごとにポップアップの状態を監視
+    // 定期監視
     setInterval(() => {
         updatePopupByContent();
         overrideKbAlert();
@@ -157,11 +166,8 @@
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
-            if (!validateAll(ev.record)) {
-                ev.error = true;
-            } else {
-                setTimeout(updatePopupByContent, 100);
-            }
+            if (!validateAll(ev.record)) ev.error = true;
+            else setTimeout(updatePopupByContent, 100);
             return ev;
         });
     }
