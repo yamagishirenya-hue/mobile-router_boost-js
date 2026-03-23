@@ -20,6 +20,7 @@
         });
 
         let targetId = "";
+        // キャリア名の判定条件を修正: KDDI(au)
         if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
