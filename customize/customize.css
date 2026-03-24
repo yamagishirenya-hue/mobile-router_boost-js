@@ -8,83 +8,74 @@ body.show-target-fields [field-id="返送先対象者の氏名"], body.show-targ
 
 /* --- 3. ポップアップ共通デザイン（強制上書き） --- */
 
-/* 外枠の白背景化とサイズ固定 */
-div[style*="rgb(240, 240, 240)"], .kb-dialog {
+/* 外枠の白背景化とリサイズ */
+div[style*="rgb(240, 240, 240)"] {
     background-color: #ffffff !important;
     border-radius: 16px !important;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.25) !important;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.2) !important;
     height: auto !important;
-    min-height: 200px !important;
-    max-height: 80vh !important;
-    padding: 0 !important;
+    min-height: 180px !important;
+    padding-bottom: 60px !important; /* ボタンエリア用のマージン */
     overflow: hidden !important;
-    border: none !important;
-    display: flex !important;
-    flex-direction: column !important;
 }
 
 /* メッセージエリアのスタイル */
-div[style*="rgb(240, 240, 240)"] > div:first-child, 
-.kb-dialog > div:first-child,
-.kb-dialog-content {
+div[style*="rgb(240, 240, 240)"] > div:first-child {
     height: auto !important;
-    min-height: 120px !important;
+    min-height: 100px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 40px 30px !important;
+    padding: 30px 20px !important;
     font-size: 20px !important;
     font-weight: bold !important;
     text-align: center !important;
     white-space: pre-wrap !important;
     line-height: 1.6 !important;
     color: #333 !important;
-    flex: 1 !important;
-    overflow-y: auto !important;
+    overflow: visible !important;
 }
 
 /* ボタンコンテナのスタイル */
-div[style*="position: absolute;"][style*="bottom: 0px"],
-div[style*="border-top-style: solid"] {
-    position: relative !important;
-    bottom: auto !important;
-    left: auto !important;
+div[style*="position: absolute;"][style*="bottom: 0px"] {
     background: #f8f9fa !important;
     border-top: 1px solid #eeeeee !important;
-    height: 70px !important;
-    min-height: 70px !important;
+    height: 60px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0 20px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
 }
 
-/* OKボタンのデザイン */
+/* OKボタンのデザイン（すべてのポップアップで共通化） */
 .kb-dialog-button {
-    background-color: #007bff !important;
+    background-color: #007bff !important; /* 青ボタン */
     color: #ffffff !important;
     font-size: 18px !important;
     font-weight: bold !important;
     border: none !important;
-    border-radius: 10px !important;
-    height: 48px !important;
-    line-height: 48px !important;
-    margin: 0 !important;
-    width: 90% !important;
-    max-width: 300px !important;
+    border-radius: 8px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    margin: 0 12px !important;
+    width: 80% !important; /* 1ボタンの時は大きく */
     cursor: pointer !important;
     display: inline-block !important;
     box-sizing: border-box !important;
-    box-shadow: 0 2px 6px rgba(0,123,255,0.3) !important;
-    transition: background-color 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    position: relative !important;
+    text-align: center !important;
 }
 
 .kb-dialog-button:hover {
     background-color: #0056b3 !important;
+    opacity: 0.9 !important;
 }
 
-/* 4. エラー表示のツノ */
+/* キャンセルボタン等、非表示にすべきボタンの強制解除 */
+.kb-dialog-button[style*="display: none"] {
+    display: none !important;
+}
+
+/* --- 4. エラー表示のツノ --- */
 .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; padding: 6px 12px !important; font-size: 16px !important; margin-top: 10px !important; position: relative !important; }
 .error-message::before { content: "" !important; position: absolute !important; top: -10px !important; left: 20px !important; border-left: 10px solid transparent !important; border-right: 10px solid transparent !important; border-bottom: 10px solid #b7282e !important; }
