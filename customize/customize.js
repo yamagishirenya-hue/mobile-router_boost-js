@@ -11,30 +11,19 @@
     const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
     const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n送信設定（フィールドコードの不一致など）を確認してください。";
     
-    // 画像として許可する拡張子
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    // 許容する最大ファイルサイズ (2MB)
     const MAX_FILE_SIZE = 2 * 1024 * 1024;
-
-    // 「返送先が異なる」場合に必須チェックを行うフィールドのリスト
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
      * 0. エラー表示の生成
-     * 項目ごとの下に赤枠のメッセージを表示します
      */
     const showError = (fieldId, message) => {
         const fieldEl = document.querySelector(`[field-id="${fieldId}"]`);
         if (!fieldEl) return;
-
-        // 入力フィールド自体の色を変える
         const input = fieldEl.querySelector('input, select, textarea');
         if (input) input.classList.add('error-input');
-
-        // すでにエラーが表示されている場合は追加しない
         if (fieldEl.querySelector('.custom-error-container')) return;
-
-        // エラーメッセージ（赤枠）の作成
         const errorDiv = document.createElement('div');
         errorDiv.className = 'custom-error-container';
         errorDiv.innerHTML = `<div class="error-message">${message}</div>`;
@@ -46,18 +35,15 @@
      */
     const updateCarrierGuidance = (selectedValue) => {
         const allSectionIds = ["company_kddi", "company_docomo", "company_softbank", "non_company"];
-        
         allSectionIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.setProperty('display', 'none', 'important');
         });
-
         let targetId = "";
         if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
-
         if (targetId) {
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.style.setProperty('display', 'block', 'important');
@@ -70,9 +56,7 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-
         const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
-        
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -88,14 +72,14 @@
 
     /**
      * 3. ポップアップの監視・書き換え
-     * 【修正】デザイン崩れを防ぐため, 構造維持とスタイル適用のロジックを整理しました
+     * 【修正】デザインを強制的に整えるロジックを強化しました
      */
     const updatePopupByContent = () => {
-        // 全てのポップアップ候補を取得
-        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog, div[style*="position: fixed"] > div[style*="background-color"]');
+        // Boosterのあらゆるポップアップを捕捉
+        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog, div[style*="position: fixed"] > div[style*="z-index"]');
         
         popups.forEach(popup => {
-            // メッセージエリア（Booster標準の構造）の特定
+            // メッセージエリアの特定
             const msgArea = popup.querySelector('div[style*="overflow"]') || 
                             popup.querySelector('div[style*="height: 172px"]') || 
                             popup.querySelector('.kb-dialog-content');
@@ -104,46 +88,35 @@
             const txt = msgArea.innerText.trim();
             const lowTxt = txt.toLowerCase();
 
-            // A. 送信完了
+            // メッセージの差し替え
             if (txt === "Done!" || txt === MSG_COMPLETE) {
                 msgArea.innerText = MSG_COMPLETE;
-                msgArea.style.setProperty('height', 'auto', 'important');
-                msgArea.style.setProperty('min-height', '100px', 'important');
-                msgArea.style.setProperty('display', 'flex', 'important');
-                msgArea.style.setProperty('align-items', 'center', 'important');
-                msgArea.style.setProperty('justify-content', 'center', 'important');
-                msgArea.style.setProperty('font-size', '20px', 'important');
-
                 const okBtn = popup.querySelector('.kb-dialog-button');
                 if (okBtn && !okBtn.dataset.listenerAttached) {
                     okBtn.addEventListener('click', () => window.location.reload());
                     okBtn.dataset.listenerAttached = "true";
                 }
             } 
-            // B. 削除確認（何もしない）
             else if (txt.includes("削除")) {
-                return; 
+                return; // 削除確認はそのまま
             }
-            // C. サーバーエラー
             else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("server") || lowTxt.includes("failed")) {
                 if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
             }
-            // D. ファイルエラー
-            else if (txt.includes("画像ファイル") || txt.includes("拡張子") || (txt.includes("ファイル") && txt.includes("誤り"))) {
+            else if (txt.includes("画像") || txt.includes("拡張子")) {
                 if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
             }
-            // E. 入力エラー・必須チェック
-            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || lowTxt.includes("check")) {
+            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
                 if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
             }
-            // F. 送信前確認
             else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
                 msgArea.innerText = MSG_CONFIRM;
             }
             
-            // 外枠の調整
+            // レイアウト強制上書き
             popup.style.setProperty('height', 'auto', 'important');
-            popup.style.setProperty('min-height', '180px', 'important');
+            popup.style.setProperty('display', 'flex', 'important');
+            popup.style.setProperty('flex-direction', 'column', 'important');
         });
     };
 
@@ -156,17 +129,11 @@
             kb.alert = function(msg) {
                 let customMsg = msg;
                 const lowMsg = (msg || "").toLowerCase();
-
-                if (msg && msg.includes("削除")) {
-                    customMsg = msg;
-                } else if (lowMsg.includes("error") || lowMsg.includes("500") || lowMsg.includes("server") || lowMsg.includes("failed")) {
-                    customMsg = MSG_SERVER_ERROR;
-                } else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力") || msg.includes("ファイル"))) {
-                    // 他の項目エラーかファイルエラーか
+                if (msg && msg.includes("削除")) customMsg = msg;
+                else if (lowMsg.includes("error") || lowMsg.includes("500")) customMsg = MSG_SERVER_ERROR;
+                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
                     customMsg = (msg.includes("拡張子") || msg.includes("画像")) ? MSG_EXT_ERROR : MSG_ERROR;
-                } else if (msg === "Done!") {
-                    customMsg = MSG_COMPLETE;
-                }
+                } else if (msg === "Done!") customMsg = MSG_COMPLETE;
                 
                 const result = originalAlert.apply(this, [customMsg]);
                 setTimeout(updatePopupByContent, 50);
@@ -198,65 +165,35 @@
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
-
-        // 全てのエラー表示を一旦クリア
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
-
-        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
-        if (zipVal && zipVal.length !== 7) {
-            showError("郵便番号", "7桁の数字で入力してください。");
-            hasError = true;
-        }
-
-        // 電話番号
+        if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
-            if (val && (val.length < 10 || val.length > 11)) {
-                showError(id, "10桁または11桁の数字で入力してください。");
-                hasError = true;
-            }
+            if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
         });
-
-        // 必須項目チェック
-        if (isDiff) {
-            targetFieldIds.forEach(id => {
-                if (!(record[id]?.value || "").trim()) {
-                    showError(id, "必須項目です。");
-                    hasError = true;
-                }
-            });
-        }
-
-        // ファイル拡張子チェック（送信時にまとめて実施）
+        if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
+        
+        // 拡張子チェック
         document.querySelectorAll('.kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
             if (hiddenInput && fieldId) {
                 try {
                     const files = JSON.parse(hiddenInput.value || "[]");
-                    let fieldExtError = false;
-                    files.forEach(file => {
-                        const ext = (file.name || "").split('.').pop().toLowerCase();
-                        if (file.name && !IMAGE_EXTENSIONS.includes(ext)) fieldExtError = true;
-                    });
-                    if (fieldExtError) {
-                        showError(fieldId, MSG_EXT_ERROR);
-                        hasError = true;
-                    }
+                    let extErr = files.some(f => !IMAGE_EXTENSIONS.includes((f.name || "").split('.').pop().toLowerCase()));
+                    if (extErr) { showError(fieldId, MSG_EXT_ERROR); hasError = true; }
                 } catch (e) {}
             }
         });
 
-        if (hasError && typeof kb !== 'undefined' && kb.alert) {
-            kb.alert(MSG_ERROR);
-        }
+        if (hasError && typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_ERROR);
         return !hasError;
     };
 
@@ -273,14 +210,11 @@
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
-        
         fileFields.forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
-
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
-
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
             if (!btn) return;
 
@@ -315,18 +249,13 @@
 
             const currentValue = hiddenInput.value || "[]";
             if (field.dataset.lastValue !== currentValue) {
-                try {
-                    const files = JSON.parse(currentValue);
-                    renderFileNames(btn, files, hiddenInput);
-                    field.dataset.lastValue = currentValue;
-                } catch(e) {}
+                try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
 
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
-                fileInput.type = 'file'; fileInput.style.display = 'none'; 
-                fileInput.accept = "image/*";
+                fileInput.type = 'file'; fileInput.style.display = 'none'; fileInput.accept = "image/*";
                 field.appendChild(fileInput);
             }
 
