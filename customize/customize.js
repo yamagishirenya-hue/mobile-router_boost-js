@@ -90,6 +90,9 @@
         else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("画像ファイル")) {
             // エラーを維持
         } 
+        else if (txt.includes("削除"){
+            // デフォルトエラー文を維持
+        }
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
         }
@@ -147,11 +150,9 @@
             if (existing) existing.remove();
         });
 
-        // 郵便番号チェック
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) hasError = true;
 
-        // 電話番号チェック
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -165,7 +166,6 @@
             });
         }
 
-        // 画像拡張子チェック
         document.querySelectorAll('.kb-file').forEach(field => {
             const hidden = field.querySelector('input[type="hidden"]');
             if (hidden) {
@@ -200,7 +200,7 @@
 
     /**
      * 8. ファイル添付フィールドのカスタマイズ
-     * 【修正】削除時の同期不全とレイアウト崩れを解消しました
+     * 【修正】ファイル名リストを点線枠内に格納し, 標準の表示を非表示にしました
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
@@ -209,57 +209,66 @@
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
 
+            // 標準のファイル表示（.kb-guide）を非表示にする
+            const defaultGuide = field.querySelector('.kb-guide');
+            if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
+
+            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
+            if (!btn) return;
+
             // UIにファイルリストを表示する関数
-            const renderFileNames = (container, files, inputEl) => {
-                let labelContainer = container.querySelector('.kb-custom-file-list');
-                if (!labelContainer) {
-                    labelContainer = document.createElement('div');
-                    labelContainer.className = 'kb-custom-file-list';
-                    labelContainer.style.cssText = 'margin-top:12px; display:flex; flex-direction:column; gap:6px;';
-                    container.appendChild(labelContainer);
+            const renderFileNames = (buttonElement, files, inputEl) => {
+                let listArea = buttonElement.querySelector('.kb-custom-file-list');
+                if (!listArea) {
+                    listArea = document.createElement('div');
+                    listArea.className = 'kb-custom-file-list';
+                    // ボタン内下部に配置するスタイル
+                    listArea.style.cssText = 'width:100%; margin-top:15px; display:flex; flex-direction:column; gap:8px; padding:0 20px 20px; box-sizing:border-box;';
+                    buttonElement.appendChild(listArea);
                 }
                 
-                labelContainer.innerHTML = ''; // 再描画のためにクリア
+                listArea.innerHTML = ''; // クリア
                 
                 files.forEach((file, index) => {
                     const item = document.createElement('div');
-                    item.style.cssText = 'display:flex; align-items:center; gap:8px; background:#f0f7ff; padding:6px 10px; border-radius:6px; border:1px solid #d0e7ff;';
+                    item.style.cssText = 'display:flex; align-items:center; gap:8px; background:#f0f7ff; padding:8px 12px; border-radius:8px; border:1px solid #cce5ff; pointer-events:auto;';
                     
                     const nameSpan = document.createElement('span');
-                    nameSpan.className = 'kb-guide-item-label';
                     nameSpan.textContent = file.name;
-                    nameSpan.style.cssText = 'font-size:13px; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;';
+                    nameSpan.style.cssText = 'font-size:13px; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:left; font-weight:normal;';
                     
                     const delBtn = document.createElement('span');
                     delBtn.textContent = '×';
-                    delBtn.style.cssText = 'color:#e53935; cursor:pointer; font-weight:bold; font-size:16px; padding:0 4px;';
+                    delBtn.style.cssText = 'color:#e53935; cursor:pointer; font-weight:bold; font-size:18px; padding:0 6px; line-height:1;';
                     
-                    // 【重要】削除ロジック：hiddenInputの内容を更新して同期させる
+                    // 削除処理
                     delBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        files.splice(index, 1); // 配列から削除
-                        inputEl.value = JSON.stringify(files); // 保存
-                        inputEl.dispatchEvent(new Event('change', { bubbles: true })); // プラグインに通知
-                        renderFileNames(container, files, inputEl); // 再描画
+                        e.preventDefault();
+                        e.stopPropagation(); // ボタン自体のクリック（ファイル選択ダイアログ）を防ぐ
+                        files.splice(index, 1);
+                        inputEl.value = JSON.stringify(files);
+                        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                        renderFileNames(buttonElement, files, inputEl);
                     };
                     
                     item.appendChild(nameSpan);
                     item.appendChild(delBtn);
-                    labelContainer.appendChild(item);
+                    listArea.appendChild(item);
                 });
             };
 
-            // 初期化（既にファイルがある場合の描画）
+            // 初期化
             if (!field.dataset.initializedList) {
                 try {
                     const initialFiles = JSON.parse(hiddenInput.value || "[]");
                     if (initialFiles.length > 0) {
-                        renderFileNames(field, initialFiles, hiddenInput);
+                        renderFileNames(btn, initialFiles, hiddenInput);
                     }
                 } catch(e) {}
                 field.dataset.initializedList = "true";
             }
 
+            // ファイル選択用inputの設定
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
@@ -269,9 +278,7 @@
                 field.appendChild(fileInput);
             }
 
-            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
-            if (!btn) return;
-
+            // アップロード共通処理
             const handleFileUpload = async (file) => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (!IMAGE_EXTENSIONS.includes(ext)) {
@@ -288,7 +295,7 @@
                     
                     hiddenInput.value = JSON.stringify(currentFiles);
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    renderFileNames(field, currentFiles, hiddenInput);
+                    renderFileNames(btn, currentFiles, hiddenInput);
                 } catch (err) {
                     console.error("Upload failed", err);
                 }
@@ -318,12 +325,22 @@
                 field.dataset.dragHandled = "true";
             }
 
-            if (field.dataset.customized) return;
+            if (field.dataset.customized) {
+                // すでにカスタマイズ済みでも, Boosterの自動描画によるリスト再生成を監視
+                try {
+                    const currentFiles = JSON.parse(hiddenInput.value || "[]");
+                    renderFileNames(btn, currentFiles, hiddenInput);
+                } catch(e) {}
+                return;
+            }
             
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('box-shadow', 'none', 'important');
+            btn.style.setProperty('height', 'auto', 'important'); // 高さを可変に
+            btn.style.setProperty('min-height', '120px', 'important');
+            
             btn.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px; box-sizing: border-box; pointer-events: none;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 20px 10px; box-sizing: border-box; pointer-events: none;">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -336,7 +353,6 @@
             
             btn.style.setProperty('display', 'block', 'important');
             btn.style.setProperty('width', '100%', 'important');
-            btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('background-color', '#fdfdfd', 'important');
             btn.style.setProperty('border', '2px dashed #007bff', 'important');
             btn.style.setProperty('border-radius', '12px', 'important');
