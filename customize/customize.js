@@ -199,17 +199,67 @@
     };
 
     /**
-     * 8. ファイル添付フィールドのカスタマイズ（プラグインAPI連携版）
+     * 8. ファイル添付フィールドのカスタマイズ
+     * 【修正】削除時の同期不全とレイアウト崩れを解消しました
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
         
         fileFields.forEach(field => {
-            // 隠しinput（データ保存用）の取得
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
 
-            // ファイル選択用inputの設定
+            // UIにファイルリストを表示する関数
+            const renderFileNames = (container, files, inputEl) => {
+                let labelContainer = container.querySelector('.kb-custom-file-list');
+                if (!labelContainer) {
+                    labelContainer = document.createElement('div');
+                    labelContainer.className = 'kb-custom-file-list';
+                    labelContainer.style.cssText = 'margin-top:12px; display:flex; flex-direction:column; gap:6px;';
+                    container.appendChild(labelContainer);
+                }
+                
+                labelContainer.innerHTML = ''; // 再描画のためにクリア
+                
+                files.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'display:flex; align-items:center; gap:8px; background:#f0f7ff; padding:6px 10px; border-radius:6px; border:1px solid #d0e7ff;';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'kb-guide-item-label';
+                    nameSpan.textContent = file.name;
+                    nameSpan.style.cssText = 'font-size:13px; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;';
+                    
+                    const delBtn = document.createElement('span');
+                    delBtn.textContent = '×';
+                    delBtn.style.cssText = 'color:#e53935; cursor:pointer; font-weight:bold; font-size:16px; padding:0 4px;';
+                    
+                    // 【重要】削除ロジック：hiddenInputの内容を更新して同期させる
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        files.splice(index, 1); // 配列から削除
+                        inputEl.value = JSON.stringify(files); // 保存
+                        inputEl.dispatchEvent(new Event('change', { bubbles: true })); // プラグインに通知
+                        renderFileNames(container, files, inputEl); // 再描画
+                    };
+                    
+                    item.appendChild(nameSpan);
+                    item.appendChild(delBtn);
+                    labelContainer.appendChild(item);
+                });
+            };
+
+            // 初期化（既にファイルがある場合の描画）
+            if (!field.dataset.initializedList) {
+                try {
+                    const initialFiles = JSON.parse(hiddenInput.value || "[]");
+                    if (initialFiles.length > 0) {
+                        renderFileNames(field, initialFiles, hiddenInput);
+                    }
+                } catch(e) {}
+                field.dataset.initializedList = "true";
+            }
+
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
@@ -222,56 +272,28 @@
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
             if (!btn) return;
 
-            // ファイルアップロードの共通処理（プラグインAPI呼び出し）
             const handleFileUpload = async (file) => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (!IMAGE_EXTENSIONS.includes(ext)) {
                     if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
                     return;
                 }
-
                 if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
 
                 try {
-                    // BoosterのアップロードAPIを直接叩く
                     const uploadResult = await kb.file.upload(file);
-                    
-                    // 現在のファイルリストを取得して追加
                     let currentFiles = [];
-                    try { currentFiles = JSON.parse(hiddenInput.value); } catch(e) { currentFiles = []; }
+                    try { currentFiles = JSON.parse(hiddenInput.value || "[]"); } catch(e) { currentFiles = []; }
                     currentFiles.push(uploadResult);
                     
-                    // hidden inputの更新
                     hiddenInput.value = JSON.stringify(currentFiles);
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-                    // UI上のファイル名表示を更新
-                    renderFileNames(field, currentFiles);
+                    renderFileNames(field, currentFiles, hiddenInput);
                 } catch (err) {
                     console.error("Upload failed", err);
                 }
             };
 
-            // UIにファイル名を表示する関数
-            const renderFileNames = (container, files) => {
-                // 既存のラベルエリアを探すか作成する
-                let labelContainer = container.querySelector('.kb-custom-file-list');
-                if (!labelContainer) {
-                    labelContainer = document.createElement('div');
-                    labelContainer.className = 'kb-custom-file-list';
-                    labelContainer.style.marginTop = '10px';
-                    container.appendChild(labelContainer);
-                }
-                
-                labelContainer.innerHTML = files.map(f => `
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; background:#f0f7ff; padding:4px 8px; border-radius:4px;">
-                        <span class="kb-guide-item-label">${f.name}</span>
-                        <span style="color:#e53935; cursor:pointer;" onclick="this.parentElement.remove();">×</span>
-                    </div>
-                `).join('');
-            };
-
-            // ドラッグ&ドロップのイベント
             if (!field.dataset.dragHandled) {
                 const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
                 const highlight = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; };
@@ -280,29 +302,22 @@
                 ['dragenter', 'dragover'].forEach(name => {
                     field.addEventListener(name, (e) => { preventDefaults(e); highlight(); }, false);
                 });
-
                 ['dragleave', 'drop'].forEach(name => {
                     field.addEventListener(name, (e) => { preventDefaults(e); unhighlight(); }, false);
                 });
 
                 field.addEventListener('drop', (e) => {
                     const droppedFiles = e.dataTransfer.files;
-                    if (droppedFiles.length > 0) {
-                        handleFileUpload(droppedFiles[0]);
-                    }
+                    if (droppedFiles.length > 0) { handleFileUpload(droppedFiles[0]); }
                 }, false);
 
-                // input(file)の変化も監視
                 fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        handleFileUpload(e.target.files[0]);
-                    }
+                    if (e.target.files.length > 0) { handleFileUpload(e.target.files[0]); }
                 });
 
                 field.dataset.dragHandled = "true";
             }
 
-            // 初期デザイン適用
             if (field.dataset.customized) return;
             
             btn.style.setProperty('background-image', 'none', 'important');
