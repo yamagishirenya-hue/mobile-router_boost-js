@@ -88,7 +88,7 @@
             }
         } 
         else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("画像ファイル")) {
-            // 既存のエラーを維持
+            // エラーを維持
         } 
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
@@ -147,11 +147,11 @@
             if (existing) existing.remove();
         });
 
-        // 郵便番号
+        // 郵便番号チェック
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) hasError = true;
 
-        // 電話番号
+        // 電話番号チェック
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -165,17 +165,19 @@
             });
         }
 
-        // 添付ファイルの拡張子チェック
+        // 画像拡張子チェック
         document.querySelectorAll('.kb-file').forEach(field => {
-            const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
-            if (fieldId && record[fieldId]) {
-                const files = record[fieldId].value;
-                if (Array.isArray(files)) {
-                    files.forEach(file => {
-                        const ext = (file.name || "").split('.').pop().toLowerCase();
-                        if (file.name && !IMAGE_EXTENSIONS.includes(ext)) extError = true;
-                    });
-                }
+            const hidden = field.querySelector('input[type="hidden"]');
+            if (hidden) {
+                try {
+                    const files = JSON.parse(hidden.value);
+                    if (Array.isArray(files)) {
+                        files.forEach(file => {
+                            const ext = (file.name || "").split('.').pop().toLowerCase();
+                            if (file.name && !IMAGE_EXTENSIONS.includes(ext)) extError = true;
+                        });
+                    }
+                } catch (e) {}
             }
         });
         
@@ -197,37 +199,83 @@
     };
 
     /**
-     * 8. ファイル添付フィールドのデザイン変更 & ドラッグ&ドロップ機能の強化
-     * 【修正】ファイル選択を画像のみに制限し, ドロップ後の検知を確実化しました
+     * 8. ファイル添付フィールドのカスタマイズ（プラグインAPI連携版）
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
         
         fileFields.forEach(field => {
-            // Boosterが生成するinput[type="file"]を取得、または生成
+            // 隠しinput（データ保存用）の取得
+            const hiddenInput = field.querySelector('input[type="hidden"]');
+            if (!hiddenInput) return;
+
+            // ファイル選択用inputの設定
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.style.display = 'none';
-                field.appendChild(fileInput);
-            }
-            
-            // 【新規】ファイル選択ダイアログで画像のみを表示する設定
-            if (fileInput.accept !== "image/*") {
                 fileInput.accept = "image/*";
+                field.appendChild(fileInput);
             }
 
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
             if (!btn) return;
 
-            // ドラッグ&ドロップのイベントハンドリング
+            // ファイルアップロードの共通処理（プラグインAPI呼び出し）
+            const handleFileUpload = async (file) => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!IMAGE_EXTENSIONS.includes(ext)) {
+                    if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
+                    return;
+                }
+
+                if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
+
+                try {
+                    // BoosterのアップロードAPIを直接叩く
+                    const uploadResult = await kb.file.upload(file);
+                    
+                    // 現在のファイルリストを取得して追加
+                    let currentFiles = [];
+                    try { currentFiles = JSON.parse(hiddenInput.value); } catch(e) { currentFiles = []; }
+                    currentFiles.push(uploadResult);
+                    
+                    // hidden inputの更新
+                    hiddenInput.value = JSON.stringify(currentFiles);
+                    hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    // UI上のファイル名表示を更新
+                    renderFileNames(field, currentFiles);
+                } catch (err) {
+                    console.error("Upload failed", err);
+                }
+            };
+
+            // UIにファイル名を表示する関数
+            const renderFileNames = (container, files) => {
+                // 既存のラベルエリアを探すか作成する
+                let labelContainer = container.querySelector('.kb-custom-file-list');
+                if (!labelContainer) {
+                    labelContainer = document.createElement('div');
+                    labelContainer.className = 'kb-custom-file-list';
+                    labelContainer.style.marginTop = '10px';
+                    container.appendChild(labelContainer);
+                }
+                
+                labelContainer.innerHTML = files.map(f => `
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; background:#f0f7ff; padding:4px 8px; border-radius:4px;">
+                        <span class="kb-guide-item-label">${f.name}</span>
+                        <span style="color:#e53935; cursor:pointer;" onclick="this.parentElement.remove();">×</span>
+                    </div>
+                `).join('');
+            };
+
+            // ドラッグ&ドロップのイベント
             if (!field.dataset.dragHandled) {
                 const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
-
-                // 視覚効果
-                const highlight = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; btn.style.transform = 'scale(1.01)'; };
-                const unhighlight = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; btn.style.transform = 'scale(1)'; };
+                const highlight = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; };
+                const unhighlight = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; };
 
                 ['dragenter', 'dragover'].forEach(name => {
                     field.addEventListener(name, (e) => { preventDefaults(e); highlight(); }, false);
@@ -237,29 +285,19 @@
                     field.addEventListener(name, (e) => { preventDefaults(e); unhighlight(); }, false);
                 });
 
-                // ファイルドロップ時の実処理
                 field.addEventListener('drop', (e) => {
                     const droppedFiles = e.dataTransfer.files;
                     if (droppedFiles.length > 0) {
-                        const file = droppedFiles[0];
-                        const ext = file.name.split('.').pop().toLowerCase();
-
-                        // 拡張子チェック
-                        if (!IMAGE_EXTENSIONS.includes(ext)) {
-                            if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
-                            return;
-                        }
-
-                        // DataTransfer経由でinputに書き込む
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        fileInput.files = dataTransfer.files;
-
-                        // 複数のイベントを発生させ, Booster側の検知漏れを防ぐ
-                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-                        fileInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        handleFileUpload(droppedFiles[0]);
                     }
                 }, false);
+
+                // input(file)の変化も監視
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        handleFileUpload(e.target.files[0]);
+                    }
+                });
 
                 field.dataset.dragHandled = "true";
             }
