@@ -7,7 +7,7 @@
      */
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
-    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
+    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので, ご確認ください。";
     
     // 「返送先が異なる」場合に必須チェックを行うフィールドのリスト
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
@@ -194,6 +194,47 @@
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
+    /**
+     * 8. ファイル添付フィールドのデザイン変更
+     * 添付ボタンを分かりやすいアップロードエリアに変更します
+     */
+    const customizeFileField = () => {
+        // 画像添付フィールド（クラス名等は環境に合わせて調整が必要な場合があります）
+        const fileFields = document.querySelectorAll('.kb-file');
+        
+        fileFields.forEach(field => {
+            if (field.dataset.customized) return;
+            
+            const btn = field.querySelector('.kb-file-button');
+            if (btn) {
+                // ボタンテキストを追加（または変更）
+                btn.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 20px;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <span style="font-weight: bold; font-size: 16px;">ファイルを添付してください</span>
+                        <span style="font-size: 12px; color: #666;">（またはここにファイルをドロップ）</span>
+                    </div>
+                `;
+                
+                // デザインの適用
+                btn.style.setProperty('display', 'block', 'important');
+                btn.style.setProperty('width', '100%', 'important');
+                btn.style.setProperty('height', 'auto', 'important');
+                btn.style.setProperty('background-color', '#f8f9fa', 'important');
+                btn.style.setProperty('border', '2px dashed #ced4da', 'important');
+                btn.style.setProperty('border-radius', '8px', 'important');
+                btn.style.setProperty('color', '#495057', 'important');
+                btn.style.setProperty('transition', 'all 0.2s ease', 'important');
+                
+                // ホバー時の演出を追加（擬似要素の代わりに関数で制御）
+                btn.onmouseover = () => { btn.style.backgroundColor = '#e9ecef'; btn.style.borderColor = '#007bff'; };
+                btn.onmouseout = () => { btn.style.backgroundColor = '#f8f9fa'; btn.style.borderColor = '#ced4da'; };
+            }
+            
+            field.dataset.customized = "true";
+        });
+    };
+
     // --- メインイベントリスナーの登録 ---
 
     // フィールドの値が変更された際（セレクトボックスやラジオボタン等）
@@ -233,6 +274,7 @@
         overrideKbAlert();
         resetPostalInput();
         updateSubmitButtonState();
+        customizeFileField(); // ファイルフィールドのデザインを適用
     }, 500);
 
     // Kintone Booster イベントとの連携
@@ -243,6 +285,7 @@
             updateCarrierGuidance(ev.record["契約会社名"]?.value || ""); 
             updateSubmitButtonState();
             updateVisibility(ev.record);
+            customizeFileField();
             return ev;
         });
 
