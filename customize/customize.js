@@ -40,7 +40,7 @@
             if (el) el.style.setProperty('display', 'none', 'important');
         });
         let targetId = "";
-        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
+        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
@@ -72,14 +72,12 @@
 
     /**
      * 3. ポップアップの監視・書き換え
-     * 【修正】デザインを強制的に整えるロジックを強化しました
+     * 【修正】レイアウトを破壊していた style.setProperty ('display', 'flex' 等) を削除しました
      */
     const updatePopupByContent = () => {
-        // Boosterのあらゆるポップアップを捕捉
-        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog, div[style*="position: fixed"] > div[style*="z-index"]');
+        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog');
         
         popups.forEach(popup => {
-            // メッセージエリアの特定
             const msgArea = popup.querySelector('div[style*="overflow"]') || 
                             popup.querySelector('div[style*="height: 172px"]') || 
                             popup.querySelector('.kb-dialog-content');
@@ -88,7 +86,6 @@
             const txt = msgArea.innerText.trim();
             const lowTxt = txt.toLowerCase();
 
-            // メッセージの差し替え
             if (txt === "Done!" || txt === MSG_COMPLETE) {
                 msgArea.innerText = MSG_COMPLETE;
                 const okBtn = popup.querySelector('.kb-dialog-button');
@@ -98,7 +95,7 @@
                 }
             } 
             else if (txt.includes("削除")) {
-                return; // 削除確認はそのまま
+                return; 
             }
             else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("server") || lowTxt.includes("failed")) {
                 if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
@@ -112,11 +109,6 @@
             else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
                 msgArea.innerText = MSG_CONFIRM;
             }
-            
-            // レイアウト強制上書き
-            popup.style.setProperty('height', 'auto', 'important');
-            popup.style.setProperty('display', 'flex', 'important');
-            popup.style.setProperty('flex-direction', 'column', 'important');
         });
     };
 
