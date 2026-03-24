@@ -62,6 +62,7 @@
 
     /**
      * 3. ポップアップの監視・書き換え
+     * メッセージ内容に基づいて、自作のメッセージ案内に差し替えます
      */
     const updatePopupByContent = () => {
         const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
@@ -72,7 +73,7 @@
 
         const txt = msgArea.innerText.trim();
 
-        // 送信完了
+        // A. 送信完了
         if (txt === "Done!" || txt === MSG_COMPLETE) {
             msgArea.innerText = MSG_COMPLETE;
             msgArea.style.setProperty('height', 'auto', 'important');
@@ -88,19 +89,19 @@
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        // 削除確認
+        // B. 削除確認（デフォルト文言を維持）
         else if (txt.includes("削除")) {
-            // デフォルトのメッセージ（削除しますか？等）を維持
+            return; 
         }
-        // 必須・エラー
-        else if (txt.includes("誤り") || txt.includes("必須")) {
-            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
-        }
-        // 拡張子エラー
+        // C. 拡張子エラー
         else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
             if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
         }
-        // 送信前確認
+        // D. 必須チェック・入力エラー
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
+            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+        }
+        // E. 送信前確認
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
         }
@@ -110,20 +111,22 @@
 
     /**
      * 4. kb.alert のオーバーライド
+     * アラート関数が呼ばれたタイミングで引数のメッセージを書き換えます
      */
     const overrideKbAlert = () => {
         if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
+                
                 // 削除確認の場合は書き換えない
                 if (msg && msg.includes("削除")) {
                     customMsg = msg;
                 }
-                else if (msg && (msg.includes("誤り") || msg.includes("必須"))) {
+                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) {
                     customMsg = MSG_ERROR;
                 }
-                else if (msg && msg.includes("拡張子")) {
+                else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) {
                     customMsg = MSG_EXT_ERROR;
                 }
                 else if (msg === "Done!") {
@@ -280,13 +283,16 @@
                 field.dataset.initializedList = "true";
             }
 
+            // 【重要】inputの設定
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.style.display = 'none';
-                fileInput.accept = "image/*";
+                fileInput.accept = "image/*"; // クリックダイアログでの制限
                 field.appendChild(fileInput);
+            } else {
+                fileInput.accept = "image/*";
             }
 
             const handleFileUpload = async (file) => {
@@ -329,7 +335,10 @@
                 }, false);
 
                 fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) { handleFileUpload(e.target.files[0]); }
+                    if (e.target.files.length > 0) { 
+                        handleFileUpload(e.target.files[0]); 
+                        e.target.value = ''; // 選択解除して再選択可能にする
+                    }
                 });
 
                 field.dataset.dragHandled = "true";
