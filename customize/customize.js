@@ -88,43 +88,62 @@
 
     /**
      * 3. ポップアップの監視・書き換え
+     * 【修正】デザイン崩れを防ぐため, 構造維持とスタイル適用のロジックを整理しました
      */
     const updatePopupByContent = () => {
-        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog, div[style*="position: fixed"] > div[style*="z-index"]');
+        // 全てのポップアップ候補を取得
+        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog, div[style*="position: fixed"] > div[style*="background-color"]');
         
         popups.forEach(popup => {
+            // メッセージエリア（Booster標準の構造）の特定
             const msgArea = popup.querySelector('div[style*="overflow"]') || 
                             popup.querySelector('div[style*="height: 172px"]') || 
-                            popup.querySelector('.kb-dialog-content') ||
-                            popup.querySelector('div > span');
+                            popup.querySelector('.kb-dialog-content');
             if (!msgArea) return;
 
             const txt = msgArea.innerText.trim();
             const lowTxt = txt.toLowerCase();
 
+            // A. 送信完了
             if (txt === "Done!" || txt === MSG_COMPLETE) {
                 msgArea.innerText = MSG_COMPLETE;
+                msgArea.style.setProperty('height', 'auto', 'important');
+                msgArea.style.setProperty('min-height', '100px', 'important');
+                msgArea.style.setProperty('display', 'flex', 'important');
+                msgArea.style.setProperty('align-items', 'center', 'important');
+                msgArea.style.setProperty('justify-content', 'center', 'important');
                 msgArea.style.setProperty('font-size', '20px', 'important');
+
                 const okBtn = popup.querySelector('.kb-dialog-button');
                 if (okBtn && !okBtn.dataset.listenerAttached) {
                     okBtn.addEventListener('click', () => window.location.reload());
                     okBtn.dataset.listenerAttached = "true";
                 }
             } 
+            // B. 削除確認（何もしない）
             else if (txt.includes("削除")) {
                 return; 
             }
+            // C. サーバーエラー
             else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("server") || lowTxt.includes("failed")) {
                 if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
             }
-            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || lowTxt.includes("check") || txt.includes("ファイル")) {
+            // D. ファイルエラー
+            else if (txt.includes("画像ファイル") || txt.includes("拡張子") || (txt.includes("ファイル") && txt.includes("誤り"))) {
+                if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
+            }
+            // E. 入力エラー・必須チェック
+            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || lowTxt.includes("check")) {
                 if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
             }
+            // F. 送信前確認
             else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
                 msgArea.innerText = MSG_CONFIRM;
             }
             
+            // 外枠の調整
             popup.style.setProperty('height', 'auto', 'important');
+            popup.style.setProperty('min-height', '180px', 'important');
         });
     };
 
@@ -143,7 +162,8 @@
                 } else if (lowMsg.includes("error") || lowMsg.includes("500") || lowMsg.includes("server") || lowMsg.includes("failed")) {
                     customMsg = MSG_SERVER_ERROR;
                 } else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力") || msg.includes("ファイル"))) {
-                    customMsg = MSG_ERROR;
+                    // 他の項目エラーかファイルエラーか
+                    customMsg = (msg.includes("拡張子") || msg.includes("画像")) ? MSG_EXT_ERROR : MSG_ERROR;
                 } else if (msg === "Done!") {
                     customMsg = MSG_COMPLETE;
                 }
@@ -174,7 +194,6 @@
 
     /**
      * 6. フォームのバリデーション
-     * 【修正】送信時に添付ファイルの拡張子をチェックし, 赤枠メッセージを出すようにしました
      */
     const validateAll = (record) => {
         let hasError = false;
@@ -205,7 +224,7 @@
             }
         });
 
-        // 必須項目チェック（返送先が異なる場合）
+        // 必須項目チェック
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) {
@@ -215,7 +234,7 @@
             });
         }
 
-        // --- ファイル拡張子のバリデーションチェック ---
+        // ファイル拡張子チェック（送信時にまとめて実施）
         document.querySelectorAll('.kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
@@ -224,11 +243,8 @@
                     const files = JSON.parse(hiddenInput.value || "[]");
                     let fieldExtError = false;
                     files.forEach(file => {
-                        const fileName = file.name || "";
-                        const ext = fileName.split('.').pop().toLowerCase();
-                        if (fileName && !IMAGE_EXTENSIONS.includes(ext)) {
-                            fieldExtError = true;
-                        }
+                        const ext = (file.name || "").split('.').pop().toLowerCase();
+                        if (file.name && !IMAGE_EXTENSIONS.includes(ext)) fieldExtError = true;
                     });
                     if (fieldExtError) {
                         showError(fieldId, MSG_EXT_ERROR);
@@ -310,13 +326,11 @@
             if (!fileInput) {
                 fileInput = document.createElement('input');
                 fileInput.type = 'file'; fileInput.style.display = 'none'; 
-                // accept属性はユーザー利便性のために残しますが、プログラム側でのブロックは行いません
                 fileInput.accept = "image/*";
                 field.appendChild(fileInput);
             }
 
             const handleFileUpload = async (file) => {
-                // 送信時にチェックするため, ここでの即時エラー・中断処理を削除しました
                 if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
                 try {
                     const uploadResult = await kb.file.upload(file);
