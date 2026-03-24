@@ -8,13 +8,12 @@ body.show-target-fields [field-id="返送先対象者の氏名"], body.show-targ
 
 /* --- 3. ポップアップ（ダイアログ）の装飾 --- */
 
-/* 外枠：Boosterのレイアウト計算を壊さないよう、背景色と装飾のみ上書き */
+/* 外枠：配置や高さはBoosterに任せ、見た目の装飾のみ適用 */
 div[style*="rgb(240, 240, 240)"], .kb-dialog {
     background-color: #ffffff !important;
     border-radius: 12px !important;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
     border: none !important;
-    /* レイアウト（height, flex等）に関する指定は一切行いません */
 }
 
 /* メッセージエリア */
@@ -27,15 +26,16 @@ div[style*="rgb(240, 240, 240)"] > div:first-child,
     line-height: 1.6 !important;
 }
 
-/* ボタンエリア（フッター部） */
-div[style*="border-top-style: solid"] {
+/* ボタンエリア（フッター） */
+div[style*="border-top-style: solid"],
+div[style*="border-top: 1px solid"] {
     background-color: #f8f9fa !important;
     border-top: 1px solid #eeeeee !important;
     border-bottom-left-radius: 12px !important;
     border-bottom-right-radius: 12px !important;
 }
 
-/* ボタンのデザイン：配置は変えず色と形のみ変更 */
+/* ボタンのデザイン */
 .kb-dialog-button {
     background-color: #007bff !important;
     color: #ffffff !important;
