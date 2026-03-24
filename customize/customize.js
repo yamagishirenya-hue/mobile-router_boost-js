@@ -195,40 +195,55 @@
     };
 
     /**
-     * 8. ファイル添付フィールドのデザイン変更
+     * 8. ファイル添付フィールドのデザイン変更（詳細版）
      * 添付ボタンを分かりやすいアップロードエリアに変更します
      */
     const customizeFileField = () => {
-        // 画像添付フィールド（クラス名等は環境に合わせて調整が必要な場合があります）
         const fileFields = document.querySelectorAll('.kb-file');
         
         fileFields.forEach(field => {
             if (field.dataset.customized) return;
             
-            const btn = field.querySelector('.kb-file-button');
+            // クリップアイコンボタン（kb-icon-file / kb-search）を特定
+            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
+            
             if (btn) {
-                // ボタンテキストを追加（または変更）
+                // クリップアイコンの画像を無効化し、カスタムHTMLを注入
+                btn.style.setProperty('background-image', 'none', 'important');
+                btn.style.setProperty('box-shadow', 'none', 'important');
+                
                 btn.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 20px;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        <span style="font-weight: bold; font-size: 16px;">ファイルを添付してください</span>
-                        <span style="font-size: 12px; color: #666;">（またはここにファイルをドロップ）</span>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px; box-sizing: border-box;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <div style="font-weight: bold; font-size: 16px; color: #333;">故障箇所の写真を添付してください</div>
+                        <div style="font-size: 13px; color: #666;">（ここをクリック または ファイルをドロップ）</div>
                     </div>
                 `;
                 
-                // デザインの適用
+                // アップロードエリアとしてのデザイン適用
                 btn.style.setProperty('display', 'block', 'important');
                 btn.style.setProperty('width', '100%', 'important');
                 btn.style.setProperty('height', 'auto', 'important');
-                btn.style.setProperty('background-color', '#f8f9fa', 'important');
-                btn.style.setProperty('border', '2px dashed #ced4da', 'important');
-                btn.style.setProperty('border-radius', '8px', 'important');
-                btn.style.setProperty('color', '#495057', 'important');
+                btn.style.setProperty('background-color', '#fdfdfd', 'important');
+                btn.style.setProperty('border', '2px dashed #007bff', 'important');
+                btn.style.setProperty('border-radius', '12px', 'important');
+                btn.style.setProperty('padding', '0', 'important');
+                btn.style.setProperty('cursor', 'pointer', 'important');
                 btn.style.setProperty('transition', 'all 0.2s ease', 'important');
                 
-                // ホバー時の演出を追加（擬似要素の代わりに関数で制御）
-                btn.onmouseover = () => { btn.style.backgroundColor = '#e9ecef'; btn.style.borderColor = '#007bff'; };
-                btn.onmouseout = () => { btn.style.backgroundColor = '#f8f9fa'; btn.style.borderColor = '#ced4da'; };
+                // インタラクション（ホバー演出）
+                btn.onmouseenter = () => {
+                    btn.style.backgroundColor = '#f0f7ff';
+                    btn.style.borderColor = '#0056b3';
+                };
+                btn.onmouseleave = () => {
+                    btn.style.backgroundColor = '#fdfdfd';
+                    btn.style.borderColor = '#007bff';
+                };
             }
             
             field.dataset.customized = "true";
@@ -237,23 +252,21 @@
 
     // --- メインイベントリスナーの登録 ---
 
-    // フィールドの値が変更された際（セレクトボックスやラジオボタン等）
+    // フィールドの値が変更された際
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
 
-        // 契約会社名の選択時：キャリア案内文を更新
         if (fieldId === '契約会社名') {
             updateCarrierGuidance(e.target.value);
         }
 
-        // 同意ラジオボタンの選択時：送信ボタンの状態を更新
         if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') {
             updateSubmitButtonState();
         }
     });
 
-    // 文字入力時：自動成形（郵便番号のハイフン、電話番号の数字制限）
+    // 文字入力時
     document.addEventListener('input', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
@@ -268,20 +281,18 @@
         }
     });
 
-    // 定期監視（0.5秒おきにポップアップやリセット処理を実行）
+    // 定期監視
     setInterval(() => {
         updatePopupByContent();
         overrideKbAlert();
         resetPostalInput();
         updateSubmitButtonState();
-        customizeFileField(); // ファイルフィールドのデザインを適用
+        customizeFileField(); // 添付フィールドを常にチェック
     }, 500);
 
     // Kintone Booster イベントとの連携
     if (typeof kb !== 'undefined' && kb.event) {
-        // 画面表示時（新規作成、編集、閲覧）
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
-            // 初期データに基づいた表示・ボタン状態のセット
             updateCarrierGuidance(ev.record["契約会社名"]?.value || ""); 
             updateSubmitButtonState();
             updateVisibility(ev.record);
@@ -289,19 +300,15 @@
             return ev;
         });
 
-        // 返送先情報の出し分けフィールドが変更された時
         kb.event.on('kb.change.返送先対象者確認', (ev) => {
             updateVisibility(ev.record);
             return ev;
         });
 
-        // 送信ボタンが押された時
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
-            // 全項目のバリデーションを実行し、エラーなら送信を中断
             if (!validateAll(ev.record)) {
                 ev.error = true;
             } else {
-                // 送信直後に表示される可能性のあるポップアップを監視
                 setTimeout(updatePopupByContent, 100);
             }
             return ev;
