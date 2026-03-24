@@ -9,10 +9,11 @@
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので, ご確認ください。";
     const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
     const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
+    const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n添付ファイルのサイズを小さくするか, 管理者へ設定を確認してください。";
     
     // 画像として許可する拡張子
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    // 許容する最大ファイルサイズ (例: 2MB)
+    // 許容する最大ファイルサイズ (2MB)
     const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
     // 「返送先が異なる」場合に必須チェックを行うフィールドのリスト
@@ -91,20 +92,23 @@
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        // B. 削除確認
+        // B. 削除確認（維持）
         else if (txt.includes("削除")) {
             return; 
         }
-        // C. 拡張子エラー
+        // C. サーバーエラー (500エラー発生時のBooster通知を書き換え)
+        else if (txt.toLowerCase().includes("error") || txt.includes("500") || txt.includes("Internal Server Error")) {
+            if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
+        }
+        // D. 拡張子・サイズエラー
         else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
             if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
         }
-        // D. サイズエラー
         else if (txt.includes("サイズ")) {
             if (msgArea.innerText !== MSG_SIZE_ERROR) msgArea.innerText = MSG_SIZE_ERROR;
         }
-        // E. 必須チェック・入力エラー
-        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
+        // E. 必須・入力エラー
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || txt.includes("check")) {
             if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
         }
         // F. 送信前確認
@@ -123,7 +127,10 @@
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
+                const lowMsg = (msg || "").toLowerCase();
+
                 if (msg && msg.includes("削除")) customMsg = msg;
+                else if (lowMsg.includes("error") || lowMsg.includes("500") || lowMsg.includes("server error")) customMsg = MSG_SERVER_ERROR;
                 else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) customMsg = MSG_ERROR;
                 else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) customMsg = MSG_EXT_ERROR;
                 else if (msg && msg.includes("サイズ")) customMsg = MSG_SIZE_ERROR;
@@ -158,7 +165,6 @@
      */
     const validateAll = (record) => {
         let hasError = false;
-        let extError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
 
         document.querySelectorAll('[field-id]').forEach(el => {
@@ -258,6 +264,8 @@
                 fileInput.style.display = 'none';
                 fileInput.accept = "image/*";
                 field.appendChild(fileInput);
+            } else if (fileInput.accept !== "image/*") {
+                fileInput.accept = "image/*";
             }
 
             const handleFileUpload = async (file) => {
@@ -266,13 +274,12 @@
                     if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
                     return;
                 }
-                // 【追加】サイズチェック
                 if (file.size > MAX_FILE_SIZE) {
                     if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_SIZE_ERROR);
                     return;
                 }
-
                 if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
+
                 try {
                     const uploadResult = await kb.file.upload(file);
                     let currentFiles = [];
