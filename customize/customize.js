@@ -6,10 +6,10 @@
      */
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
-    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので, ご確認ください。";
+    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
     const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
     const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
-    const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\nSMTP設定（ポート番号と保護方式の組み合わせ等）を確認してください。";
+    const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n送信設定（フィールドコードの不一致など）を確認するか、添付ファイルのサイズを小さくして再度お試しください。";
     
     // 画像として許可する拡張子
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -24,15 +24,18 @@
      */
     const updateCarrierGuidance = (selectedValue) => {
         const allSectionIds = ["company_kddi", "company_docomo", "company_softbank", "non_company"];
+        
         allSectionIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.setProperty('display', 'none', 'important');
         });
+
         let targetId = "";
         if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
+
         if (targetId) {
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.style.setProperty('display', 'block', 'important');
@@ -45,7 +48,9 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
+
         const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
+        
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -63,51 +68,59 @@
      * 3. ポップアップの監視・書き換え
      */
     const updatePopupByContent = () => {
-        // ポップアップ要素（Booster標準の構造）
-        const popups = document.querySelectorAll('div[style*="position: fixed"] div[style*="rgb(240, 240, 240)"], div.kb-dialog');
+        // Booster標準のポップアップ外枠を探す
+        const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
+        if (!popup) return;
+
+        const msgArea = popup.querySelector('div[style*="overflow"]') || popup.querySelector('div[style*="height: 172px"]');
+        if (!msgArea) return;
+
+        const txt = msgArea.innerText.trim();
+        const lowTxt = txt.toLowerCase();
+
+        // A. 送信完了
+        if (txt === "Done!" || txt === MSG_COMPLETE) {
+            msgArea.innerText = MSG_COMPLETE;
+            msgArea.style.setProperty('height', 'auto', 'important');
+            msgArea.style.setProperty('min-height', '100px', 'important');
+            msgArea.style.setProperty('display', 'flex', 'important');
+            msgArea.style.setProperty('align-items', 'center', 'important');
+            msgArea.style.setProperty('justify-content', 'center', 'important');
+            msgArea.style.setProperty('font-size', '20px', 'important');
+
+            const okBtn = popup.querySelector('.kb-dialog-button');
+            if (okBtn && !okBtn.dataset.listenerAttached) {
+                okBtn.addEventListener('click', () => window.location.reload());
+                okBtn.dataset.listenerAttached = "true";
+            }
+        } 
+        // B. 削除確認（文言をそのまま維持）
+        else if (txt.includes("削除")) {
+            return; 
+        }
+        // C. サーバーエラー (500, Internal Server Error, Failed to fetch等)
+        else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("server") || lowTxt.includes("failed")) {
+            if (msgArea.innerText !== MSG_SERVER_ERROR) {
+                msgArea.innerText = MSG_SERVER_ERROR;
+            }
+        }
+        // D. 拡張子・サイズエラー
+        else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
+            if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
+        }
+        else if (txt.includes("サイズ")) {
+            if (msgArea.innerText !== MSG_SIZE_ERROR) msgArea.innerText = MSG_SIZE_ERROR;
+        }
+        // E. 必須チェック・一般エラー
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || lowTxt.includes("check")) {
+            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+        }
+        // F. 送信前確認
+        else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
+            msgArea.innerText = MSG_CONFIRM;
+        }
         
-        popups.forEach(popup => {
-            const msgArea = popup.querySelector('div[style*="overflow"]') || popup.querySelector('div[style*="height: 172px"]') || popup.querySelector('.kb-dialog-content');
-            if (!msgArea) return;
-
-            const txt = msgArea.innerText.trim();
-            const lowTxt = txt.toLowerCase();
-
-            // A. 送信完了
-            if (txt === "Done!" || txt === MSG_COMPLETE) {
-                msgArea.innerText = MSG_COMPLETE;
-                msgArea.style.setProperty('font-size', '20px', 'important');
-                const okBtn = popup.querySelector('.kb-dialog-button');
-                if (okBtn && !okBtn.dataset.listenerAttached) {
-                    okBtn.addEventListener('click', () => window.location.reload());
-                    okBtn.dataset.listenerAttached = "true";
-                }
-            } 
-            // B. 削除確認（維持）
-            else if (txt.includes("削除")) {
-                return; 
-            }
-            // C. サーバーエラー（500系）
-            else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("internal server error")) {
-                if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
-            }
-            // D. 拡張子・サイズエラー
-            else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
-                if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
-            }
-            else if (txt.includes("サイズ")) {
-                if (msgArea.innerText !== MSG_SIZE_ERROR) msgArea.innerText = MSG_SIZE_ERROR;
-            }
-            // E. 必須・一般入力エラー
-            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || lowTxt.includes("check")) {
-                if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
-            }
-            // F. 送信前確認
-            else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
-                msgArea.innerText = MSG_CONFIRM;
-            }
-            popup.style.setProperty('height', 'auto', 'important');
-        });
+        popup.style.setProperty('height', 'auto', 'important');
     };
 
     /**
@@ -119,10 +132,21 @@
             kb.alert = function(msg) {
                 let customMsg = msg;
                 const lowMsg = (msg || "").toLowerCase();
-                if (msg && msg.includes("削除")) customMsg = msg;
-                else if (lowMsg.includes("error") || lowMsg.includes("500")) customMsg = MSG_SERVER_ERROR;
-                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) customMsg = MSG_ERROR;
-                else if (msg && (msg.includes("拡張子") || msg.includes("画像ファイル"))) customMsg = MSG_EXT_ERROR;
+
+                if (msg && msg.includes("削除")) {
+                    customMsg = msg;
+                } else if (lowMsg.includes("error") || lowMsg.includes("500") || lowMsg.includes("server") || lowMsg.includes("failed")) {
+                    customMsg = MSG_SERVER_ERROR;
+                } else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) {
+                    customMsg = MSG_ERROR;
+                } else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) {
+                    customMsg = MSG_EXT_ERROR;
+                } else if (msg && msg.includes("サイズ")) {
+                    customMsg = MSG_SIZE_ERROR;
+                } else if (msg === "Done!") {
+                    customMsg = MSG_COMPLETE;
+                }
+                
                 const result = originalAlert.apply(this, [customMsg]);
                 setTimeout(updatePopupByContent, 50);
                 return result;
@@ -153,24 +177,29 @@
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
+
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
+
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) hasError = true;
+
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
             if (val && (val.length < 10 || val.length > 11)) hasError = true;
         });
+
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) hasError = true;
             });
         }
+
         if (hasError && typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_ERROR);
         return !hasError;
     };
@@ -188,11 +217,14 @@
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
+        
         fileFields.forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
+
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
+
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
             if (!btn) return;
 
@@ -215,13 +247,16 @@
                     delBtn.textContent = '×';
                     delBtn.style.cssText = 'color:#e53935; cursor:pointer; font-weight:bold; font-size:18px; padding:0 6px; line-height:1;';
                     delBtn.onclick = (e) => {
-                        e.preventDefault(); e.stopPropagation();
+                        e.preventDefault();
+                        e.stopPropagation();
                         files.splice(index, 1);
                         inputEl.value = JSON.stringify(files);
                         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
                         renderFileNames(buttonElement, files, inputEl);
                     };
-                    item.appendChild(nameSpan); item.appendChild(delBtn); listArea.appendChild(item);
+                    item.appendChild(nameSpan);
+                    item.appendChild(delBtn);
+                    listArea.appendChild(item);
                 });
             };
 
@@ -237,15 +272,24 @@
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
-                fileInput.type = 'file'; fileInput.style.display = 'none'; fileInput.accept = "image/*";
+                fileInput.type = 'file';
+                fileInput.style.display = 'none';
+                fileInput.accept = "image/*";
                 field.appendChild(fileInput);
             }
 
             const handleFileUpload = async (file) => {
                 const ext = file.name.split('.').pop().toLowerCase();
-                if (!IMAGE_EXTENSIONS.includes(ext)) { kb.alert(MSG_EXT_ERROR); return; }
-                if (file.size > MAX_FILE_SIZE) { kb.alert(MSG_SIZE_ERROR); return; }
+                if (!IMAGE_EXTENSIONS.includes(ext)) {
+                    if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
+                    return;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_SIZE_ERROR);
+                    return;
+                }
                 if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
+
                 try {
                     const uploadResult = await kb.file.upload(file);
                     let currentFiles = [];
@@ -253,34 +297,52 @@
                     currentFiles.push(uploadResult);
                     hiddenInput.value = JSON.stringify(currentFiles);
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-                } catch (err) { console.error("Upload failed", err); }
+                } catch (err) {
+                    console.error("Upload failed", err);
+                    if (typeof kb !== 'undefined' && kb.alert) kb.alert("アップロード中にエラーが発生しました。");
+                }
             };
 
             if (!field.dataset.dragHandled) {
                 const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
                 const highlight = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; };
                 const unhighlight = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; };
-                ['dragenter', 'dragover'].forEach(name => field.addEventListener(name, (e) => { preventDefaults(e); highlight(); }, false));
-                ['dragleave', 'drop'].forEach(name => field.addEventListener(name, (e) => { preventDefaults(e); unhighlight(); }, false));
+                ['dragenter', 'dragover'].forEach(name => {
+                    field.addEventListener(name, (e) => { preventDefaults(e); highlight(); }, false);
+                });
+                ['dragleave', 'drop'].forEach(name => {
+                    field.addEventListener(name, (e) => { preventDefaults(e); unhighlight(); }, false);
+                });
                 field.addEventListener('drop', (e) => {
                     const droppedFiles = e.dataTransfer.files;
-                    if (droppedFiles.length > 0) handleFileUpload(droppedFiles[0]);
+                    if (droppedFiles.length > 0) { handleFileUpload(droppedFiles[0]); }
                 }, false);
                 fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) { handleFileUpload(e.target.files[0]); e.target.value = ''; }
+                    if (e.target.files.length > 0) { 
+                        handleFileUpload(e.target.files[0]); 
+                        e.target.value = ''; 
+                    }
                 });
                 field.dataset.dragHandled = "true";
             }
 
             if (field.dataset.customized) return;
+            
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('box-shadow', 'none', 'important');
             btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
-            btn.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 20px 10px; box-sizing: border-box; pointer-events: none;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <div style="font-weight: bold; font-size: 16px; color: #333;">故障箇所の写真を添付してください</div>
-                <div style="font-size: 13px; color: #666;">（ここをクリック または ファイルをドロップ）</div></div>`;
+            btn.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 20px 10px; box-sizing: border-box; pointer-events: none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <div style="font-weight: bold; font-size: 16px; color: #333;">故障箇所の写真を添付してください</div>
+                    <div style="font-size: 13px; color: #666;">（ここをクリック または ファイルをドロップ）</div>
+                </div>
+            `;
             btn.style.setProperty('display', 'block', 'important');
             btn.style.setProperty('width', '100%', 'important');
             btn.style.setProperty('background-color', '#fdfdfd', 'important');
@@ -295,6 +357,7 @@
         });
     };
 
+    // --- メインイベントリスナー ---
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
