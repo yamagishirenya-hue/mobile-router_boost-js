@@ -198,12 +198,26 @@
 
     /**
      * 8. ファイル添付フィールドのデザイン変更 & ドラッグ&ドロップ機能の強化
-     * ドロップされたファイルを確実に内部処理に受け渡します
+     * 【修正】ファイル選択を画像のみに制限し, ドロップ後の検知を確実化しました
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
         
         fileFields.forEach(field => {
+            // Boosterが生成するinput[type="file"]を取得、または生成
+            let fileInput = field.querySelector('input[type="file"]');
+            if (!fileInput) {
+                fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.style.display = 'none';
+                field.appendChild(fileInput);
+            }
+            
+            // 【新規】ファイル選択ダイアログで画像のみを表示する設定
+            if (fileInput.accept !== "image/*") {
+                fileInput.accept = "image/*";
+            }
+
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
             if (!btn) return;
 
@@ -236,23 +250,14 @@
                             return;
                         }
 
-                        // Boosterが隠し持っているinput[type="file"]を探す
-                        // もしなければ、この場で疑似的な窓口を作成してBoosterのリスナーに渡す
-                        let fileInput = field.querySelector('input[type="file"]');
-                        if (!fileInput) {
-                            fileInput = document.createElement('input');
-                            fileInput.type = 'file';
-                            fileInput.style.display = 'none';
-                            field.appendChild(fileInput);
-                        }
-
-                        // FileListをDataTransfer経由でinputに書き込む
+                        // DataTransfer経由でinputに書き込む
                         const dataTransfer = new DataTransfer();
                         dataTransfer.items.add(file);
                         fileInput.files = dataTransfer.files;
 
-                        // changeイベントをバブリング付きで発生させ、Booster側に「ファイルが来た」ことを通知
+                        // 複数のイベントを発生させ, Booster側の検知漏れを防ぐ
                         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        fileInput.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                 }, false);
 
