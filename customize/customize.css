@@ -6,62 +6,41 @@ body .kb-injector { max-width: 800px !important; margin: 10px auto !important; p
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
 body.show-target-fields [field-id="返送先対象者の氏名"], body.show-target-fields [field-id="返送先対象者の会社名"], body.show-target-fields [field-id="返送先対象者の電話番号"], body.show-target-fields [field-id="返送先対象者のメールアドレス"] { display: block !important; background-color: #f8fbff !important; padding: 15px 20px !important; border-left: 5px solid #007bff !important; }
 
-/* --- 3. ポップアップ（ダイアログ）デザイン --- */
+/* --- 3. ポップアップ（ダイアログ）の装飾 --- */
 
-/* 外枠：白背景と影、角丸のみを適用（配置はプラグインに任せる） */
+/* 外枠：レイアウト（高さや配置）はプラグインに任せ、色と装飾のみ上書き */
 div[style*="rgb(240, 240, 240)"], .kb-dialog {
     background-color: #ffffff !important;
     border-radius: 12px !important;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
     border: none !important;
-    overflow: hidden !important;
 }
 
-/* メッセージエリア：背景を透明化し、文字を読みやすく */
+/* メッセージエリア */
 div[style*="rgb(240, 240, 240)"] > div:first-child, 
 .kb-dialog > div:first-child,
 .kb-dialog-content {
-    background-color: transparent !important;
     color: #333 !important;
-    font-size: 18px !important;
     font-weight: bold !important;
-    line-height: 1.5 !important;
-    padding: 30px !important;
-    text-align: center !important;
 }
 
-/* ボタンエリア（フッター）：薄いグレーの背景で区切りを明確に */
-div[style*="border-top-style: solid"],
-div[style*="border-top: 1px solid"] {
-    background-color: #f8f9fa !important;
-    border-top: 1px solid #eeeeee !important;
-}
-
-/* ボタン：青色のモダンなデザインに変更 */
+/* ボタン：配置は変えず、色と形のみ変更 */
 .kb-dialog-button {
     background-color: #007bff !important;
     color: #ffffff !important;
-    font-size: 15px !important;
+    border-radius: 6px !important;
     font-weight: bold !important;
     border: none !important;
-    border-radius: 6px !important;
-    padding: 0 20px !important;
     cursor: pointer !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-    transition: opacity 0.2s ease !important;
 }
 
-.kb-dialog-button:hover {
-    opacity: 0.8 !important;
-}
-
-/* --- 4. 項目別エラー表示（赤い吹き出し）のデザイン --- */
+/* --- 4. 項目別エラー表示（赤い吹き出し） --- */
 .custom-error-container {
     margin-top: 8px !important;
 }
 
 .error-message {
-    background-color: #b7282e !important; /* 深みのある赤 */
+    background-color: #b7282e !important;
     color: #ffffff !important;
     border-radius: 4px !important;
     padding: 8px 12px !important;
@@ -69,10 +48,9 @@ div[style*="border-top: 1px solid"] {
     font-weight: bold !important;
     position: relative !important;
     display: inline-block !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
-/* 吹き出しのツノ（上向き三角形） */
+/* 吹き出しのツノ */
 .error-message::before {
     content: "" !important;
     position: absolute !important;
@@ -83,7 +61,7 @@ div[style*="border-top: 1px solid"] {
     border-bottom: 8px solid #b7282e !important;
 }
 
-/* エラー時の入力枠（JSから付与されるクラス） */
+/* エラー時の入力枠 */
 .error-input {
     border-color: #b7282e !important;
     background-color: #fff5f5 !important;
