@@ -8,9 +8,12 @@
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので, ご確認ください。";
     const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
+    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
     
     // 画像として許可する拡張子
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    // 許容する最大ファイルサイズ (例: 2MB)
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
     // 「返送先が異なる」場合に必須チェックを行うフィールドのリスト
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
@@ -62,7 +65,6 @@
 
     /**
      * 3. ポップアップの監視・書き換え
-     * メッセージ内容に基づいて、自作のメッセージ案内に差し替えます
      */
     const updatePopupByContent = () => {
         const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
@@ -89,7 +91,7 @@
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        // B. 削除確認（デフォルト文言を維持）
+        // B. 削除確認
         else if (txt.includes("削除")) {
             return; 
         }
@@ -97,11 +99,15 @@
         else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
             if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
         }
-        // D. 必須チェック・入力エラー
+        // D. サイズエラー
+        else if (txt.includes("サイズ")) {
+            if (msgArea.innerText !== MSG_SIZE_ERROR) msgArea.innerText = MSG_SIZE_ERROR;
+        }
+        // E. 必須チェック・入力エラー
         else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
             if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
         }
-        // E. 送信前確認
+        // F. 送信前確認
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
         }
@@ -111,27 +117,17 @@
 
     /**
      * 4. kb.alert のオーバーライド
-     * アラート関数が呼ばれたタイミングで引数のメッセージを書き換えます
      */
     const overrideKbAlert = () => {
         if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
-                
-                // 削除確認の場合は書き換えない
-                if (msg && msg.includes("削除")) {
-                    customMsg = msg;
-                }
-                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) {
-                    customMsg = MSG_ERROR;
-                }
-                else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) {
-                    customMsg = MSG_EXT_ERROR;
-                }
-                else if (msg === "Done!") {
-                    customMsg = MSG_COMPLETE;
-                }
+                if (msg && msg.includes("削除")) customMsg = msg;
+                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) customMsg = MSG_ERROR;
+                else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) customMsg = MSG_EXT_ERROR;
+                else if (msg && msg.includes("サイズ")) customMsg = MSG_SIZE_ERROR;
+                else if (msg === "Done!") customMsg = MSG_COMPLETE;
                 
                 const result = originalAlert.apply(this, [customMsg]);
                 setTimeout(updatePopupByContent, 50);
@@ -187,26 +183,6 @@
             });
         }
 
-        document.querySelectorAll('.kb-file').forEach(field => {
-            const hidden = field.querySelector('input[type="hidden"]');
-            if (hidden) {
-                try {
-                    const files = JSON.parse(hidden.value);
-                    if (Array.isArray(files)) {
-                        files.forEach(file => {
-                            const ext = (file.name || "").split('.').pop().toLowerCase();
-                            if (file.name && !IMAGE_EXTENSIONS.includes(ext)) extError = true;
-                        });
-                    }
-                } catch (e) {}
-            }
-        });
-        
-        if (extError) {
-            if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
-            return false;
-        }
-
         if (hasError && typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_ERROR);
         return !hasError;
     };
@@ -243,21 +219,16 @@
                     listArea.style.cssText = 'width:100%; margin-top:15px; display:flex; flex-direction:column; gap:8px; padding:0 20px 20px; box-sizing:border-box;';
                     buttonElement.appendChild(listArea);
                 }
-                
                 listArea.innerHTML = '';
-                
                 files.forEach((file, index) => {
                     const item = document.createElement('div');
                     item.style.cssText = 'display:flex; align-items:center; gap:8px; background:#f0f7ff; padding:8px 12px; border-radius:8px; border:1px solid #cce5ff; pointer-events:auto;';
-                    
                     const nameSpan = document.createElement('span');
                     nameSpan.textContent = file.name;
                     nameSpan.style.cssText = 'font-size:13px; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:left; font-weight:normal;';
-                    
                     const delBtn = document.createElement('span');
                     delBtn.textContent = '×';
                     delBtn.style.cssText = 'color:#e53935; cursor:pointer; font-weight:bold; font-size:18px; padding:0 6px; line-height:1;';
-                    
                     delBtn.onclick = (e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -266,7 +237,6 @@
                         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
                         renderFileNames(buttonElement, files, inputEl);
                     };
-                    
                     item.appendChild(nameSpan);
                     item.appendChild(delBtn);
                     listArea.appendChild(item);
@@ -276,23 +246,18 @@
             if (!field.dataset.initializedList) {
                 try {
                     const initialFiles = JSON.parse(hiddenInput.value || "[]");
-                    if (initialFiles.length > 0) {
-                        renderFileNames(btn, initialFiles, hiddenInput);
-                    }
+                    if (initialFiles.length > 0) renderFileNames(btn, initialFiles, hiddenInput);
                 } catch(e) {}
                 field.dataset.initializedList = "true";
             }
 
-            // 【重要】inputの設定
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.style.display = 'none';
-                fileInput.accept = "image/*"; // クリックダイアログでの制限
-                field.appendChild(fileInput);
-            } else {
                 fileInput.accept = "image/*";
+                field.appendChild(fileInput);
             }
 
             const handleFileUpload = async (file) => {
@@ -301,14 +266,18 @@
                     if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
                     return;
                 }
-                if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
+                // 【追加】サイズチェック
+                if (file.size > MAX_FILE_SIZE) {
+                    if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_SIZE_ERROR);
+                    return;
+                }
 
+                if (typeof kb === 'undefined' || !kb.file || !kb.file.upload) return;
                 try {
                     const uploadResult = await kb.file.upload(file);
                     let currentFiles = [];
                     try { currentFiles = JSON.parse(hiddenInput.value || "[]"); } catch(e) { currentFiles = []; }
                     currentFiles.push(uploadResult);
-                    
                     hiddenInput.value = JSON.stringify(currentFiles);
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
                     renderFileNames(btn, currentFiles, hiddenInput);
@@ -321,26 +290,22 @@
                 const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
                 const highlight = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; };
                 const unhighlight = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; };
-
                 ['dragenter', 'dragover'].forEach(name => {
                     field.addEventListener(name, (e) => { preventDefaults(e); highlight(); }, false);
                 });
                 ['dragleave', 'drop'].forEach(name => {
                     field.addEventListener(name, (e) => { preventDefaults(e); unhighlight(); }, false);
                 });
-
                 field.addEventListener('drop', (e) => {
                     const droppedFiles = e.dataTransfer.files;
                     if (droppedFiles.length > 0) { handleFileUpload(droppedFiles[0]); }
                 }, false);
-
                 fileInput.addEventListener('change', (e) => {
                     if (e.target.files.length > 0) { 
                         handleFileUpload(e.target.files[0]); 
-                        e.target.value = ''; // 選択解除して再選択可能にする
+                        e.target.value = ''; 
                     }
                 });
-
                 field.dataset.dragHandled = "true";
             }
 
@@ -351,12 +316,10 @@
                 } catch(e) {}
                 return;
             }
-            
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('box-shadow', 'none', 'important');
             btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
-            
             btn.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 20px 10px; box-sizing: border-box; pointer-events: none;">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -368,7 +331,6 @@
                     <div style="font-size: 13px; color: #666;">（ここをクリック または ファイルをドロップ）</div>
                 </div>
             `;
-            
             btn.style.setProperty('display', 'block', 'important');
             btn.style.setProperty('width', '100%', 'important');
             btn.style.setProperty('background-color', '#fdfdfd', 'important');
@@ -377,23 +339,19 @@
             btn.style.setProperty('padding', '0', 'important');
             btn.style.setProperty('cursor', 'pointer', 'important');
             btn.style.setProperty('transition', 'all 0.2s ease', 'important');
-            
             btn.onmouseenter = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; };
             btn.onmouseleave = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; };
-            
             field.dataset.customized = "true";
         });
     };
 
     // --- メインイベントリスナー ---
-
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
         if (fieldId === '契約会社名') updateCarrierGuidance(e.target.value);
         if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
     });
-
     document.addEventListener('input', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
@@ -423,9 +381,7 @@
             customizeFileField();
             return ev;
         });
-
         kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
-
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) ev.error = true;
             else setTimeout(updatePopupByContent, 100);
