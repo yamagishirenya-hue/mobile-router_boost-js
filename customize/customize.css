@@ -6,85 +6,65 @@ body .kb-injector { max-width: 800px !important; margin: 10px auto !important; p
 [field-id="返送先対象者の氏名"], [field-id="返送先対象者の会社名"], [field-id="返送先対象者の電話番号"], [field-id="返送先対象者のメールアドレス"] { display: none !important;}
 body.show-target-fields [field-id="返送先対象者の氏名"], body.show-target-fields [field-id="返送先対象者の会社名"], body.show-target-fields [field-id="返送先対象者の電話番号"], body.show-target-fields [field-id="返送先対象者のメールアドレス"] { display: block !important; background-color: #f8fbff !important; padding: 15px 20px !important; border-left: 5px solid #007bff !important; }
 
-/* --- 3. ポップアップ共通デザイン（強制上書き） --- */
+/* --- 3. ポップアップ共通デザイン（安定版） --- */
 
-/* 外枠の白背景化とサイズ固定 */
+/* 外枠の白背景化とデザイン調整 */
 div[style*="rgb(240, 240, 240)"], .kb-dialog {
     background-color: #ffffff !important;
     border-radius: 16px !important;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.25) !important;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.2) !important;
+    border: none !important;
     height: auto !important;
     min-height: 200px !important;
-    max-height: 80vh !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    border: none !important;
-    display: flex !important;
-    flex-direction: column !important;
 }
 
-/* メッセージエリアのスタイル */
+/* メッセージエリアのデザイン */
 div[style*="rgb(240, 240, 240)"] > div:first-child, 
 .kb-dialog > div:first-child,
 .kb-dialog-content {
-    height: auto !important;
-    min-height: 120px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 40px 30px !important;
+    background-color: transparent !important;
+    color: #333 !important;
     font-size: 20px !important;
     font-weight: bold !important;
+    padding: 40px 30px !important;
     text-align: center !important;
-    white-space: pre-wrap !important;
     line-height: 1.6 !important;
-    color: #333 !important;
-    flex: 1 !important;
-    overflow-y: auto !important;
+    height: auto !important;
 }
 
-/* ボタンコンテナのスタイル */
+/* ボタンエリアのデザイン（フッター） */
 div[style*="position: absolute;"][style*="bottom: 0px"],
 div[style*="border-top-style: solid"] {
-    position: relative !important;
-    bottom: auto !important;
-    left: auto !important;
     background: #f8f9fa !important;
     border-top: 1px solid #eeeeee !important;
-    height: 70px !important;
-    min-height: 70px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 20px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+    padding: 15px 0 !important;
+    text-align: center !important;
+    height: auto !important;
 }
 
-/* OKボタンのデザイン */
+/* OK/Cancelボタンの個別デザイン */
 .kb-dialog-button {
     background-color: #007bff !important;
     color: #ffffff !important;
-    font-size: 18px !important;
+    font-size: 16px !important;
     font-weight: bold !important;
     border: none !important;
-    border-radius: 10px !important;
-    height: 48px !important;
-    line-height: 48px !important;
-    margin: 0 !important;
-    width: 90% !important;
-    max-width: 300px !important;
+    border-radius: 8px !important;
+    padding: 10px 30px !important;
+    margin: 0 10px !important;
     cursor: pointer !important;
     display: inline-block !important;
-    box-sizing: border-box !important;
-    box-shadow: 0 2px 6px rgba(0,123,255,0.3) !important;
-    transition: background-color 0.2s ease !important;
+    min-width: 120px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+    transition: opacity 0.2s ease !important;
 }
 
 .kb-dialog-button:hover {
-    background-color: #0056b3 !important;
+    opacity: 0.8 !important;
 }
 
-/* 4. エラー表示のツノ */
+/* --- 4. 項目別エラー表示のデザイン --- */
 .error-message { background-color: rgb(183, 40, 46) !important; color: #ffffff !important; border-radius: 4px !important; padding: 6px 12px !important; font-size: 16px !important; margin-top: 10px !important; position: relative !important; }
 .error-message::before { content: "" !important; position: absolute !important; top: -10px !important; left: 20px !important; border-left: 10px solid transparent !important; border-right: 10px solid transparent !important; border-bottom: 10px solid #b7282e !important; }
