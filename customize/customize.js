@@ -9,7 +9,7 @@
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
     const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
     const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
-    const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n送信設定（フィールドコードの不一致など）を確認するか、添付ファイルのサイズを小さくして再度お試しください。";
+    const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n入力内容を確認するか、添付ファイルのサイズを小さくして再度お試しください。";
     
     // 画像として許可する拡張子
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -68,7 +68,6 @@
      * 3. ポップアップの監視・書き換え
      */
     const updatePopupByContent = () => {
-        // Booster標準のポップアップ外枠を探す
         const popup = document.querySelector('div[style*="rgb(240, 240, 240)"]');
         if (!popup) return;
 
@@ -76,7 +75,6 @@
         if (!msgArea) return;
 
         const txt = msgArea.innerText.trim();
-        const lowTxt = txt.toLowerCase();
 
         // A. 送信完了
         if (txt === "Done!" || txt === MSG_COMPLETE) {
@@ -94,15 +92,13 @@
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        // B. 削除確認（文言をそのまま維持）
+        // B. 削除確認（維持）
         else if (txt.includes("削除")) {
             return; 
         }
-        // C. サーバーエラー (500, Internal Server Error, Failed to fetch等)
-        else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("server") || lowTxt.includes("failed")) {
-            if (msgArea.innerText !== MSG_SERVER_ERROR) {
-                msgArea.innerText = MSG_SERVER_ERROR;
-            }
+        // C. サーバーエラー対応
+        else if (txt.toLowerCase().includes("error") || txt.includes("500") || txt.includes("Internal Server Error")) {
+            if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
         }
         // D. 拡張子・サイズエラー
         else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
@@ -111,8 +107,8 @@
         else if (txt.includes("サイズ")) {
             if (msgArea.innerText !== MSG_SIZE_ERROR) msgArea.innerText = MSG_SIZE_ERROR;
         }
-        // E. 必須チェック・一般エラー
-        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || lowTxt.includes("check")) {
+        // E. 必須・入力エラー
+        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください") || txt.includes("check")) {
             if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
         }
         // F. 送信前確認
@@ -133,19 +129,12 @@
                 let customMsg = msg;
                 const lowMsg = (msg || "").toLowerCase();
 
-                if (msg && msg.includes("削除")) {
-                    customMsg = msg;
-                } else if (lowMsg.includes("error") || lowMsg.includes("500") || lowMsg.includes("server") || lowMsg.includes("failed")) {
-                    customMsg = MSG_SERVER_ERROR;
-                } else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) {
-                    customMsg = MSG_ERROR;
-                } else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) {
-                    customMsg = MSG_EXT_ERROR;
-                } else if (msg && msg.includes("サイズ")) {
-                    customMsg = MSG_SIZE_ERROR;
-                } else if (msg === "Done!") {
-                    customMsg = MSG_COMPLETE;
-                }
+                if (msg && msg.includes("削除")) customMsg = msg;
+                else if (lowMsg.includes("error") || lowMsg.includes("500") || lowMsg.includes("server error")) customMsg = MSG_SERVER_ERROR;
+                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力してください"))) customMsg = MSG_ERROR;
+                else if (msg && (msg.includes("画像ファイル") || msg.includes("拡張子"))) customMsg = MSG_EXT_ERROR;
+                else if (msg && msg.includes("サイズ")) customMsg = MSG_SIZE_ERROR;
+                else if (msg === "Done!") customMsg = MSG_COMPLETE;
                 
                 const result = originalAlert.apply(this, [customMsg]);
                 setTimeout(updatePopupByContent, 50);
@@ -260,6 +249,7 @@
                 });
             };
 
+            // 変更があった時だけ再描画するように最適化
             const currentValue = hiddenInput.value || "[]";
             if (field.dataset.lastValue !== currentValue) {
                 try {
@@ -299,7 +289,6 @@
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
                 } catch (err) {
                     console.error("Upload failed", err);
-                    if (typeof kb !== 'undefined' && kb.alert) kb.alert("アップロード中にエラーが発生しました。");
                 }
             };
 
