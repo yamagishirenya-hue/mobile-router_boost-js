@@ -3,19 +3,20 @@
 
     /**
      * 表示メッセージの定数定義
-     * ユーザーに表示する文言を一箇所で管理します
      */
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので, ご確認ください。";
     const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
     
+    // 画像として許可する拡張子
+    const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
     // 「返送先が異なる」場合に必須チェックを行うフィールドのリスト
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
      * 1. キャリア案内文の表示制御
-     * セレクトボックス（契約会社名）の選択肢に合わせて、特定のHTML要素を表示/非表示にします
      */
     const updateCarrierGuidance = (selectedValue) => {
         const allSectionIds = ["company_kddi", "company_docomo", "company_softbank", "non_company"];
@@ -39,7 +40,6 @@
 
     /**
      * 2. 送信ボタンの活性・非活性制御
-     * 同意ラジオボタンが「同意します。」になっていない場合は送信ボタンを無効化（グレーアウト）します
      */
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
@@ -88,9 +88,7 @@
             }
         } 
         else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("画像ファイル")) {
-            if (!msgArea.innerText.includes(MSG_ERROR) && !msgArea.innerText.includes(MSG_EXT_ERROR)) {
-                // すでにエラー文言がセットされている場合は上書きしない（拡張子エラー表示のため）
-            }
+            // 既存のエラーを維持
         } 
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
@@ -137,7 +135,6 @@
 
     /**
      * 6. フォームのバリデーション
-     * 拡張子のチェックを追加しました
      */
     const validateAll = (record) => {
         let hasError = false;
@@ -162,27 +159,21 @@
             if (val && (val.length < 10 || val.length > 11)) hasError = true;
         });
 
-        // 必須項目チェック
         if (isDiff) {
             targetFieldIds.forEach(id => {
                 if (!(record[id]?.value || "").trim()) hasError = true;
             });
         }
 
-        // --- 画像ファイルの拡張子チェック ---
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        // 全ての添付ファイルフィールドをスキャン
+        // 添付ファイルの拡張子チェック
         document.querySelectorAll('.kb-file').forEach(field => {
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
             if (fieldId && record[fieldId]) {
-                const files = record[fieldId].value; // Boosterのファイルオブジェクト配列
+                const files = record[fieldId].value;
                 if (Array.isArray(files)) {
                     files.forEach(file => {
-                        const fileName = file.name || "";
-                        const ext = fileName.split('.').pop().toLowerCase();
-                        if (fileName && !imageExtensions.includes(ext)) {
-                            extError = true;
-                        }
+                        const ext = (file.name || "").split('.').pop().toLowerCase();
+                        if (file.name && !IMAGE_EXTENSIONS.includes(ext)) extError = true;
                     });
                 }
             }
@@ -206,81 +197,109 @@
     };
 
     /**
-     * 8. ファイル添付フィールドのデザイン変更 & ドラッグ抑制
+     * 8. ファイル添付フィールドのデザイン変更 & ドラッグ&ドロップ機能の強化
+     * ドロップされたファイルを確実に内部処理に受け渡します
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
         
         fileFields.forEach(field => {
-            // ブラウザがファイルを別タブで開くのを防ぐ（ドラッグイベントの抑制）
+            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
+            if (!btn) return;
+
+            // ドラッグ&ドロップのイベントハンドリング
             if (!field.dataset.dragHandled) {
-                const preventDefaults = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                };
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    field.addEventListener(eventName, preventDefaults, false);
+                const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
+
+                // 視覚効果
+                const highlight = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; btn.style.transform = 'scale(1.01)'; };
+                const unhighlight = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; btn.style.transform = 'scale(1)'; };
+
+                ['dragenter', 'dragover'].forEach(name => {
+                    field.addEventListener(name, (e) => { preventDefaults(e); highlight(); }, false);
                 });
+
+                ['dragleave', 'drop'].forEach(name => {
+                    field.addEventListener(name, (e) => { preventDefaults(e); unhighlight(); }, false);
+                });
+
+                // ファイルドロップ時の実処理
+                field.addEventListener('drop', (e) => {
+                    const droppedFiles = e.dataTransfer.files;
+                    if (droppedFiles.length > 0) {
+                        const file = droppedFiles[0];
+                        const ext = file.name.split('.').pop().toLowerCase();
+
+                        // 拡張子チェック
+                        if (!IMAGE_EXTENSIONS.includes(ext)) {
+                            if (typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_EXT_ERROR);
+                            return;
+                        }
+
+                        // Boosterが隠し持っているinput[type="file"]を探す
+                        // もしなければ、この場で疑似的な窓口を作成してBoosterのリスナーに渡す
+                        let fileInput = field.querySelector('input[type="file"]');
+                        if (!fileInput) {
+                            fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            fileInput.style.display = 'none';
+                            field.appendChild(fileInput);
+                        }
+
+                        // FileListをDataTransfer経由でinputに書き込む
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+
+                        // changeイベントをバブリング付きで発生させ、Booster側に「ファイルが来た」ことを通知
+                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }, false);
+
                 field.dataset.dragHandled = "true";
             }
 
+            // 初期デザイン適用
             if (field.dataset.customized) return;
             
-            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
+            btn.style.setProperty('background-image', 'none', 'important');
+            btn.style.setProperty('box-shadow', 'none', 'important');
+            btn.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px; box-sizing: border-box; pointer-events: none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <div style="font-weight: bold; font-size: 16px; color: #333;">故障箇所の写真を添付してください</div>
+                    <div style="font-size: 13px; color: #666;">（ここをクリック または ファイルをドロップ）</div>
+                </div>
+            `;
             
-            if (btn) {
-                btn.style.setProperty('background-image', 'none', 'important');
-                btn.style.setProperty('box-shadow', 'none', 'important');
-                
-                btn.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px; box-sizing: border-box;">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
-                        <div style="font-weight: bold; font-size: 16px; color: #333;">故障箇所の写真を添付してください</div>
-                        <div style="font-size: 13px; color: #666;">（ここをクリックしてファイルを選択）</div>
-                    </div>
-                `;
-                
-                btn.style.setProperty('display', 'block', 'important');
-                btn.style.setProperty('width', '100%', 'important');
-                btn.style.setProperty('height', 'auto', 'important');
-                btn.style.setProperty('background-color', '#fdfdfd', 'important');
-                btn.style.setProperty('border', '2px dashed #007bff', 'important');
-                btn.style.setProperty('border-radius', '12px', 'important');
-                btn.style.setProperty('padding', '0', 'important');
-                btn.style.setProperty('cursor', 'pointer', 'important');
-                btn.style.setProperty('transition', 'all 0.2s ease', 'important');
-                
-                btn.onmouseenter = () => {
-                    btn.style.backgroundColor = '#f0f7ff';
-                    btn.style.borderColor = '#0056b3';
-                };
-                btn.onmouseleave = () => {
-                    btn.style.backgroundColor = '#fdfdfd';
-                    btn.style.borderColor = '#007bff';
-                };
-            }
+            btn.style.setProperty('display', 'block', 'important');
+            btn.style.setProperty('width', '100%', 'important');
+            btn.style.setProperty('height', 'auto', 'important');
+            btn.style.setProperty('background-color', '#fdfdfd', 'important');
+            btn.style.setProperty('border', '2px dashed #007bff', 'important');
+            btn.style.setProperty('border-radius', '12px', 'important');
+            btn.style.setProperty('padding', '0', 'important');
+            btn.style.setProperty('cursor', 'pointer', 'important');
+            btn.style.setProperty('transition', 'all 0.2s ease', 'important');
+            
+            btn.onmouseenter = () => { btn.style.backgroundColor = '#f0f7ff'; btn.style.borderColor = '#0056b3'; };
+            btn.onmouseleave = () => { btn.style.backgroundColor = '#fdfdfd'; btn.style.borderColor = '#007bff'; };
             
             field.dataset.customized = "true";
         });
     };
 
-    // --- メインイベントリスナーの登録 ---
+    // --- メインイベントリスナー ---
 
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
-
-        if (fieldId === '契約会社名') {
-            updateCarrierGuidance(e.target.value);
-        }
-
-        if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') {
-            updateSubmitButtonState();
-        }
+        if (fieldId === '契約会社名') updateCarrierGuidance(e.target.value);
+        if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
     });
 
     document.addEventListener('input', (e) => {
@@ -288,7 +307,6 @@
         if (!fieldWrap) return;
         const fieldId = fieldWrap.getAttribute('field-id');
         let val = e.target.value;
-        
         if (fieldId === "郵便番号") {
             let d = val.replace(/[^\d]/g, "");
             e.target.value = d.length <= 3 ? d : d.slice(0, 3) + "-" + d.slice(3, 7);
@@ -297,7 +315,6 @@
         }
     });
 
-    // 定期監視
     setInterval(() => {
         updatePopupByContent();
         overrideKbAlert();
@@ -306,7 +323,6 @@
         customizeFileField();
     }, 500);
 
-    // Kintone Booster イベントとの連携
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
             updateCarrierGuidance(ev.record["契約会社名"]?.value || ""); 
@@ -316,17 +332,11 @@
             return ev;
         });
 
-        kb.event.on('kb.change.返送先対象者確認', (ev) => {
-            updateVisibility(ev.record);
-            return ev;
-        });
+        kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
 
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
-            if (!validateAll(ev.record)) {
-                ev.error = true;
-            } else {
-                setTimeout(updatePopupByContent, 100);
-            }
+            if (!validateAll(ev.record)) ev.error = true;
+            else setTimeout(updatePopupByContent, 100);
             return ev;
         });
     }
