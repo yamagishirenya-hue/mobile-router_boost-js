@@ -72,6 +72,7 @@
 
         const txt = msgArea.innerText.trim();
 
+        // 送信完了
         if (txt === "Done!" || txt === MSG_COMPLETE) {
             msgArea.innerText = MSG_COMPLETE;
             msgArea.style.setProperty('height', 'auto', 'important');
@@ -87,12 +88,19 @@
                 okBtn.dataset.listenerAttached = "true";
             }
         } 
-        else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("画像ファイル")) {
-            // エラーを維持
-        } 
-        else if (txt.includes("削除"){
-            // デフォルトエラー文を維持
+        // 削除確認
+        else if (txt.includes("削除")) {
+            // デフォルトのメッセージ（削除しますか？等）を維持
         }
+        // 必須・エラー
+        else if (txt.includes("誤り") || txt.includes("必須")) {
+            if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+        }
+        // 拡張子エラー
+        else if (txt.includes("画像ファイル") || txt.includes("拡張子")) {
+            if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
+        }
+        // 送信前確認
         else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
             msgArea.innerText = MSG_CONFIRM;
         }
@@ -108,9 +116,19 @@
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
-                if (msg && (msg.includes("誤り") || msg.includes("必須"))) customMsg = MSG_ERROR;
-                else if (msg && msg.includes("拡張子")) customMsg = MSG_EXT_ERROR;
-                else if (msg === "Done!") customMsg = MSG_COMPLETE;
+                // 削除確認の場合は書き換えない
+                if (msg && msg.includes("削除")) {
+                    customMsg = msg;
+                }
+                else if (msg && (msg.includes("誤り") || msg.includes("必須"))) {
+                    customMsg = MSG_ERROR;
+                }
+                else if (msg && msg.includes("拡張子")) {
+                    customMsg = MSG_EXT_ERROR;
+                }
+                else if (msg === "Done!") {
+                    customMsg = MSG_COMPLETE;
+                }
                 
                 const result = originalAlert.apply(this, [customMsg]);
                 setTimeout(updatePopupByContent, 50);
@@ -200,7 +218,6 @@
 
     /**
      * 8. ファイル添付フィールドのカスタマイズ
-     * 【修正】ファイル名リストを点線枠内に格納し, 標準の表示を非表示にしました
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
@@ -209,25 +226,22 @@
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
 
-            // 標準のファイル表示（.kb-guide）を非表示にする
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
 
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
             if (!btn) return;
 
-            // UIにファイルリストを表示する関数
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
                     listArea = document.createElement('div');
                     listArea.className = 'kb-custom-file-list';
-                    // ボタン内下部に配置するスタイル
                     listArea.style.cssText = 'width:100%; margin-top:15px; display:flex; flex-direction:column; gap:8px; padding:0 20px 20px; box-sizing:border-box;';
                     buttonElement.appendChild(listArea);
                 }
                 
-                listArea.innerHTML = ''; // クリア
+                listArea.innerHTML = '';
                 
                 files.forEach((file, index) => {
                     const item = document.createElement('div');
@@ -241,10 +255,9 @@
                     delBtn.textContent = '×';
                     delBtn.style.cssText = 'color:#e53935; cursor:pointer; font-weight:bold; font-size:18px; padding:0 6px; line-height:1;';
                     
-                    // 削除処理
                     delBtn.onclick = (e) => {
                         e.preventDefault();
-                        e.stopPropagation(); // ボタン自体のクリック（ファイル選択ダイアログ）を防ぐ
+                        e.stopPropagation();
                         files.splice(index, 1);
                         inputEl.value = JSON.stringify(files);
                         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -257,7 +270,6 @@
                 });
             };
 
-            // 初期化
             if (!field.dataset.initializedList) {
                 try {
                     const initialFiles = JSON.parse(hiddenInput.value || "[]");
@@ -268,7 +280,6 @@
                 field.dataset.initializedList = "true";
             }
 
-            // ファイル選択用inputの設定
             let fileInput = field.querySelector('input[type="file"]');
             if (!fileInput) {
                 fileInput = document.createElement('input');
@@ -278,7 +289,6 @@
                 field.appendChild(fileInput);
             }
 
-            // アップロード共通処理
             const handleFileUpload = async (file) => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (!IMAGE_EXTENSIONS.includes(ext)) {
@@ -326,7 +336,6 @@
             }
 
             if (field.dataset.customized) {
-                // すでにカスタマイズ済みでも, Boosterの自動描画によるリスト再生成を監視
                 try {
                     const currentFiles = JSON.parse(hiddenInput.value || "[]");
                     renderFileNames(btn, currentFiles, hiddenInput);
@@ -336,7 +345,7 @@
             
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('box-shadow', 'none', 'important');
-            btn.style.setProperty('height', 'auto', 'important'); // 高さを可変に
+            btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
             
             btn.innerHTML = `
