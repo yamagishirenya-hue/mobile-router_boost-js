@@ -10,7 +10,6 @@ body.show-target-fields [field-id="返送先対象者の氏名"], body.show-targ
 
 /* 外枠：配置や高さはBoosterに任せ、見た目の装飾のみ適用 */
 div[style*="rgb(240, 240, 240)"], .kb-dialog {
-    background-color: #ffffff !important;
     border-radius: 12px !important;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
     border: none !important;
