@@ -10,6 +10,7 @@
     const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
     const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
     const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n送信設定（フィールドコードの不一致など）を確認してください。";
+    const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     const MAX_FILE_SIZE = 2 * 1024 * 1024;
@@ -72,9 +73,10 @@
 
     /**
      * 3. ポップアップの監視・書き換え
-     * 【修正】レイアウトを破壊していた style.setProperty ('display', 'flex' 等) を削除しました
+     * 【修正】デザイン崩れと背景の透過不具合を解消しました
      */
     const updatePopupByContent = () => {
+        // 特定の色を持つダイアログ要素のみを正確に取得
         const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog');
         
         popups.forEach(popup => {
@@ -153,24 +155,45 @@
 
     /**
      * 6. フォームのバリデーション
+     * 【追加】メールアドレスの形式チェック
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
+        
+        // 全てのエラー表示を一旦クリア
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
+
+        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
+
+        // 電話番号
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
             if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
         });
+
+        // 必須項目チェック
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
+
+        // メールアドレスの形式チェック
+        const emailIds = ["修理依頼者様のメールアドレス"];
+        if (isDiff) emailIds.push("返送先対象者のメールアドレス");
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+        emailIds.forEach(id => {
+            const val = (record[id]?.value || "").trim();
+            if (val && !emailRegex.test(val)) {
+                showError(id, MSG_MAIL_ERROR);
+                hasError = true;
+            }
+        });
         
         // 拡張子チェック
         document.querySelectorAll('.kb-file').forEach(field => {
@@ -302,22 +325,29 @@
         });
     };
 
+    // --- メインイベントリスナー ---
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
         if (fieldId === '契約会社名') updateCarrierGuidance(e.target.value);
         if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
     });
+
     document.addEventListener('input', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (!fieldWrap) return;
         const fieldId = fieldWrap.getAttribute('field-id');
         let val = e.target.value;
+
         if (fieldId === "郵便番号") {
             let d = val.replace(/[^\d]/g, "");
             e.target.value = d.length <= 3 ? d : d.slice(0, 3) + "-" + d.slice(3, 7);
         } else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
+        } 
+        // 【追加】メールアドレスのリアルタイム入力制限（英数字と許可記号のみ）
+        else if (fieldId && fieldId.includes("メールアドレス")) {
+            e.target.value = val.replace(/[^a-zA-Z0-9@.!#$%&'*+/=?^_`{|}~-]/g, "");
         }
     });
 
