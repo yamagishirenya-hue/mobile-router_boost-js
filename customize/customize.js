@@ -84,7 +84,7 @@
             msgArea.style.setProperty('padding', '25px 20px', 'important');
 
             // 親要素(ダイアログ本体)のデザイン適用
-            const popup = msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
+            const popup = msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
             if (popup) {
                 popup.style.setProperty('background-color', '#ffffff', 'important');
                 popup.style.setProperty('border-radius', '12px', 'important');
@@ -105,7 +105,7 @@
             else if (txt.includes("画像") || txt.includes("拡張子")) {
                 if (msgArea.innerHTML !== targetExtErrorHtml) msgArea.innerHTML = targetExtErrorHtml;
             }
-            else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && txt !== MSG_COMPLETE) {
+            else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel") && txt !== MSG_COMPLETE) {
                 if (msgArea.innerHTML !== targetConfirmHtml) msgArea.innerHTML = targetConfirmHtml;
             }
         });
@@ -118,17 +118,23 @@
         );
         
         if (doneMsg) {
-            const donePopup = doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
+            // ダイアログ本体を特定
+            const donePopup = doneMsg.classList.contains('kb-dialog') ? doneMsg : (doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement);
+            
             if (donePopup) {
                 donePopup.style.setProperty('background-color', '#ffffff', 'important');
                 donePopup.style.setProperty('border-radius', '12px', 'important');
+                donePopup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
                 
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
-                if (doneMsg.innerHTML !== targetCompleteHtml) {
-                    doneMsg.innerHTML = targetCompleteHtml;
+                
+                // メッセージを差し替え（外枠自体がdoneMsgの場合は子要素を操作）
+                const contentArea = doneMsg.classList.contains('kb-dialog') ? doneMsg.querySelector('div[style*="overflow"]') : doneMsg;
+                if (contentArea && contentArea.innerHTML !== targetCompleteHtml) {
+                    contentArea.innerHTML = targetCompleteHtml;
+                    contentArea.style.setProperty('font-size', '20px', 'important');
+                    contentArea.style.setProperty('padding', '40px 20px', 'important');
                 }
-                doneMsg.style.setProperty('font-size', '20px', 'important');
-                doneMsg.style.setProperty('padding', '40px 20px', 'important');
                 
                 const okBtn = donePopup.querySelector('.kb-dialog-button');
                 if (okBtn && !okBtn.dataset.listenerAttached) {
