@@ -19,7 +19,6 @@ div[style*="rgb(240, 240, 240)"], .kb-dialog {
 div[style*="rgb(240, 240, 240)"] > div:first-child, 
 .kb-dialog > div:first-child,
 .kb-dialog-content {
-    background-color: transparent !important;
     color: #333 !important;
     font-weight: bold !important;
     line-height: 1.6 !important;
@@ -64,7 +63,7 @@ div[style*="border-top: 1px solid"] {
 .error-message::before {
     content: "" !important;
     position: absolute !important;
-    top: -8px !important;
+    top: -7px !important;
     left: 15px !important;
     border-left: 8px solid transparent !important;
     border-right: 8px solid transparent !important;
