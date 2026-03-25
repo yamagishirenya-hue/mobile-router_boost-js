@@ -4,11 +4,11 @@
     /**
      * 表示メッセージの定数定義
      */
-    const MSG_ERROR = "入力内容に誤りがあります。<br>赤枠の項目を確認してください。";
-    const MSG_CONFIRM = "入力内容に問題はありませんか？<br>よろしければ送信してください。";
-    const MSG_COMPLETE = "送信が完了しました。<br>完了メールが送付されますので、ご確認ください。";
-    const MSG_EXT_ERROR = "次の拡張子のみ添付可能です。<br>jpg, png, gif, webp,.heic,xlsx,docx";
-    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。<br>2MB以下の画像を選択してください。";
+    const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
+    const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
+    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
+    const MSG_EXT_ERROR = "次の拡張子のみ添付可能です。\njpg, png, gif, webp, heic, xlsx, docx";
+    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。\n2MB以下の画像を選択してください。";
     const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
@@ -72,7 +72,6 @@
 
     /**
      * 3. ポップアップの監視・書き換え
-     * 【修正】ご指定のHTMLタグ(height:58px)のみを対象にデザインを適用し, 背景の不具合を解消しました
      */
     const updatePopupByContent = () => {
         // 指定された固有のスタイルを持つメッセージエリアを直接探す
@@ -97,27 +96,41 @@
             const txt = msgArea.innerText.trim();
             const lowTxt = txt.toLowerCase();
 
-            // 文言の差し替え判定
+            // 文言の差し替え（改行反映のためinnerHTMLを使用し\nを<br>へ置換）
             if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
-                if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+                if (msgArea.innerText !== MSG_ERROR.replace(/\n/g, '')) {
+                    msgArea.innerHTML = MSG_ERROR.replace(/\n/g, '<br>');
+                }
             }
             else if (txt.includes("画像") || txt.includes("拡張子")) {
-                if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
+                if (msgArea.innerText !== MSG_EXT_ERROR.replace(/\n/g, '')) {
+                    msgArea.innerHTML = MSG_EXT_ERROR.replace(/\n/g, '<br>');
+                }
             }
-            else if (txt.length > 0 && txt !== MSG_CONFIRM && !txt.includes("削除")) {
-                msgArea.innerText = MSG_CONFIRM;
+            else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel")) {
+                if (msgArea.innerText !== MSG_CONFIRM.replace(/\n/g, '')) {
+                    msgArea.innerHTML = MSG_CONFIRM.replace(/\n/g, '<br>');
+                }
             }
         }
 
-        // 送信完了（Done!）のポップアップは構造が異なる場合があるため別途判定
+        // 送信完了ポップアップ判定とリロード処理
         const allDivs = document.querySelectorAll('div');
-        const doneMsg = Array.from(allDivs).find(el => el.innerText === "Done!");
+        const doneMsg = Array.from(allDivs).find(el => 
+            el.innerText.trim() === "Done!" || 
+            el.innerText.includes("送信が完了しました")
+        );
+        
         if (doneMsg) {
             const donePopup = doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             if (donePopup) {
                 donePopup.style.setProperty('background-color', '#ffffff', 'important');
                 donePopup.style.setProperty('border-radius', '12px', 'important');
-                doneMsg.innerText = MSG_COMPLETE;
+                
+                // メッセージを差し替え
+                if (!doneMsg.innerText.includes("送信が完了しました")) {
+                    doneMsg.innerHTML = MSG_COMPLETE.replace(/\n/g, '<br>');
+                }
                 doneMsg.style.setProperty('font-size', '20px', 'important');
                 doneMsg.style.setProperty('padding', '40px 20px', 'important');
                 
@@ -153,25 +166,37 @@
     };
 
     /**
+     * 5. 郵便番号フィールドのクリーニング
+     */
+    const resetPostalInput = () => {
+        const parentField = document.querySelector('[field-id="郵便番号"]');
+        if (!parentField) return;
+        const oldContainer = parentField.querySelector('.postal-box-container');
+        if (oldContainer) oldContainer.remove();
+        const input = parentField.querySelector('input');
+        if (input) {
+            input.style.display = 'block';
+            input.style.position = 'static';
+            input.style.opacity = '1';
+        }
+    };
+
+    /**
      * 6. フォームのバリデーション
-     * 【再実装】メールアドレスの形式チェックを確実に実行
      */
     const validateAll = (record) => {
         let hasError = false;
         const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
         
-        // 全てのエラー表示を一旦クリア
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
 
-        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
 
-        // 電話番号
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -179,13 +204,11 @@
             if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
         });
 
-        // 必須項目チェック
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
 
-        // メールアドレスの形式チェック（バリデーション）
         const emailIds = ["連絡先メールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         emailIds.forEach(id => {
             const val = (record[id]?.value || "").trim();
             if (val && !emailRegex.test(val)) {
@@ -194,7 +217,6 @@
             }
         });
         
-        // 拡張子チェック
         document.querySelectorAll('.kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
@@ -344,7 +366,6 @@
         } else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         } 
-        // メールアドレスのリアルタイム入力制限（英数字と許可記号のみ）
         else if (fieldId && fieldId.includes("メールアドレス")) {
             e.target.value = val.replace(/[^a-zA-Z0-9@.!#$%&'*+/=?^_`{|}~-]/g, "");
         }
@@ -353,6 +374,7 @@
     setInterval(() => {
         updatePopupByContent();
         overrideKbAlert();
+        resetPostalInput();
         updateSubmitButtonState();
         customizeFileField();
     }, 500);
