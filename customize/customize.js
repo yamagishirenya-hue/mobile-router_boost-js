@@ -74,16 +74,16 @@
      * 3. ポップアップの監視・書き換え
      */
     const updatePopupByContent = () => {
-        // 指定された固有のスタイルを持つメッセージエリアを直接探す
-        const msgArea = document.querySelector('div[style*="height: 58px"][style*="overflow: hidden auto"]');
+        // heightの値に関わらず, 構造的な特徴(overflow, width)からメッセージエリアを特定
+        const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
         
-        if (msgArea) {
-            // メッセージ要素自体のレイアウト調整
+        msgAreas.forEach(msgArea => {
+            // メッセージ要素のレイアウトを強制調整
             msgArea.style.setProperty('height', 'auto', 'important');
             msgArea.style.setProperty('min-height', '60px', 'important');
             msgArea.style.setProperty('padding', '25px 20px', 'important');
 
-            // メッセージ要素の親要素（ダイアログ本体）にのみ白背景デザインを適用
+            // 親要素(ダイアログ本体)のデザイン適用
             const popup = msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
             if (popup) {
                 popup.style.setProperty('background-color', '#ffffff', 'important');
@@ -94,19 +94,21 @@
             }
 
             const txt = msgArea.innerText.trim();
-            const lowTxt = txt.toLowerCase();
+            const targetErrorHtml = MSG_ERROR.replace(/\n/g, '<br>');
+            const targetConfirmHtml = MSG_CONFIRM.replace(/\n/g, '<br>');
+            const targetExtErrorHtml = MSG_EXT_ERROR.replace(/\n/g, '<br>');
 
-            // 文言の差し替え（改行反映のためinnerHTMLを使用し\nを<br>へ置換）
+            // 文言の差し替え判定
             if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
-                msgArea.innerHTML = MSG_ERROR.replace(/\n/g, '<br>');
+                if (msgArea.innerHTML !== targetErrorHtml) msgArea.innerHTML = targetErrorHtml;
             }
             else if (txt.includes("画像") || txt.includes("拡張子")) {
-                msgArea.innerHTML = MSG_EXT_ERROR.replace(/\n/g, '<br>');
+                if (msgArea.innerHTML !== targetExtErrorHtml) msgArea.innerHTML = targetExtErrorHtml;
             }
-            else if (txt.length > 0 && !txt.includes("送信しますか？")) {
-                msgArea.innerHTML = MSG_CONFIRM.replace(/\n/g, '<br>');
+            else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && txt !== MSG_COMPLETE) {
+                if (msgArea.innerHTML !== targetConfirmHtml) msgArea.innerHTML = targetConfirmHtml;
             }
-        }
+        });
 
         // 送信完了ポップアップ判定とリロード処理
         const allDivs = document.querySelectorAll('div');
@@ -121,9 +123,9 @@
                 donePopup.style.setProperty('background-color', '#ffffff', 'important');
                 donePopup.style.setProperty('border-radius', '12px', 'important');
                 
-                // メッセージを差し替え
-                if (!doneMsg.innerText.includes("送信が完了しました")) {
-                    doneMsg.innerHTML = MSG_COMPLETE.replace(/\n/g, '<br>');
+                const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
+                if (doneMsg.innerHTML !== targetCompleteHtml) {
+                    doneMsg.innerHTML = targetCompleteHtml;
                 }
                 doneMsg.style.setProperty('font-size', '20px', 'important');
                 doneMsg.style.setProperty('padding', '40px 20px', 'important');
@@ -145,7 +147,6 @@
             const originalAlert = kb.alert;
             kb.alert = function(msg) {
                 let customMsg = msg;
-                const lowMsg = (msg || "").toLowerCase();
                 if (msg && msg.includes("削除")) customMsg = msg;
                 else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
                     customMsg = (msg.includes("拡張子") || msg.includes("画像")) ? MSG_EXT_ERROR : MSG_ERROR;
