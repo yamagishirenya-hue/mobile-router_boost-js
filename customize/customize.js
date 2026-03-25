@@ -4,15 +4,14 @@
     /**
      * 表示メッセージの定数定義
      */
-    const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
-    const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
-    const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
-    const MSG_EXT_ERROR = "画像ファイル（jpg, png, gif, webp）のみ添付可能です。";
-    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。2MB以下の画像を選択してください。";
-    const MSG_SERVER_ERROR = "メール送信サーバーでエラーが発生しました。\n送信設定（フィールドコードの不一致など）を確認してください。";
+    const MSG_ERROR = "入力内容に誤りがあります。<br>赤枠の項目を確認してください。";
+    const MSG_CONFIRM = "入力内容に問題はありませんか？<br>よろしければ送信してください。";
+    const MSG_COMPLETE = "送信が完了しました。<br>完了メールが送付されますので、ご確認ください。";
+    const MSG_EXT_ERROR = "次の拡張子のみ添付可能です。<br>jpg, png, gif, webp,.heic,xlsx,docx";
+    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。<br>2MB以下の画像を選択してください。";
     const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
-    const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
     const MAX_FILE_SIZE = 2 * 1024 * 1024;
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
@@ -105,10 +104,7 @@
             else if (txt.includes("画像") || txt.includes("拡張子")) {
                 if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
             }
-            else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("failed")) {
-                if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
-            }
-            else if (txt.length > 0 && txt !== MSG_CONFIRM && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel")) {
+            else if (txt.length > 0 && txt !== MSG_CONFIRM && !txt.includes("削除")) {
                 msgArea.innerText = MSG_CONFIRM;
             }
         }
@@ -144,7 +140,6 @@
                 let customMsg = msg;
                 const lowMsg = (msg || "").toLowerCase();
                 if (msg && msg.includes("削除")) customMsg = msg;
-                else if (lowMsg.includes("error") || lowMsg.includes("500")) customMsg = MSG_SERVER_ERROR;
                 else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
                     customMsg = (msg.includes("拡張子") || msg.includes("画像")) ? MSG_EXT_ERROR : MSG_ERROR;
                 } else if (msg === "Done!") customMsg = MSG_COMPLETE;
@@ -154,22 +149,6 @@
                 return result;
             };
             kb.alert._isOverridden = true;
-        }
-    };
-
-    /**
-     * 5. 郵便番号フィールドのクリーニング
-     */
-    const resetPostalInput = () => {
-        const parentField = document.querySelector('[field-id="郵便番号"]');
-        if (!parentField) return;
-        const oldContainer = parentField.querySelector('.postal-box-container');
-        if (oldContainer) oldContainer.remove();
-        const input = parentField.querySelector('input');
-        if (input) {
-            input.style.display = 'block';
-            input.style.position = 'static';
-            input.style.opacity = '1';
         }
     };
 
@@ -204,7 +183,7 @@
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
 
         // メールアドレスの形式チェック（バリデーション）
-        const emailIds = ["修理依頼者様のメールアドレス"];
+        const emailIds = ["連絡先メールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         emailIds.forEach(id => {
