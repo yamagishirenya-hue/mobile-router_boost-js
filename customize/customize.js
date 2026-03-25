@@ -40,7 +40,7 @@
             if (el) el.style.setProperty('display', 'none', 'important');
         });
         let targetId = "";
-        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
+        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
