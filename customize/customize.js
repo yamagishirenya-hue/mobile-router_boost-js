@@ -73,45 +73,65 @@
 
     /**
      * 3. ポップアップの監視・書き換え
-     * 【修正】デザイン崩れと背景の透過不具合を解消しました
+     * 【修正】ご指定のHTMLタグ(height:58px)のみを対象にデザインを適用し, 背景の不具合を解消しました
      */
     const updatePopupByContent = () => {
-        // 特定の色を持つダイアログ要素のみを正確に取得
-        const popups = document.querySelectorAll('div[style*="rgb(240, 240, 240)"], .kb-dialog');
+        // 指定された固有のスタイルを持つメッセージエリアを直接探す
+        const msgArea = document.querySelector('div[style*="height: 58px"][style*="overflow: hidden auto"]');
         
-        popups.forEach(popup => {
-            const msgArea = popup.querySelector('div[style*="overflow"]') || 
-                            popup.querySelector('div[style*="height: 172px"]') || 
-                            popup.querySelector('.kb-dialog-content');
-            if (!msgArea) return;
+        if (msgArea) {
+            // メッセージ要素自体のレイアウト調整
+            msgArea.style.setProperty('height', 'auto', 'important');
+            msgArea.style.setProperty('min-height', '60px', 'important');
+            msgArea.style.setProperty('padding', '25px 20px', 'important');
+
+            // メッセージ要素の親要素（ダイアログ本体）にのみ白背景デザインを適用
+            const popup = msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
+            if (popup) {
+                popup.style.setProperty('background-color', '#ffffff', 'important');
+                popup.style.setProperty('border-radius', '12px', 'important');
+                popup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
+                popup.style.setProperty('border', 'none', 'important');
+                popup.style.setProperty('height', 'auto', 'important');
+            }
 
             const txt = msgArea.innerText.trim();
             const lowTxt = txt.toLowerCase();
 
-            if (txt === "Done!" || txt === MSG_COMPLETE) {
-                msgArea.innerText = MSG_COMPLETE;
-                const okBtn = popup.querySelector('.kb-dialog-button');
-                if (okBtn && !okBtn.dataset.listenerAttached) {
-                    okBtn.addEventListener('click', () => window.location.reload());
-                    okBtn.dataset.listenerAttached = "true";
-                }
-            } 
-            else if (txt.includes("削除")) {
-                return; 
-            }
-            else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("server") || lowTxt.includes("failed")) {
-                if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
+            // 文言の差し替え判定
+            if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
+                if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
             }
             else if (txt.includes("画像") || txt.includes("拡張子")) {
                 if (msgArea.innerText !== MSG_EXT_ERROR) msgArea.innerText = MSG_EXT_ERROR;
             }
-            else if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
-                if (msgArea.innerText !== MSG_ERROR) msgArea.innerText = MSG_ERROR;
+            else if (lowTxt.includes("error") || lowTxt.includes("500") || lowTxt.includes("failed")) {
+                if (msgArea.innerText !== MSG_SERVER_ERROR) msgArea.innerText = MSG_SERVER_ERROR;
             }
-            else if (txt.length > 0 && txt !== MSG_CONFIRM && txt !== MSG_COMPLETE && !txt.includes("OK") && !txt.includes("Cancel")) {
+            else if (txt.length > 0 && txt !== MSG_CONFIRM && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel")) {
                 msgArea.innerText = MSG_CONFIRM;
             }
-        });
+        }
+
+        // 送信完了（Done!）のポップアップは構造が異なる場合があるため別途判定
+        const allDivs = document.querySelectorAll('div');
+        const doneMsg = Array.from(allDivs).find(el => el.innerText === "Done!");
+        if (doneMsg) {
+            const donePopup = doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
+            if (donePopup) {
+                donePopup.style.setProperty('background-color', '#ffffff', 'important');
+                donePopup.style.setProperty('border-radius', '12px', 'important');
+                doneMsg.innerText = MSG_COMPLETE;
+                doneMsg.style.setProperty('font-size', '20px', 'important');
+                doneMsg.style.setProperty('padding', '40px 20px', 'important');
+                
+                const okBtn = donePopup.querySelector('.kb-dialog-button');
+                if (okBtn && !okBtn.dataset.listenerAttached) {
+                    okBtn.addEventListener('click', () => window.location.reload());
+                    okBtn.dataset.listenerAttached = "true";
+                }
+            }
+        }
     };
 
     /**
@@ -155,7 +175,7 @@
 
     /**
      * 6. フォームのバリデーション
-     * 【追加】メールアドレスの形式チェック
+     * 【再実装】メールアドレスの形式チェックを確実に実行
      */
     const validateAll = (record) => {
         let hasError = false;
@@ -183,10 +203,10 @@
         // 必須項目チェック
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
 
-        // メールアドレスの形式チェック
+        // メールアドレスの形式チェック（バリデーション）
         const emailIds = ["修理依頼者様のメールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         emailIds.forEach(id => {
             const val = (record[id]?.value || "").trim();
             if (val && !emailRegex.test(val)) {
@@ -345,7 +365,7 @@
         } else if (fieldId && fieldId.includes("電話番号")) {
             e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         } 
-        // 【追加】メールアドレスのリアルタイム入力制限（英数字と許可記号のみ）
+        // メールアドレスのリアルタイム入力制限（英数字と許可記号のみ）
         else if (fieldId && fieldId.includes("メールアドレス")) {
             e.target.value = val.replace(/[^a-zA-Z0-9@.!#$%&'*+/=?^_`{|}~-]/g, "");
         }
