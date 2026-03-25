@@ -86,11 +86,11 @@
             // 親要素(ダイアログ本体)のデザイン適用
             const popup = msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
             if (popup) {
-                popup.style.setProperty('background-color', '#ffffff', 'important');
+                popup.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
                 popup.style.setProperty('border-radius', '12px', 'important');
                 popup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
                 popup.style.setProperty('border', 'none', 'important');
-                popup.style.setProperty('height', 'auto', 'important');
+                popup.style.setProperty('height', '100%', 'important');
             }
 
             const txt = msgArea.innerText.trim();
@@ -122,7 +122,7 @@
             const donePopup = doneMsg.classList.contains('kb-dialog') ? doneMsg : (doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement);
             
             if (donePopup) {
-                donePopup.style.setProperty('background-color', '#ffffff', 'important');
+                donePopup.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
                 donePopup.style.setProperty('border-radius', '12px', 'important');
                 donePopup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
                 
