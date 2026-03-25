@@ -353,7 +353,6 @@
     setInterval(() => {
         updatePopupByContent();
         overrideKbAlert();
-        resetPostalInput();
         updateSubmitButtonState();
         customizeFileField();
     }, 500);
