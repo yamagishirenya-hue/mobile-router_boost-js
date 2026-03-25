@@ -98,19 +98,13 @@
 
             // 文言の差し替え（改行反映のためinnerHTMLを使用し\nを<br>へ置換）
             if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
-                if (msgArea.innerText !== MSG_ERROR.replace(/\n/g, '')) {
-                    msgArea.innerHTML = MSG_ERROR.replace(/\n/g, '<br>');
-                }
+                msgArea.innerHTML = MSG_ERROR.replace(/\n/g, '<br>');
             }
             else if (txt.includes("画像") || txt.includes("拡張子")) {
-                if (msgArea.innerText !== MSG_EXT_ERROR.replace(/\n/g, '')) {
-                    msgArea.innerHTML = MSG_EXT_ERROR.replace(/\n/g, '<br>');
-                }
+                msgArea.innerHTML = MSG_EXT_ERROR.replace(/\n/g, '<br>');
             }
-            else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel")) {
-                if (msgArea.innerText !== MSG_CONFIRM.replace(/\n/g, '')) {
-                    msgArea.innerHTML = MSG_CONFIRM.replace(/\n/g, '<br>');
-                }
+            else if (txt.length > 0 && !txt.includes("送信しますか？")) {
+                msgArea.innerHTML = MSG_CONFIRM.replace(/\n/g, '<br>');
             }
         }
 
