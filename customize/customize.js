@@ -56,7 +56,7 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-        const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
+        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]');
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -352,7 +352,7 @@
         const fieldWrap = e.target.closest('[field-id]');
         const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
         if (fieldId === '契約会社名') updateCarrierGuidance(e.target.value);
-        if (e.target.name === '修理費用' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
+        if (e.target.name === '修理受付費同意可否' || e.target.getAttribute('data-name') === '修理受付費同意可否') updateSubmitButtonState();
     });
 
     document.addEventListener('input', (e) => {
