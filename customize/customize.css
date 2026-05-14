@@ -1,9 +1,9 @@
-/* --- 1. フォーム全体のカード風デザイン --- */
+/* --- 1. フォーム全体のデザイン --- */
 body {
     background-color: #f0f2f5 !important;
 }
 
-/* フォーム本体の枠組みを強制適用 */
+/* フォーム本体を中央寄せにし、カード風のデザインを適用 */
 body .kb-injector {
     max-width: 850px !important;
     margin: 30px auto !important;
@@ -14,17 +14,25 @@ body .kb-injector {
     border: 1px solid #e0e4e9 !important;
 }
 
-/* --- 2. 出し分け・強調フィールドのデザイン --- */
+/* --- 2. 返送先出し分け項目の設定 --- */
+/* 初期状態（ご本人様の場合など）は非表示にする */
 [field-id="返送先対象者の氏名"], 
 [field-id="返送先対象者の会社名"], 
 [field-id="返送先対象者の電話番号"], 
 [field-id="返送先対象者のメールアドレス"] {
+    display: none !important;
+}
+
+/* 「返送先が異なる」が選択され、bodyにクラスが付与された時のみ表示 */
+body.show-target-fields [field-id="返送先対象者の氏名"], 
+body.show-target-fields [field-id="返送先対象者の会社名"], 
+body.show-target-fields [field-id="返送先対象者の電話番号"], 
+body.show-target-fields [field-id="返送先対象者のメールアドレス"] {
+    display: block !important;
     background-color: #f9fbff !important;
     border-left: 5px solid #007bff !important;
     margin-bottom: 12px !important;
-    padding-left: 20px !important;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    padding: 15px 20px !important;
 }
 
 /* --- 3. エラー時の赤い吹き出しメッセージ --- */
@@ -32,17 +40,21 @@ body .kb-injector {
     margin-top: 8px !important;
     clear: both !important;
 }
+
+/* 赤い吹き出し本体 */
 .error-message {
     background-color: #e53935 !important;
     color: #ffffff !important;
     border-radius: 4px !important;
-    padding: 8px 12px !important;
+    padding: 6px 12px !important;
     font-size: 13px !important;
     font-weight: bold !important;
     position: relative !important;
     display: inline-block !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
+
+/* 吹き出しの三角部分 */
 .error-message::before {
     content: "" !important;
     position: absolute !important;
@@ -52,6 +64,8 @@ body .kb-injector {
     border-right: 8px solid transparent !important;
     border-bottom: 8px solid #e53935 !important;
 }
+
+/* エラーがある入力欄を赤枠にする */
 .error-input {
     border-color: #e53935 !important;
     background-color: #fff5f5 !important;
@@ -60,9 +74,4 @@ body .kb-injector {
 /* --- 4. ポップアップおよびボタンの共通デザイン --- */
 .kb-dialog-button, #custom-ok-button {
     transition: all 0.2s ease !important;
-}
-
-/* --- 5. ファイルアップロードエリアのデザイン補強 --- */
-.kb-file button {
-    box-shadow: none !important;
 }
