@@ -40,7 +40,7 @@
             if (el) el.style.setProperty('display', 'none', 'important');
         });
         let targetId = "";
-        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
+        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
@@ -56,7 +56,7 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-        const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
+        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]');
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -114,14 +114,18 @@
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         
         if (doneMsg) {
+            // ダイアログ本体を特定（kb-dialogクラスを優先）
             const donePopup = doneMsg.classList.contains('kb-dialog') ? doneMsg : (doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement);
+            
             if (donePopup) {
+                // 背景色と不透明度を強力に上書きして透明化を防ぐ
                 donePopup.style.setProperty('background-color', '#ffffff', 'important');
-                donePopup.style.setProperty('border-radius', '12px', 'important');
-                donePopup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
                 donePopup.style.setProperty('opacity', '1', 'important');
                 donePopup.style.setProperty('display', 'block', 'important');
+                donePopup.style.setProperty('border-radius', '12px', 'important');
+                donePopup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
                 donePopup.style.setProperty('min-width', '450px', 'important');
+                donePopup.style.setProperty('height', 'auto', 'important');
                 
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
                 const contentArea = doneMsg.classList.contains('kb-dialog') ? doneMsg.querySelector('div[style*="overflow"]') : doneMsg;
@@ -129,7 +133,10 @@
                     contentArea.innerHTML = targetCompleteHtml;
                     contentArea.style.setProperty('font-size', '20px', 'important');
                     contentArea.style.setProperty('padding', '45px 30px', 'important');
+                    contentArea.style.setProperty('height', 'auto', 'important');
+                    contentArea.style.setProperty('min-height', '100px', 'important');
                 }
+                
                 const okBtn = donePopup.querySelector('.kb-dialog-button');
                 if (okBtn && !okBtn.dataset.listenerAttached) {
                     okBtn.addEventListener('click', () => window.location.reload());
@@ -195,7 +202,6 @@
 
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
 
-        // メールアドレスチェックの強化
         const emailIds = ["連絡先メールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
@@ -308,7 +314,7 @@
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (fieldWrap && fieldWrap.getAttribute('field-id') === '契約会社名') updateCarrierGuidance(e.target.value);
-        if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
+        if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理受付費同意可否') updateSubmitButtonState();
     });
 
     document.addEventListener('input', (e) => {
