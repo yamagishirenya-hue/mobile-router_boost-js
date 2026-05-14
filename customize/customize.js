@@ -77,37 +77,37 @@
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
         
         msgAreas.forEach(msgArea => {
-            // ダイアログ本体（白い箱になるべき要素）のデザイン適用関数
-            const applyWhiteBoxStyle = (el) => {
-                el.style.setProperty('background-color', '#ffffff', 'important');
-                el.style.setProperty('border-radius', '12px', 'important');
-                el.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.25)', 'important');
-                el.style.setProperty('border', 'none', 'important');
-                el.style.setProperty('opacity', '1', 'important');
-                el.style.setProperty('display', 'block', 'important');
-                el.style.setProperty('height', 'auto', 'important');
-            };
-
             const popup = msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
             
             if (popup) {
-                // 要素が全画面（オーバーレイ）かどうかを判定（画面幅の90%以上ならオーバーレイとみなす）
                 const isOverlay = popup.offsetWidth >= window.innerWidth * 0.9;
                 
                 if (isOverlay) {
-                    // オーバーレイだった場合は、メッセージエリア自体を白い箱にする
-                    applyWhiteBoxStyle(msgArea);
+                    // オーバーレイ（背景）は透過させ、中央揃えにする
+                    popup.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
+                    popup.style.setProperty('display', 'flex', 'important');
+                    popup.style.setProperty('align-items', 'center', 'important');
+                    popup.style.setProperty('justify-content', 'center', 'important');
+                    popup.style.setProperty('height', '100%', 'important');
+                    popup.style.setProperty('width', '100%', 'important');
+
+                    // メッセージエリア自体を白い箱にする
+                    msgArea.style.setProperty('background-color', '#ffffff', 'important');
+                    msgArea.style.setProperty('border-radius', '12px', 'important');
+                    msgArea.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
                     msgArea.style.setProperty('width', 'auto', 'important');
-                    msgArea.style.setProperty('max-width', '500px', 'important');
+                    msgArea.style.setProperty('min-width', '450px', 'important');
+                    msgArea.style.setProperty('height', 'auto', 'important');
                     msgArea.style.setProperty('margin', 'auto', 'important');
-                    msgArea.style.setProperty('position', 'relative', 'important');
                 } else {
-                    applyWhiteBoxStyle(popup);
+                    // 通常のダイアログ
+                    popup.style.setProperty('background-color', '#ffffff', 'important');
+                    popup.style.setProperty('border-radius', '12px', 'important');
+                    popup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
                     popup.style.setProperty('min-width', '450px', 'important');
                 }
             }
 
-            // メッセージ要素自体の余白調整
             msgArea.style.setProperty('min-height', '100px', 'important');
             msgArea.style.setProperty('padding', '40px 30px', 'important');
 
@@ -132,39 +132,44 @@
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         
         if (doneMsg) {
-            const donePopup = doneMsg.classList.contains('kb-dialog') ? doneMsg : (doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement);
+            const doneDialog = doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             
-            if (donePopup) {
-                const isOverlay = donePopup.offsetWidth >= window.innerWidth * 0.9;
-                const targetBox = isOverlay ? (doneMsg.classList.contains('kb-dialog') ? doneMsg.querySelector('div[style*="overflow"]') || doneMsg : doneMsg) : donePopup;
-
-                // 背景色と不透明度を強力に上書き
-                targetBox.style.setProperty('background-color', '#ffffff', 'important');
-                targetBox.style.setProperty('opacity', '1', 'important');
-                targetBox.style.setProperty('border-radius', '12px', 'important');
-                targetBox.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
+            if (doneDialog) {
+                const isOverlay = doneDialog.offsetWidth >= window.innerWidth * 0.9;
                 
                 if (isOverlay) {
-                    targetBox.style.setProperty('width', 'auto', 'important');
-                    targetBox.style.setProperty('min-width', '450px', 'important');
-                    targetBox.style.setProperty('margin', 'auto', 'important');
+                    doneDialog.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
+                    doneDialog.style.setProperty('display', 'flex', 'important');
+                    doneDialog.style.setProperty('align-items', 'center', 'important');
+                    doneDialog.style.setProperty('justify-content', 'center', 'important');
                 }
 
-                const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
+                // メッセージを書き換える対象（ボタンを消さないように注意）
                 const contentArea = doneMsg.classList.contains('kb-dialog') ? doneMsg.querySelector('div[style*="overflow"]') : doneMsg;
                 
-                if (contentArea && contentArea.innerHTML !== targetCompleteHtml) {
-                    contentArea.innerHTML = targetCompleteHtml;
-                    contentArea.style.setProperty('font-size', '20px', 'important');
+                if (contentArea) {
+                    contentArea.style.setProperty('background-color', '#ffffff', 'important');
+                    contentArea.style.setProperty('border-radius', '12px', 'important');
+                    contentArea.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
                     contentArea.style.setProperty('padding', '45px 30px', 'important');
+                    contentArea.style.setProperty('min-width', '450px', 'important');
                     contentArea.style.setProperty('height', 'auto', 'important');
-                    contentArea.style.setProperty('min-height', '100px', 'important');
+                    
+                    const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
+                    if (contentArea.innerHTML !== targetCompleteHtml) {
+                        contentArea.innerHTML = targetCompleteHtml;
+                        contentArea.style.setProperty('font-size', '20px', 'important');
+                    }
                 }
                 
-                const okBtn = donePopup.querySelector('.kb-dialog-button');
-                if (okBtn && !okBtn.dataset.listenerAttached) {
-                    okBtn.addEventListener('click', () => window.location.reload());
-                    okBtn.dataset.listenerAttached = "true";
+                // OKボタンの再表示とイベント付与
+                const okBtn = doneDialog.querySelector('.kb-dialog-button');
+                if (okBtn) {
+                    okBtn.style.setProperty('display', 'inline-block', 'important');
+                    if (!okBtn.dataset.listenerAttached) {
+                        okBtn.addEventListener('click', () => window.location.reload());
+                        okBtn.dataset.listenerAttached = "true";
+                    }
                 }
             }
         }
