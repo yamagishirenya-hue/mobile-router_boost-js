@@ -12,8 +12,21 @@
     const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
-    const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
-    const requesterFieldIds = ["修理依頼者様のお名前", "修理依頼者様の会社名", "修理依頼者様のお電話番号", "修理依頼者様のメールアドレス"];
+    
+    // 【復元】元のフィールドID定義を使用
+    const targetFieldIds = [
+        "返送先対象者の氏名", 
+        "返送先対象者の会社名", 
+        "返送先対象者の電話番号", 
+        "返送先対象者のメールアドレス"
+    ];
+    
+    const requesterFieldIds = [
+        "修理依頼者様のお名前", 
+        "修理依頼者様の会社名", 
+        "修理依頼者様のお電話番号", 
+        "修理依頼者様のメールアドレス"
+    ];
 
     /**
      * 0. エラー表示の生成
@@ -53,7 +66,6 @@
 
     /**
      * 2. 送信ボタンの活性・非活性制御
-     * 【修正】同意・同意しないの選択を正確に監視
      */
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
@@ -132,7 +144,7 @@
             }
         });
 
-        // 送信完了ポップアップ処理（OKボタン再生成）
+        // 送信完了ポップアップ処理
         const allDivs = document.querySelectorAll('div');
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         
@@ -214,11 +226,11 @@
 
     /**
      * 6. フォームのバリデーション
-     * 【修正】修理依頼者の基本情報チェックを追加
      */
     const validateAll = (record) => {
         let hasError = false;
-        const isDiff = record["返送先対象者確認"]?.value === "返送先が異なる";
+        const checkValue = record["返送先対象者確認"]?.value;
+        const isDiff = checkValue === "返送先が異なる";
         
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
@@ -226,16 +238,13 @@
             if (existing) existing.remove();
         });
 
-        // 修理依頼者の必須チェック
         requesterFieldIds.forEach(id => {
             if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; }
         });
 
-        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
 
-        // 電話番号
         const telIds = ["修理依頼者様のお電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
@@ -243,10 +252,8 @@
             if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
         });
 
-        // 返送先情報の必須チェック
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
 
-        // メールアドレスチェック
         const emailIds = ["修理依頼者様のメールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
@@ -255,7 +262,6 @@
             if (val && !emailRegex.test(val)) { showError(id, MSG_MAIL_ERROR); hasError = true; }
         });
         
-        // ファイルチェック
         document.querySelectorAll('.kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
@@ -276,13 +282,14 @@
      * 7. 返送先情報のフィールド出し分け
      */
     const updateVisibility = (record) => {
-        const isDifferent = record["返送先対象者確認"]?.value === "返送先が異なる";
+        if (!record) return;
+        const checkValue = record["返送先対象者確認"]?.value;
+        const isDifferent = (checkValue === "返送先が異なる");
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
     /**
      * 8. ファイル添付フィールドのカスタマイズ
-     * 【修正】ボックスデザインが確実に反映されるようセレクタを強化
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
@@ -290,13 +297,11 @@
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
             
-            // 標準のボタンまたはアイコンを探す
             const btn = field.querySelector('button.kb-icon-file') || 
-                        field.querySelector('button.kb-search') ||
+                        field.querySelector('button.kb-search') || 
                         field.querySelector('button');
             if (!btn) return;
 
-            // リスト表示
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
@@ -330,23 +335,6 @@
                 try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
 
-            if (!field.dataset.dragHandled) {
-                const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => field.addEventListener(name, preventDefaults, false));
-                field.addEventListener('drop', (e) => {
-                    const droppedFiles = e.dataTransfer.files;
-                    if (droppedFiles.length > 0 && typeof kb !== 'undefined' && kb.file && kb.file.upload) {
-                        kb.file.upload(droppedFiles[0]).then(res => {
-                            let currentFiles = JSON.parse(hiddenInput.value || "[]");
-                            currentFiles.push(res);
-                            hiddenInput.value = JSON.stringify(currentFiles);
-                            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-                        });
-                    }
-                }, false);
-                field.dataset.dragHandled = "true";
-            }
-
             if (field.dataset.customized) return;
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
@@ -370,7 +358,9 @@
     // --- メインイベントリスナー ---
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
-        if (fieldWrap && fieldWrap.getAttribute('field-id') === '契約会社名') updateCarrierGuidance(e.target.value);
+        const fieldId = fieldWrap ? fieldWrap.getAttribute('field-id') : null;
+        if (fieldId === '契約会社名') updateCarrierGuidance(e.target.value);
+        if (fieldId === '返送先対象者確認') updateVisibility({ "返送先対象者確認": { value: e.target.value } });
         if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理受付費同意可否') updateSubmitButtonState();
     });
 
@@ -401,7 +391,10 @@
             customizeFileField(); 
             return ev;
         });
-        kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
+        kb.event.on('kb.change.返送先対象者確認', (ev) => { 
+            updateVisibility(ev.record); 
+            return ev; 
+        });
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) ev.error = true;
             else setTimeout(updatePopupByContent, 100);
