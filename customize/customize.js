@@ -134,7 +134,7 @@
             const doneDialog = doneMsg.closest('.bst-dialog') || doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             
             if (doneDialog) {
-                // レイアウト設定
+                // ダイアログ外枠のレイアウト
                 doneDialog.style.setProperty('position', 'fixed', 'important');
                 doneDialog.style.setProperty('top', '50%', 'important');
                 doneDialog.style.setProperty('left', '50%', 'important');
@@ -148,28 +148,29 @@
                 doneDialog.style.setProperty('display', 'flex', 'important');
                 doneDialog.style.setProperty('flex-direction', 'column', 'important');
                 doneDialog.style.setProperty('align-items', 'center', 'important');
-                doneDialog.style.setProperty('padding', '45px 30px', 'important');
+                doneDialog.style.setProperty('padding', '0', 'important'); // パディングは子要素で調整
                 doneDialog.style.setProperty('z-index', '999999', 'important');
+                doneDialog.style.setProperty('overflow', 'hidden', 'important');
 
-                // テキストの書き換え（ボタンがまだない場合、またはテキストが古い場合のみ実行）
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
                 const btnId = "custom-ok-button";
                 
-                if (!doneDialog.innerHTML.includes(targetCompleteHtml)) {
-                    // メッセージエリアをクリアして再構築
-                    doneDialog.innerHTML = `<div style="font-size: 20px !important; margin-bottom: 30px !important; text-align: center !important;">${targetCompleteHtml}</div>`;
+                // メッセージエリア（上の段）
+                if (!doneDialog.querySelector('.custom-msg-area')) {
+                    doneDialog.innerHTML = `<div class="custom-msg-area" style="font-size: 18px !important; padding: 45px 30px !important; text-align: center !important; line-height: 1.6 !important; font-weight: bold !important; color: #333 !important; flex: 1;">${targetCompleteHtml}</div>`;
                 }
 
-                // OKボタンの挿入（存在しない場合のみ）
+                // OKボタンのフッターエリア（下の段）
                 if (!document.getElementById(btnId)) {
                     const btnWrapper = document.createElement('div');
-                    btnWrapper.style.cssText = "width: 100%; text-align: center; border-top: 1px solid #eee; padding-top: 20px;";
+                    // 他のポップアップに合わせた薄いグレーの背景色と境界線
+                    btnWrapper.style.cssText = "width: 100%; text-align: center; border-top: 1px solid #eeeeee; padding: 20px 0; background-color: #f8f9fa;";
                     
                     const btn = document.createElement('button');
                     btn.id = btnId;
                     btn.innerText = "OK";
-                    // Boosterの標準デザインに合わせる
-                    btn.style.cssText = "background-color: #007bff; color: #fff; border: none; border-radius: 6px; padding: 12px 60px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s;";
+                    // 標準的なサイズとデザインに調整
+                    btn.style.cssText = "background-color: #007bff; color: #fff; border: none; border-radius: 4px; padding: 8px 45px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 120px;";
                     btn.onmouseover = () => btn.style.backgroundColor = "#0056b3";
                     btn.onmouseout = () => btn.style.backgroundColor = "#007bff";
                     
