@@ -8,18 +8,19 @@ body.show-target-fields [field-id="返送先対象者の氏名"], body.show-targ
 
 /* --- 3. ポップアップ（ダイアログ）の装飾 --- */
 
-/* 外枠：配置や高さはBoosterに任せ、見た目の装飾のみ適用 */
+/* 白い箱（ダイアログ本体）のデザイン */
 div[style*="rgb(240, 240, 240)"], .kb-dialog {
-    border-radius: 12px !important;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+    background-color: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
     border: none !important;
-    background-color: rgb(255, 255, 255) !important;
 }
 
 /* メッセージエリア */
 div[style*="rgb(240, 240, 240)"] > div:first-child, 
 .kb-dialog > div:first-child,
 .kb-dialog-content {
+    background-color: transparent !important;
     color: #333 !important;
     font-weight: bold !important;
     line-height: 1.6 !important;
@@ -30,49 +31,22 @@ div[style*="border-top-style: solid"],
 div[style*="border-top: 1px solid"] {
     background-color: #f8f9fa !important;
     border-top: 1px solid #eeeeee !important;
-    border-bottom-left-radius: 12px !important;
-    border-bottom-right-radius: 12px !important;
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
 }
 
 /* ボタンのデザイン */
 .kb-dialog-button {
     background-color: #007bff !important;
     color: #ffffff !important;
-    border-radius: 6px !important;
-    border: none !important;
+    border-radius: 8px !important;
     font-weight: bold !important;
+    border: none !important;
     cursor: pointer !important;
 }
 
 /* --- 4. 項目別エラー表示（赤い吹き出し） --- */
-.custom-error-container {
-    margin-top: 8px !important;
-}
-
-.error-message {
-    background-color: #b7282e !important;
-    color: #ffffff !important;
-    border-radius: 4px !important;
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-    font-weight: bold !important;
-    position: relative !important;
-    display: inline-block !important;
-}
-
-/* 吹き出しのツノ */
-.error-message::before {
-    content: "" !important;
-    position: absolute !important;
-    top: -7px !important;
-    left: 15px !important;
-    border-left: 8px solid transparent !important;
-    border-right: 8px solid transparent !important;
-    border-bottom: 8px solid #b7282e !important;
-}
-
-/* エラー時の入力枠 */
-.error-input {
-    border-color: #b7282e !important;
-    background-color: #fff5f5 !important;
-}
+.custom-error-container { margin-top: 8px !important; }
+.error-message { background-color: #b7282e !important; color: #ffffff !important; border-radius: 4px !important; padding: 8px 12px !important; font-size: 14px !important; font-weight: bold !important; position: relative !important; display: inline-block !important; }
+.error-message::before { content: "" !important; position: absolute !important; top: -8px !important; left: 15px !important; border-left: 8px solid transparent !important; border-right: 8px solid transparent !important; border-bottom: 8px solid #b7282e !important; }
+.error-input { border-color: #b7282e !important; background-color: #fff5f5 !important; }
