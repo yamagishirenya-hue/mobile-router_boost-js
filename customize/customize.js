@@ -44,6 +44,7 @@
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
+        
         if (targetId) {
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.style.setProperty('display', 'block', 'important');
@@ -52,11 +53,15 @@
 
     /**
      * 2. 送信ボタンの活性・非活性制御
+     * 【修正】新フィールド名「修理受付費同意可否」に対応
      */
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]');
+        // data-name属性または通常のname属性でラジオボタンを特定
+        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]') || 
+                           document.querySelector('input[name="repair_cost_agree"][value="同意します。"]');
+        
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -81,7 +86,6 @@
             
             if (popup) {
                 const isOverlay = popup.offsetWidth >= window.innerWidth * 0.9;
-                
                 if (isOverlay) {
                     popup.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
                     popup.style.setProperty('display', 'flex', 'important');
@@ -126,15 +130,13 @@
             }
         });
 
-        // 送信完了ポップアップ判定とリロード処理
+        // 送信完了ポップアップ処理
         const allDivs = document.querySelectorAll('div');
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         
         if (doneMsg) {
             const doneDialog = doneMsg.closest('.bst-dialog') || doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
-            
             if (doneDialog) {
-                // ダイアログ外枠のレイアウト
                 doneDialog.style.setProperty('position', 'fixed', 'important');
                 doneDialog.style.setProperty('top', '50%', 'important');
                 doneDialog.style.setProperty('left', '50%', 'important');
@@ -148,37 +150,27 @@
                 doneDialog.style.setProperty('display', 'flex', 'important');
                 doneDialog.style.setProperty('flex-direction', 'column', 'important');
                 doneDialog.style.setProperty('align-items', 'center', 'important');
-                doneDialog.style.setProperty('padding', '0', 'important'); // パディングは子要素で調整
+                doneDialog.style.setProperty('padding', '0', 'important');
                 doneDialog.style.setProperty('z-index', '999999', 'important');
                 doneDialog.style.setProperty('overflow', 'hidden', 'important');
 
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
                 const btnId = "custom-ok-button";
                 
-                // メッセージエリア（上の段）
                 if (!doneDialog.querySelector('.custom-msg-area')) {
                     doneDialog.innerHTML = `<div class="custom-msg-area" style="font-size: 18px !important; padding: 45px 30px !important; text-align: center !important; line-height: 1.6 !important; font-weight: bold !important; color: #333 !important; flex: 1;">${targetCompleteHtml}</div>`;
                 }
 
-                // OKボタンのフッターエリア（下の段）
                 if (!document.getElementById(btnId)) {
                     const btnWrapper = document.createElement('div');
-                    // 他のポップアップに合わせた薄いグレーの背景色と境界線
                     btnWrapper.style.cssText = "width: 100%; text-align: center; border-top: 1px solid #eeeeee; padding: 20px 0; background-color: #f8f9fa;";
-                    
                     const btn = document.createElement('button');
                     btn.id = btnId;
                     btn.innerText = "OK";
-                    // 標準的なサイズとデザインに調整
                     btn.style.cssText = "background-color: #007bff; color: #fff; border: none; border-radius: 4px; padding: 8px 45px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 120px;";
                     btn.onmouseover = () => btn.style.backgroundColor = "#0056b3";
                     btn.onmouseout = () => btn.style.backgroundColor = "#007bff";
-                    
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        window.location.reload();
-                    };
-                    
+                    btn.onclick = (e) => { e.preventDefault(); window.location.reload(); };
                     btnWrapper.appendChild(btn);
                     doneDialog.appendChild(btnWrapper);
                 }
@@ -276,26 +268,32 @@
 
     /**
      * 8. ファイル添付フィールドのカスタマイズ
+     * 【修正】不具合解消のためセレクタと適用条件を強化
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
         fileFields.forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
-            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search');
+            
+            const btn = field.querySelector('button.kb-icon-file') || 
+                        field.querySelector('button.kb-search') ||
+                        field.querySelector('button[style*="background-image"]');
             if (!btn) return;
+
+            // ファイルリストのレンダリング
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
                     listArea = document.createElement('div');
                     listArea.className = 'kb-custom-file-list';
-                    listArea.style.cssText = 'width:100%; margin-top:15px; display:flex; flex-direction:column; gap:8px; padding:0 20px 20px; box-sizing:border-box;';
+                    listArea.style.cssText = 'width:100%; margin-top:15px; display:flex; flex-direction:column; gap:8px; padding:0 20px 20px; box-sizing:border-box; pointer-events:auto;';
                     buttonElement.appendChild(listArea);
                 }
                 listArea.innerHTML = '';
                 files.forEach((file, index) => {
                     const item = document.createElement('div');
-                    item.style.cssText = 'display:flex; align-items:center; gap:8px; background:#f0f7ff; padding:8px 12px; border-radius:8px; border:1px solid #cce5ff; pointer-events:auto;';
+                    item.style.cssText = 'display:flex; align-items:center; gap:8px; background:#f0f7ff; padding:8px 12px; border-radius:8px; border:1px solid #cce5ff;';
                     const nameSpan = document.createElement('span');
                     nameSpan.textContent = file.name;
                     nameSpan.style.cssText = 'font-size:13px; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:left; font-weight:normal;';
@@ -311,10 +309,13 @@
                     item.appendChild(nameSpan); item.appendChild(delBtn); listArea.appendChild(item);
                 });
             };
+
             const currentValue = hiddenInput.value || "[]";
             if (field.dataset.lastValue !== currentValue) {
                 try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
+
+            // ドラッグ&ドロップ処理
             if (!field.dataset.dragHandled) {
                 const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => field.addEventListener(name, preventDefaults, false));
@@ -331,9 +332,12 @@
                 }, false);
                 field.dataset.dragHandled = "true";
             }
+
+            // 見た目の上書き
             if (field.dataset.customized) return;
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
+            
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
@@ -354,6 +358,7 @@
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (fieldWrap && fieldWrap.getAttribute('field-id') === '契約会社名') updateCarrierGuidance(e.target.value);
+        // 同意チェック変更時に即座にボタン状態を更新
         if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理受付費同意可否') updateSubmitButtonState();
     });
 
@@ -368,12 +373,21 @@
         else if (fieldId && fieldId.includes("メールアドレス")) e.target.value = val.replace(/[^a-zA-Z0-9@.!#$%&'*+/=?^_`{|}~-]/g, "");
     });
 
-    setInterval(() => { updatePopupByContent(); overrideKbAlert(); resetPostalInput(); updateSubmitButtonState(); customizeFileField(); }, 500);
+    setInterval(() => { 
+        updatePopupByContent(); 
+        overrideKbAlert(); 
+        resetPostalInput(); 
+        updateSubmitButtonState(); 
+        customizeFileField(); 
+    }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
             updateCarrierGuidance(ev.record["契約会社名"]?.value || ""); 
-            updateSubmitButtonState(); updateVisibility(ev.record); customizeFileField(); return ev;
+            updateSubmitButtonState(); 
+            updateVisibility(ev.record); 
+            customizeFileField(); 
+            return ev;
         });
         kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
