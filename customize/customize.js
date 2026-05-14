@@ -40,7 +40,7 @@
             if (el) el.style.setProperty('display', 'none', 'important');
         });
         let targetId = "";
-        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
+        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
@@ -56,7 +56,7 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-        const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
+        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]');
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -83,7 +83,6 @@
                 const isOverlay = popup.offsetWidth >= window.innerWidth * 0.9;
                 
                 if (isOverlay) {
-                    // 背景は透過させ、中央揃えを維持
                     popup.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
                     popup.style.setProperty('display', 'flex', 'important');
                     popup.style.setProperty('align-items', 'center', 'important');
@@ -92,7 +91,6 @@
                     popup.style.setProperty('width', '100%', 'important');
                     popup.style.setProperty('top', '0', 'important');
 
-                    // メッセージエリア自体を白い箱にする
                     msgArea.style.setProperty('background-color', '#ffffff', 'important');
                     msgArea.style.setProperty('border-radius', '12px', 'important');
                     msgArea.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
@@ -101,7 +99,6 @@
                     msgArea.style.setProperty('height', 'auto', 'important');
                     msgArea.style.setProperty('margin', 'auto', 'important');
                     msgArea.style.setProperty('position', 'relative', 'important');
-                    msgArea.style.setProperty('flex-direction', 'column', 'important');
                 } else {
                     popup.style.setProperty('background-color', '#ffffff', 'important');
                     popup.style.setProperty('border-radius', '12px', 'important');
@@ -134,11 +131,10 @@
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         
         if (doneMsg) {
-            // クラス名 bst-dialog または kb-dialog を対象とする
             const doneDialog = doneMsg.closest('.bst-dialog') || doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             
             if (doneDialog) {
-                // ポップアップが画面上部に張り付くのを防ぎ、中央に配置
+                // レイアウト設定
                 doneDialog.style.setProperty('position', 'fixed', 'important');
                 doneDialog.style.setProperty('top', '50%', 'important');
                 doneDialog.style.setProperty('left', '50%', 'important');
@@ -155,23 +151,35 @@
                 doneDialog.style.setProperty('padding', '45px 30px', 'important');
                 doneDialog.style.setProperty('z-index', '999999', 'important');
 
-                // メッセージテキストエリアのみを特定して書き換え（ボタン消失を防止）
+                // テキストの書き換え（ボタンがまだない場合、またはテキストが古い場合のみ実行）
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
-                if (doneMsg.innerHTML !== targetCompleteHtml) {
-                    doneMsg.innerHTML = targetCompleteHtml;
-                    doneMsg.style.setProperty('font-size', '20px', 'important');
-                    doneMsg.style.setProperty('margin-bottom', '20px', 'important');
-                }
+                const btnId = "custom-ok-button";
                 
-                // OKボタンの取得とデザイン調整、イベント付与
-                const okBtn = doneDialog.querySelector('.kb-dialog-button') || doneDialog.querySelector('button');
-                if (okBtn) {
-                    okBtn.style.setProperty('display', 'inline-block', 'important');
-                    okBtn.style.setProperty('margin-top', '10px', 'important');
-                    if (!okBtn.dataset.listenerAttached) {
-                        okBtn.addEventListener('click', () => window.location.reload());
-                        okBtn.dataset.listenerAttached = "true";
-                    }
+                if (!doneDialog.innerHTML.includes(targetCompleteHtml)) {
+                    // メッセージエリアをクリアして再構築
+                    doneDialog.innerHTML = `<div style="font-size: 20px !important; margin-bottom: 30px !important; text-align: center !important;">${targetCompleteHtml}</div>`;
+                }
+
+                // OKボタンの挿入（存在しない場合のみ）
+                if (!document.getElementById(btnId)) {
+                    const btnWrapper = document.createElement('div');
+                    btnWrapper.style.cssText = "width: 100%; text-align: center; border-top: 1px solid #eee; padding-top: 20px;";
+                    
+                    const btn = document.createElement('button');
+                    btn.id = btnId;
+                    btn.innerText = "OK";
+                    // Boosterの標準デザインに合わせる
+                    btn.style.cssText = "background-color: #007bff; color: #fff; border: none; border-radius: 6px; padding: 12px 60px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s;";
+                    btn.onmouseover = () => btn.style.backgroundColor = "#0056b3";
+                    btn.onmouseout = () => btn.style.backgroundColor = "#007bff";
+                    
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.reload();
+                    };
+                    
+                    btnWrapper.appendChild(btn);
+                    doneDialog.appendChild(btnWrapper);
                 }
             }
         }
@@ -345,7 +353,7 @@
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (fieldWrap && fieldWrap.getAttribute('field-id') === '契約会社名') updateCarrierGuidance(e.target.value);
-        if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
+        if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理受付費同意可否') updateSubmitButtonState();
     });
 
     document.addEventListener('input', (e) => {
