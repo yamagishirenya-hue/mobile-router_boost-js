@@ -4,7 +4,8 @@ body {
 }
 
 /* フォーム本体を中央寄せにし、カード風のデザインを適用 */
-body .bst-injector {
+/* :is() を使うことで bst-injector と kb-injector の両方に適用されます */
+body :is(.bst-injector, .kb-injector) {
     max-width: 850px !important;
     margin: 30px auto !important;
     padding: 40px !important;
@@ -15,6 +16,7 @@ body .bst-injector {
 }
 
 /* --- 2. 返送先出し分け項目の設定 --- */
+/* field-id 自体にはプレフィックスがつかないため、そのままで問題ありません */
 [field-id="返送先対象者の氏名"], 
 [field-id="返送先対象者の会社名"], 
 [field-id="返送先対象者の電話番号"], 
@@ -22,6 +24,7 @@ body .bst-injector {
     display: none !important;
 }
 
+/* body にクラスが付与された時のみ表示 */
 body.show-target-fields [field-id="返送先対象者の氏名"], 
 body.show-target-fields [field-id="返送先対象者の会社名"], 
 body.show-target-fields [field-id="返送先対象者の電話番号"], 
@@ -67,7 +70,8 @@ body.show-target-fields [field-id="返送先対象者のメールアドレス"] 
 }
 
 /* --- 4. ボタンのデザイン（送信ボタンおよびポップアップ） --- */
-.bst-injector-button {
+/* 送信ボタンの新旧クラスに対応 */
+:is(.bst-injector-button, .kb-injector-button) {
     background-color: #007bff !important;
     color: #ffffff !important;
     border: none !important;
@@ -79,18 +83,19 @@ body.show-target-fields [field-id="返送先対象者のメールアドレス"] 
     transition: all 0.2s ease !important;
 }
 
-/* 同意していない（無効）状態のボタンデザイン */
-.bst-injector-button:disabled {
+/* 無効状態のボタン */
+:is(.bst-injector-button, .kb-injector-button):disabled {
     background-color: #cccccc !important;
     opacity: 0.6 !important;
     cursor: not-allowed !important;
     pointer-events: none !important;
 }
 
-.bst-injector-button:hover:not(:disabled) {
+:is(.bst-injector-button, .kb-injector-button):hover:not(:disabled) {
     background-color: #0056b3 !important;
 }
 
-.kb-dialog-button, #custom-ok-button {
+/* ダイアログボタンの新旧クラスに対応 */
+:is(.bst-dialog-button, .kb-dialog-button), #custom-ok-button {
     transition: all 0.2s ease !important;
 }
