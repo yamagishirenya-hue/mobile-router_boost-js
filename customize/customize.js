@@ -40,7 +40,7 @@
             if (el) el.style.setProperty('display', 'none', 'important');
         });
         let targetId = "";
-        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
+        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
@@ -56,7 +56,7 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]');
+        const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -77,6 +77,23 @@
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
         
         msgAreas.forEach(msgArea => {
+            // ポップアップのサイズを拡大
+            msgArea.style.setProperty('height', 'auto', 'important');
+            msgArea.style.setProperty('min-height', '100px', 'important');
+            msgArea.style.setProperty('padding', '40px 30px', 'important');
+
+            const popup = msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
+            if (popup) {
+                popup.style.setProperty('background-color', '#ffffff', 'important');
+                popup.style.setProperty('border-radius', '12px', 'important');
+                popup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
+                popup.style.setProperty('border', 'none', 'important');
+                popup.style.setProperty('height', 'auto', 'important');
+                popup.style.setProperty('min-width', '450px', 'important');
+                popup.style.setProperty('opacity', '1', 'important');
+                popup.style.setProperty('display', 'block', 'important');
+            }
+
             const txt = msgArea.innerText.trim();
             const targetErrorHtml = MSG_ERROR.replace(/\n/g, '<br>');
             const targetConfirmHtml = MSG_CONFIRM.replace(/\n/g, '<br>');
@@ -99,12 +116,19 @@
         if (doneMsg) {
             const donePopup = doneMsg.classList.contains('kb-dialog') ? doneMsg : (doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement);
             if (donePopup) {
+                donePopup.style.setProperty('background-color', '#ffffff', 'important');
+                donePopup.style.setProperty('border-radius', '12px', 'important');
+                donePopup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
+                donePopup.style.setProperty('opacity', '1', 'important');
+                donePopup.style.setProperty('display', 'block', 'important');
+                donePopup.style.setProperty('min-width', '450px', 'important');
+                
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
                 const contentArea = doneMsg.classList.contains('kb-dialog') ? doneMsg.querySelector('div[style*="overflow"]') : doneMsg;
                 if (contentArea && contentArea.innerHTML !== targetCompleteHtml) {
                     contentArea.innerHTML = targetCompleteHtml;
                     contentArea.style.setProperty('font-size', '20px', 'important');
-                    contentArea.style.setProperty('padding', '40px 20px', 'important');
+                    contentArea.style.setProperty('padding', '45px 30px', 'important');
                 }
                 const okBtn = donePopup.querySelector('.kb-dialog-button');
                 if (okBtn && !okBtn.dataset.listenerAttached) {
