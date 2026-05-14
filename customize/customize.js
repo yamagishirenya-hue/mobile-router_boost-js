@@ -13,6 +13,7 @@
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
     
+    // フィールドIDの定義
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
     const requesterFieldIds = ["修理依頼者様のお名前", "修理依頼者様の会社名", "修理依頼者様のお電話番号", "修理依頼者様のメールアドレス"];
 
@@ -54,10 +55,8 @@
 
     /**
      * 2. 送信ボタンの活性・非活性制御
-     * 【修正】ボタンのクラス名を bst-injector-button に合わせ、制御ロジックを強化
      */
     const updateSubmitButtonState = () => {
-        // ボタンを新しいクラス名で取得
         const submitBtn = document.querySelector('.bst-injector-button') || document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
         
@@ -71,7 +70,6 @@
             submitBtn.style.pointerEvents = "auto";
         } else {
             submitBtn.disabled = true;
-            // スタイルはCSS側で定義しているため、JSでは属性操作を優先
             submitBtn.style.pointerEvents = "none";
         }
     };
@@ -206,42 +204,59 @@
         let hasError = false;
         const checkValue = record["返送先対象者確認"]?.value;
         const isDiff = checkValue === "返送先が異なる";
+        
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
+
+        // 修理依頼者の必須チェック
         requesterFieldIds.forEach(id => {
-            if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; }
+            if (!record[id] || !(record[id].value || "").trim()) { showError(id, "必須項目です。"); hasError = true; }
         });
+
+        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
+
+        // 電話番号の収集とチェック
         const telIds = ["修理依頼者様のお電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
             if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
         });
-        if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
+
+        // 返送先が異なる場合の必須チェック
+        if (isDiff) { targetFieldIds.forEach(id => { if (!record[id] || !(record[id].value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
+
+        // メールアドレスチェック
         const emailIds = ["修理依頼者様のメールアドレス"];
+        // 【修正】混入を防止し、正しいフィールド名を追加
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
+        
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         emailIds.forEach(id => {
             const val = (record[id]?.value || "").trim();
             if (val && !emailRegex.test(val)) { showError(id, MSG_MAIL_ERROR); hasError = true; }
         });
+        
+        // 添付ファイルのバリデーション
         document.querySelectorAll('.kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
             if (hiddenInput && fieldId) {
                 try {
-                    const files = JSON.parse(hiddenInput.value || "[]");
-                    if (files.some(f => !IMAGE_EXTENSIONS.includes((f.name || "").split('.').pop().toLowerCase()))) {
+                    const valStr = hiddenInput.value || "[]";
+                    const files = JSON.parse(valStr);
+                    if (files.length > 0 && files.some(f => !IMAGE_EXTENSIONS.includes((f.name || "").split('.').pop().toLowerCase()))) {
                         showError(fieldId, MSG_EXT_ERROR); hasError = true;
                     }
                 } catch (e) {}
             }
         });
+        
         if (hasError && typeof kb !== 'undefined' && kb.alert) kb.alert(MSG_ERROR);
         return !hasError;
     };
