@@ -8,14 +8,21 @@
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
     const MSG_EXT_ERROR = "次の拡張子のみ添付可能です。\njpg, png, gif, webp, heic, xlsx, docx";
-    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。\n2MB以下の画像を選択してください。";
     const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
     
-    // フィールドIDの定義
-    const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
-    const requesterFieldIds = ["修理依頼者様のお名前", "修理依頼者様の会社名", "修理依頼者様のお電話番号", "修理依頼者様のメールアドレス"];
+    // 【画像 bebf25.png に基づき完全に同期】
+    // 修理依頼者（ご本人）の情報
+    const requesterFieldIds = ["氏名", "会社名", "連絡先電話番号", "連絡先メールアドレス"];
+    
+    // 返送先が異なる場合の追加情報
+    const targetFieldIds = [
+        "返送先対象者の氏名", 
+        "返送先対象者の会社名", 
+        "返送先対象者の電話番号", 
+        "返送先対象者のメールアドレス"
+    ];
 
     /**
      * 0. エラー表示の生成
@@ -57,7 +64,7 @@
      * 2. 送信ボタンの活性・非活性制御
      */
     const updateSubmitButtonState = () => {
-        const submitBtn = document.querySelector('.bst-injector-button') || document.querySelector('.kb-injector-button');
+        const submitBtn = document.querySelector('.bst-injector-button');
         if (!submitBtn) return;
         
         const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]') || 
@@ -75,7 +82,7 @@
     };
 
     /**
-     * 3. ポップアップの監視・書き換え
+     * 3. ポップアップの監視・書き換え（送信完了ダイアログ等）
      */
     const updatePopupByContent = () => {
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
@@ -166,27 +173,7 @@
     };
 
     /**
-     * 4. kb.alert のオーバーライド
-     */
-    const overrideKbAlert = () => {
-        if (typeof kb !== 'undefined' && kb.alert && !kb.alert._isOverridden) {
-            const originalAlert = kb.alert;
-            kb.alert = function(msg) {
-                let customMsg = msg;
-                if (msg && msg.includes("削除")) customMsg = msg;
-                else if (msg && (msg.includes("誤り") || msg.includes("必須") || msg.includes("入力"))) {
-                    customMsg = (msg.includes("拡張子") || msg.includes("画像")) ? MSG_EXT_ERROR : MSG_ERROR;
-                } else if (msg === "Done!") customMsg = MSG_COMPLETE;
-                const result = originalAlert.apply(this, [customMsg]);
-                setTimeout(updatePopupByContent, 50);
-                return result;
-            };
-            kb.alert._isOverridden = true;
-        }
-    };
-
-    /**
-     * 5. 郵便番号フィールドのクリーニング
+     * 4. 郵便番号フィールドの補正
      */
     const resetPostalInput = () => {
         const parentField = document.querySelector('[field-id="郵便番号"]');
@@ -198,13 +185,15 @@
     };
 
     /**
-     * 6. フォームのバリデーション
+     * 5. フォームのバリデーション（入力チェック）
+     * 【修正】hasError が不当に true にならないようロジックを整理
      */
     const validateAll = (record) => {
         let hasError = false;
         const checkValue = record["返送先対象者確認"]?.value;
         const isDiff = checkValue === "返送先が異なる";
         
+        // 全エラー表示のリセット
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
@@ -213,33 +202,55 @@
 
         // 修理依頼者の必須チェック
         requesterFieldIds.forEach(id => {
-            if (!record[id] || !(record[id].value || "").trim()) { showError(id, "必須項目です。"); hasError = true; }
+            if (!record[id] || !(record[id].value || "").trim()) { 
+                showError(id, "必須項目です。"); 
+                hasError = true; 
+            }
         });
 
         // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
-        if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
+        if (zipVal && zipVal.length !== 7) { 
+            showError("郵便番号", "7桁の数字で入力してください。"); 
+            hasError = true; 
+        }
 
-        // 電話番号の収集とチェック
-        const telIds = ["修理依頼者様のお電話番号", "モバイルルーターの電話番号"];
+        // 電話番号のチェック
+        const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
-            const val = (record[id]?.value || "").replace(/[^\d]/g, "");
-            if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
+            if (record[id]) {
+                const val = (record[id].value || "").replace(/[^\d]/g, "");
+                if (val && (val.length < 10 || val.length > 11)) { 
+                    showError(id, "10桁または11桁の数字で入力してください。"); 
+                    hasError = true; 
+                }
+            }
         });
 
         // 返送先が異なる場合の必須チェック
-        if (isDiff) { targetFieldIds.forEach(id => { if (!record[id] || !(record[id].value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
+        if (isDiff) { 
+            targetFieldIds.forEach(id => { 
+                if (!record[id] || !(record[id].value || "").trim()) { 
+                    showError(id, "必須項目です。"); 
+                    hasError = true; 
+                } 
+            }); 
+        }
 
         // メールアドレスチェック
-        const emailIds = ["修理依頼者様のメールアドレス"];
-        // 【修正】混入を防止し、正しいフィールド名を追加
+        const emailIds = ["連絡先メールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
         
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         emailIds.forEach(id => {
-            const val = (record[id]?.value || "").trim();
-            if (val && !emailRegex.test(val)) { showError(id, MSG_MAIL_ERROR); hasError = true; }
+            if (record[id]) {
+                const val = (record[id].value || "").trim();
+                if (val && !emailRegex.test(val)) { 
+                    showError(id, MSG_MAIL_ERROR); 
+                    hasError = true; 
+                }
+            }
         });
         
         // 添付ファイルのバリデーション
@@ -262,7 +273,7 @@
     };
 
     /**
-     * 7. 返送先情報のフィールド出し分け
+     * 6. 返送先情報のフィールド出し分け
      */
     const updateVisibility = (record) => {
         if (!record) return;
@@ -272,7 +283,7 @@
     };
 
     /**
-     * 8. ファイル添付フィールドのカスタマイズ
+     * 7. ファイル添付フィールドのカスタマイズ（画像ボックスデザイン）
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.kb-file');
@@ -281,6 +292,8 @@
             if (!hiddenInput) return;
             const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search') || field.querySelector('button');
             if (!btn) return;
+            
+            // ファイル名リストの表示
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
@@ -308,10 +321,12 @@
                     item.appendChild(nameSpan); item.appendChild(delBtn); listArea.appendChild(item);
                 });
             };
+
             const currentValue = hiddenInput.value || "[]";
             if (field.dataset.lastValue !== currentValue) {
                 try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
+
             if (field.dataset.customized) return;
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
@@ -352,7 +367,6 @@
 
     setInterval(() => { 
         updatePopupByContent(); 
-        overrideKbAlert(); 
         resetPostalInput(); 
         updateSubmitButtonState(); 
         customizeFileField(); 
