@@ -13,20 +13,8 @@
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
     
-    // 【復元】元のフィールドID定義を使用
-    const targetFieldIds = [
-        "返送先対象者の氏名", 
-        "返送先対象者の会社名", 
-        "返送先対象者の電話番号", 
-        "返送先対象者のメールアドレス"
-    ];
-    
-    const requesterFieldIds = [
-        "修理依頼者様のお名前", 
-        "修理依頼者様の会社名", 
-        "修理依頼者様のお電話番号", 
-        "修理依頼者様のメールアドレス"
-    ];
+    const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
+    const requesterFieldIds = ["修理依頼者様のお名前", "修理依頼者様の会社名", "修理依頼者様のお電話番号", "修理依頼者様のメールアドレス"];
 
     /**
      * 0. エラー表示の生成
@@ -66,9 +54,11 @@
 
     /**
      * 2. 送信ボタンの活性・非活性制御
+     * 【修正】ボタンのクラス名を bst-injector-button に合わせ、制御ロジックを強化
      */
     const updateSubmitButtonState = () => {
-        const submitBtn = document.querySelector('.kb-injector-button');
+        // ボタンを新しいクラス名で取得
+        const submitBtn = document.querySelector('.bst-injector-button') || document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
         
         const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]') || 
@@ -79,13 +69,10 @@
             submitBtn.style.opacity = "1";
             submitBtn.style.cursor = "pointer";
             submitBtn.style.pointerEvents = "auto";
-            submitBtn.style.backgroundColor = "#007bff";
         } else {
             submitBtn.disabled = true;
-            submitBtn.style.opacity = "0.5";
-            submitBtn.style.cursor = "not-allowed";
+            // スタイルはCSS側で定義しているため、JSでは属性操作を優先
             submitBtn.style.pointerEvents = "none";
-            submitBtn.style.backgroundColor = "#ccc";
         }
     };
 
@@ -94,10 +81,8 @@
      */
     const updatePopupByContent = () => {
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
-        
         msgAreas.forEach(msgArea => {
             const popup = msgArea.closest('.bst-dialog') || msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
-            
             if (popup) {
                 const isOverlay = popup.offsetWidth >= window.innerWidth * 0.9;
                 if (isOverlay) {
@@ -124,30 +109,23 @@
                     popup.style.setProperty('min-width', '450px', 'important');
                 }
             }
-
             msgArea.style.setProperty('min-height', '100px', 'important');
             msgArea.style.setProperty('padding', '40px 30px', 'important');
-
             const txt = msgArea.innerText.trim();
             const targetErrorHtml = MSG_ERROR.replace(/\n/g, '<br>');
             const targetConfirmHtml = MSG_CONFIRM.replace(/\n/g, '<br>');
             const targetExtErrorHtml = MSG_EXT_ERROR.replace(/\n/g, '<br>');
-
             if (txt.includes("誤り") || txt.includes("必須") || txt.includes("入力してください")) {
                 if (msgArea.innerHTML !== targetErrorHtml) msgArea.innerHTML = targetErrorHtml;
-            }
-            else if (txt.includes("画像") || txt.includes("拡張子")) {
+            } else if (txt.includes("画像") || txt.includes("拡張子")) {
                 if (msgArea.innerHTML !== targetExtErrorHtml) msgArea.innerHTML = targetExtErrorHtml;
-            }
-            else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel") && txt !== MSG_COMPLETE) {
+            } else if (txt.length > 0 && !txt.includes("送信が完了しました") && !txt.includes("削除") && !txt.includes("OK") && !txt.includes("Cancel") && txt !== MSG_COMPLETE) {
                 if (msgArea.innerHTML !== targetConfirmHtml) msgArea.innerHTML = targetConfirmHtml;
             }
         });
 
-        // 送信完了ポップアップ処理
         const allDivs = document.querySelectorAll('div');
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
-        
         if (doneMsg) {
             const doneDialog = doneMsg.closest('.bst-dialog') || doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             if (doneDialog) {
@@ -167,14 +145,11 @@
                 doneDialog.style.setProperty('padding', '0', 'important');
                 doneDialog.style.setProperty('z-index', '999999', 'important');
                 doneDialog.style.setProperty('overflow', 'hidden', 'important');
-
                 const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
                 const btnId = "custom-ok-button";
-                
                 if (!doneDialog.querySelector('.custom-msg-area')) {
                     doneDialog.innerHTML = `<div class="custom-msg-area" style="font-size: 18px !important; padding: 45px 30px !important; text-align: center !important; line-height: 1.6 !important; font-weight: bold !important; color: #333 !important; flex: 1;">${targetCompleteHtml}</div>`;
                 }
-
                 if (!document.getElementById(btnId)) {
                     const btnWrapper = document.createElement('div');
                     btnWrapper.style.cssText = "width: 100%; text-align: center; border-top: 1px solid #eeeeee; padding: 20px 0; background-color: #f8f9fa;";
@@ -231,29 +206,23 @@
         let hasError = false;
         const checkValue = record["返送先対象者確認"]?.value;
         const isDiff = checkValue === "返送先が異なる";
-        
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
-
         requesterFieldIds.forEach(id => {
             if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; }
         });
-
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
         if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
-
         const telIds = ["修理依頼者様のお電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             const val = (record[id]?.value || "").replace(/[^\d]/g, "");
             if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
         });
-
         if (isDiff) { targetFieldIds.forEach(id => { if (!(record[id]?.value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
-
         const emailIds = ["修理依頼者様のメールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
@@ -261,7 +230,6 @@
             const val = (record[id]?.value || "").trim();
             if (val && !emailRegex.test(val)) { showError(id, MSG_MAIL_ERROR); hasError = true; }
         });
-        
         document.querySelectorAll('.kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
@@ -296,12 +264,8 @@
         fileFields.forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
-            
-            const btn = field.querySelector('button.kb-icon-file') || 
-                        field.querySelector('button.kb-search') || 
-                        field.querySelector('button');
+            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search') || field.querySelector('button');
             if (!btn) return;
-
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
@@ -329,16 +293,13 @@
                     item.appendChild(nameSpan); item.appendChild(delBtn); listArea.appendChild(item);
                 });
             };
-
             const currentValue = hiddenInput.value || "[]";
             if (field.dataset.lastValue !== currentValue) {
                 try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
-
             if (field.dataset.customized) return;
             const defaultGuide = field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
-            
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
@@ -369,7 +330,6 @@
         if (!fieldWrap) return;
         const fieldId = fieldWrap.getAttribute('field-id');
         let val = e.target.value;
-
         if (fieldId === "郵便番号") e.target.value = val.replace(/[^\d]/g, "").slice(0, 7).replace(/(\d{3})(\d{4})/, '$1-$2');
         else if (fieldId && (fieldId.includes("電話番号") || fieldId.includes("お電話番号"))) e.target.value = val.replace(/[^\d]/g, "").slice(0, 11);
         else if (fieldId && fieldId.includes("メールアドレス")) e.target.value = val.replace(/[^a-zA-Z0-9@.!#$%&'*+/=?^_`{|}~-]/g, "");
@@ -391,10 +351,7 @@
             customizeFileField(); 
             return ev;
         });
-        kb.event.on('kb.change.返送先対象者確認', (ev) => { 
-            updateVisibility(ev.record); 
-            return ev; 
-        });
+        kb.event.on('kb.change.返送先対象者確認', (ev) => { updateVisibility(ev.record); return ev; });
         kb.event.on(['kb.create.submit', 'kb.edit.submit'], (ev) => {
             if (!validateAll(ev.record)) ev.error = true;
             else setTimeout(updatePopupByContent, 100);
