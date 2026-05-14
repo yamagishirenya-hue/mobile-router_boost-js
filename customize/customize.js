@@ -2,6 +2,18 @@
     "use strict";
 
     /**
+     * 将来の名称変更に対応するための定義
+     * 今後「bst」「kb」以外の名称が追加された場合は、配列に文字列を追加するだけで対応可能です。
+     */
+    const PREFIXES = ['bst', 'kb'];
+
+    /**
+     * 指定したクラス名に対して、全てのプレフィックス候補を含むセレクタを生成します。
+     * 例: getSelector('file') -> ".bst-file, .kb-file"
+     */
+    const getSelector = (cls) => PREFIXES.map(p => `.${p}-${cls}`).join(', ');
+
+    /**
      * 表示メッセージの定数定義
      */
     const MSG_ERROR = "入力内容に誤りがあります。\n赤枠の項目を確認してください。";
@@ -17,12 +29,7 @@
     const requesterFieldIds = ["氏名", "会社名", "連絡先電話番号", "連絡先メールアドレス"];
     
     // 返送先が異なる場合の追加情報
-    const targetFieldIds = [
-        "返送先対象者の氏名", 
-        "返送先対象者の会社名", 
-        "返送先対象者の電話番号", 
-        "返送先対象者のメールアドレス"
-    ];
+    const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
      * 0. エラー表示の生成
@@ -64,7 +71,8 @@
      * 2. 送信ボタンの活性・非活性制御
      */
     const updateSubmitButtonState = () => {
-        const submitBtn = document.querySelector('.bst-injector-button');
+        // 全てのプレフィックス候補で送信ボタンを探す
+        const submitBtn = document.querySelector(getSelector('injector-button'));
         if (!submitBtn) return;
         
         const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]') || 
@@ -87,7 +95,9 @@
     const updatePopupByContent = () => {
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
         msgAreas.forEach(msgArea => {
-            const popup = msgArea.closest('.bst-dialog') || msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
+            // ダイアログのコンテナを探す
+            const popup = msgArea.closest(getSelector('dialog')) || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
+            
             if (popup) {
                 const isOverlay = popup.offsetWidth >= window.innerWidth * 0.9;
                 if (isOverlay) {
@@ -132,7 +142,7 @@
         const allDivs = document.querySelectorAll('div');
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         if (doneMsg) {
-            const doneDialog = doneMsg.closest('.bst-dialog') || doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
+            const doneDialog = doneMsg.closest(getSelector('dialog')) || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             if (doneDialog) {
                 doneDialog.style.setProperty('position', 'fixed', 'important');
                 doneDialog.style.setProperty('top', '50%', 'important');
@@ -192,52 +202,30 @@
         const checkValue = record["返送先対象者確認"]?.value;
         const isDiff = checkValue === "返送先が異なる";
         
-        // 全エラー表示のリセット
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
             const existing = el.querySelector('.custom-error-container');
             if (existing) existing.remove();
         });
 
-        // 修理依頼者の必須チェック
         requesterFieldIds.forEach(id => {
-            if (!record[id] || !(record[id].value || "").trim()) { 
-                showError(id, "必須項目です。"); 
-                hasError = true; 
-            }
+            if (!record[id] || !(record[id].value || "").trim()) { showError(id, "必須項目です。"); hasError = true; }
         });
 
-        // 郵便番号
         const zipVal = (record["郵便番号"]?.value || "").replace(/[^\d]/g, "");
-        if (zipVal && zipVal.length !== 7) { 
-            showError("郵便番号", "7桁の数字で入力してください。"); 
-            hasError = true; 
-        }
+        if (zipVal && zipVal.length !== 7) { showError("郵便番号", "7桁の数字で入力してください。"); hasError = true; }
 
-        // 電話番号のチェック
         const telIds = ["連絡先電話番号", "モバイルルーターの電話番号"];
         if (isDiff) telIds.push("返送先対象者の電話番号");
         telIds.forEach(id => {
             if (record[id]) {
                 const val = (record[id].value || "").replace(/[^\d]/g, "");
-                if (val && (val.length < 10 || val.length > 11)) { 
-                    showError(id, "10桁または11桁の数字で入力してください。"); 
-                    hasError = true; 
-                }
+                if (val && (val.length < 10 || val.length > 11)) { showError(id, "10桁または11桁の数字で入力してください。"); hasError = true; }
             }
         });
 
-        // 返送先が異なる場合の必須チェック
-        if (isDiff) { 
-            targetFieldIds.forEach(id => { 
-                if (!record[id] || !(record[id].value || "").trim()) { 
-                    showError(id, "必須項目です。"); 
-                    hasError = true; 
-                } 
-            }); 
-        }
+        if (isDiff) { targetFieldIds.forEach(id => { if (!record[id] || !(record[id].value || "").trim()) { showError(id, "必須項目です。"); hasError = true; } }); }
 
-        // メールアドレスチェック
         const emailIds = ["連絡先メールアドレス"];
         if (isDiff) emailIds.push("返送先対象者のメールアドレス");
         
@@ -245,15 +233,12 @@
         emailIds.forEach(id => {
             if (record[id]) {
                 const val = (record[id].value || "").trim();
-                if (val && !emailRegex.test(val)) { 
-                    showError(id, MSG_MAIL_ERROR); 
-                    hasError = true; 
-                }
+                if (val && !emailRegex.test(val)) { showError(id, MSG_MAIL_ERROR); hasError = true; }
             }
         });
         
         // 添付ファイルのバリデーション
-        document.querySelectorAll('.bst-file, .kb-file').forEach(field => {
+        document.querySelectorAll(getSelector('file')).forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
             if (hiddenInput && fieldId) {
@@ -283,22 +268,19 @@
 
     /**
      * 7. ファイル添付フィールドのカスタマイズ（画像ボックスデザイン & ドラッグドロップ）
-     * 【修正】ドラッグ＆ドロップのイベントリスナーを復元
      */
     const customizeFileField = () => {
-        const fileFields = document.querySelectorAll('.bst-file, .kb-file');
+        const fileFields = document.querySelectorAll(getSelector('file'));
         fileFields.forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
             
-            const btn = field.querySelector('button.bst-icon-file') || 
-                        field.querySelector('button.kb-icon-file') || 
-                        field.querySelector('button.bst-search') || 
-                        field.querySelector('button.kb-search') || 
+            // 全てのプレフィックス候補でボタンを探す
+            const btn = field.querySelector('button' + getSelector('icon-file').replace(/,/g, ', button')) || 
+                        field.querySelector('button' + getSelector('search').replace(/,/g, ', button')) || 
                         field.querySelector('button');
             if (!btn) return;
             
-            // ファイル名リスト表示処理
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
@@ -332,7 +314,6 @@
                 try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
 
-            // 【復元】ドラッグ＆ドロップのハンドリング
             if (!field.dataset.dragHandled) {
                 const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => field.addEventListener(name, preventDefaults, false));
@@ -352,7 +333,7 @@
 
             if (field.dataset.customized) return;
             
-            const defaultGuide = field.querySelector('.bst-guide') || field.querySelector('.kb-guide');
+            const defaultGuide = field.querySelector(getSelector('guide'));
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
             
             btn.style.setProperty('background-image', 'none', 'important');
