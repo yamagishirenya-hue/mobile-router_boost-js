@@ -40,7 +40,7 @@
             if (el) el.style.setProperty('display', 'none', 'important');
         });
         let targetId = "";
-        if (selectedValue === "KDDI(au)") targetId = "company_kddi";
+        if (selectedValue === "au(KDDI)") targetId = "company_kddi";
         else if (selectedValue === "docomo") targetId = "company_docomo";
         else if (selectedValue === "Softbank") targetId = "company_softbank";
         else if (selectedValue === "") targetId = "non_company";
@@ -56,7 +56,7 @@
     const updateSubmitButtonState = () => {
         const submitBtn = document.querySelector('.kb-injector-button');
         if (!submitBtn) return;
-        const agreeRadio = document.querySelector('input[data-name="修理受付費同意可否"][value="同意します。"]');
+        const agreeRadio = document.querySelector('input[data-name="修理費用"][value="同意します。"]');
         if (agreeRadio && agreeRadio.checked) {
             submitBtn.disabled = false;
             submitBtn.style.opacity = "1";
@@ -77,19 +77,20 @@
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
         
         msgAreas.forEach(msgArea => {
-            const popup = msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
+            const popup = msgArea.closest('.bst-dialog') || msgArea.closest('.kb-dialog') || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
             
             if (popup) {
                 const isOverlay = popup.offsetWidth >= window.innerWidth * 0.9;
                 
                 if (isOverlay) {
-                    // オーバーレイ（背景）は透過させ、中央揃えにする
+                    // 背景は透過させ、中央揃えを維持
                     popup.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
                     popup.style.setProperty('display', 'flex', 'important');
                     popup.style.setProperty('align-items', 'center', 'important');
                     popup.style.setProperty('justify-content', 'center', 'important');
                     popup.style.setProperty('height', '100%', 'important');
                     popup.style.setProperty('width', '100%', 'important');
+                    popup.style.setProperty('top', '0', 'important');
 
                     // メッセージエリア自体を白い箱にする
                     msgArea.style.setProperty('background-color', '#ffffff', 'important');
@@ -99,8 +100,9 @@
                     msgArea.style.setProperty('min-width', '450px', 'important');
                     msgArea.style.setProperty('height', 'auto', 'important');
                     msgArea.style.setProperty('margin', 'auto', 'important');
+                    msgArea.style.setProperty('position', 'relative', 'important');
+                    msgArea.style.setProperty('flex-direction', 'column', 'important');
                 } else {
-                    // 通常のダイアログ
                     popup.style.setProperty('background-color', '#ffffff', 'important');
                     popup.style.setProperty('border-radius', '12px', 'important');
                     popup.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.2)', 'important');
@@ -132,40 +134,40 @@
         const doneMsg = Array.from(allDivs).find(el => el.innerText.trim() === "Done!" || el.innerText.includes("送信が完了しました"));
         
         if (doneMsg) {
-            const doneDialog = doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
+            // クラス名 bst-dialog または kb-dialog を対象とする
+            const doneDialog = doneMsg.closest('.bst-dialog') || doneMsg.closest('.kb-dialog') || doneMsg.closest('div[style*="rgb(240, 240, 240)"]') || doneMsg.parentElement;
             
             if (doneDialog) {
-                const isOverlay = doneDialog.offsetWidth >= window.innerWidth * 0.9;
-                
-                if (isOverlay) {
-                    doneDialog.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
-                    doneDialog.style.setProperty('display', 'flex', 'important');
-                    doneDialog.style.setProperty('align-items', 'center', 'important');
-                    doneDialog.style.setProperty('justify-content', 'center', 'important');
-                }
+                // ポップアップが画面上部に張り付くのを防ぎ、中央に配置
+                doneDialog.style.setProperty('position', 'fixed', 'important');
+                doneDialog.style.setProperty('top', '50%', 'important');
+                doneDialog.style.setProperty('left', '50%', 'important');
+                doneDialog.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+                doneDialog.style.setProperty('width', 'auto', 'important');
+                doneDialog.style.setProperty('min-width', '450px', 'important');
+                doneDialog.style.setProperty('height', 'auto', 'important');
+                doneDialog.style.setProperty('background-color', '#ffffff', 'important');
+                doneDialog.style.setProperty('border-radius', '12px', 'important');
+                doneDialog.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
+                doneDialog.style.setProperty('display', 'flex', 'important');
+                doneDialog.style.setProperty('flex-direction', 'column', 'important');
+                doneDialog.style.setProperty('align-items', 'center', 'important');
+                doneDialog.style.setProperty('padding', '45px 30px', 'important');
+                doneDialog.style.setProperty('z-index', '999999', 'important');
 
-                // メッセージを書き換える対象（ボタンを消さないように注意）
-                const contentArea = doneMsg.classList.contains('kb-dialog') ? doneMsg.querySelector('div[style*="overflow"]') : doneMsg;
-                
-                if (contentArea) {
-                    contentArea.style.setProperty('background-color', '#ffffff', 'important');
-                    contentArea.style.setProperty('border-radius', '12px', 'important');
-                    contentArea.style.setProperty('box-shadow', '0 10px 40px rgba(0,0,0,0.3)', 'important');
-                    contentArea.style.setProperty('padding', '45px 30px', 'important');
-                    contentArea.style.setProperty('min-width', '450px', 'important');
-                    contentArea.style.setProperty('height', 'auto', 'important');
-                    
-                    const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
-                    if (contentArea.innerHTML !== targetCompleteHtml) {
-                        contentArea.innerHTML = targetCompleteHtml;
-                        contentArea.style.setProperty('font-size', '20px', 'important');
-                    }
+                // メッセージテキストエリアのみを特定して書き換え（ボタン消失を防止）
+                const targetCompleteHtml = MSG_COMPLETE.replace(/\n/g, '<br>');
+                if (doneMsg.innerHTML !== targetCompleteHtml) {
+                    doneMsg.innerHTML = targetCompleteHtml;
+                    doneMsg.style.setProperty('font-size', '20px', 'important');
+                    doneMsg.style.setProperty('margin-bottom', '20px', 'important');
                 }
                 
-                // OKボタンの再表示とイベント付与
-                const okBtn = doneDialog.querySelector('.kb-dialog-button');
+                // OKボタンの取得とデザイン調整、イベント付与
+                const okBtn = doneDialog.querySelector('.kb-dialog-button') || doneDialog.querySelector('button');
                 if (okBtn) {
                     okBtn.style.setProperty('display', 'inline-block', 'important');
+                    okBtn.style.setProperty('margin-top', '10px', 'important');
                     if (!okBtn.dataset.listenerAttached) {
                         okBtn.addEventListener('click', () => window.location.reload());
                         okBtn.dataset.listenerAttached = "true";
@@ -343,7 +345,7 @@
     document.addEventListener('change', (e) => {
         const fieldWrap = e.target.closest('[field-id]');
         if (fieldWrap && fieldWrap.getAttribute('field-id') === '契約会社名') updateCarrierGuidance(e.target.value);
-        if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理受付費同意可否') updateSubmitButtonState();
+        if (e.target.name === 'repair_cost_agree' || e.target.getAttribute('data-name') === '修理費用') updateSubmitButtonState();
     });
 
     document.addEventListener('input', (e) => {
