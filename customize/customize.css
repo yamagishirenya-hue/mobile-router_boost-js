@@ -3,40 +3,45 @@ body {
     background-color: #f0f2f5 !important;
 }
 
-.kb-injector {
+/* フォーム本体の枠組みを強制適用 */
+body .kb-injector {
     max-width: 850px !important;
     margin: 30px auto !important;
     padding: 40px !important;
     background-color: #ffffff !important;
     border-radius: 12px !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
     border: 1px solid #e0e4e9 !important;
 }
 
-/* --- 2. 出し分けフィールドの背景色 --- */
+/* --- 2. 出し分け・強調フィールドのデザイン --- */
 [field-id="返送先対象者の氏名"], 
 [field-id="返送先対象者の会社名"], 
 [field-id="返送先対象者の電話番号"], 
 [field-id="返送先対象者のメールアドレス"] {
     background-color: #f9fbff !important;
-    border-left: 4px solid #007bff !important;
-    margin-bottom: 10px !important;
-    padding-left: 15px !important;
+    border-left: 5px solid #007bff !important;
+    margin-bottom: 12px !important;
+    padding-left: 20px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
 }
 
 /* --- 3. エラー時の赤い吹き出しメッセージ --- */
 .custom-error-container {
     margin-top: 8px !important;
+    clear: both !important;
 }
 .error-message {
     background-color: #e53935 !important;
     color: #ffffff !important;
     border-radius: 4px !important;
-    padding: 6px 12px !important;
+    padding: 8px 12px !important;
     font-size: 13px !important;
     font-weight: bold !important;
     position: relative !important;
     display: inline-block !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
 .error-message::before {
     content: "" !important;
@@ -52,7 +57,12 @@ body {
     background-color: #fff5f5 !important;
 }
 
-/* --- 4. ポップアップボタンの共通デザイン --- */
+/* --- 4. ポップアップおよびボタンの共通デザイン --- */
 .kb-dialog-button, #custom-ok-button {
     transition: all 0.2s ease !important;
+}
+
+/* --- 5. ファイルアップロードエリアのデザイン補強 --- */
+.kb-file button {
+    box-shadow: none !important;
 }
