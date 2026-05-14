@@ -13,7 +13,6 @@
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
     
-    // 【画像 bebf25.png に基づき完全に同期】
     // 修理依頼者（ご本人）の情報
     const requesterFieldIds = ["氏名", "会社名", "連絡先電話番号", "連絡先メールアドレス"];
     
@@ -283,8 +282,8 @@
     };
 
     /**
-     * 7. ファイル添付フィールドのカスタマイズ（画像ボックスデザイン）
-     * 【修正】bst- プレフィックスのクラス名に完全対応
+     * 7. ファイル添付フィールドのカスタマイズ（画像ボックスデザイン & ドラッグドロップ）
+     * 【修正】ドラッグ＆ドロップのイベントリスナーを復元
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll('.bst-file, .kb-file');
@@ -292,7 +291,6 @@
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
             
-            // ボタンの特定（bst- または kb- または 標準のbutton）
             const btn = field.querySelector('button.bst-icon-file') || 
                         field.querySelector('button.kb-icon-file') || 
                         field.querySelector('button.bst-search') || 
@@ -300,7 +298,7 @@
                         field.querySelector('button');
             if (!btn) return;
             
-            // ファイル名リストの表示
+            // ファイル名リスト表示処理
             const renderFileNames = (buttonElement, files, inputEl) => {
                 let listArea = buttonElement.querySelector('.kb-custom-file-list');
                 if (!listArea) {
@@ -334,13 +332,29 @@
                 try { renderFileNames(btn, JSON.parse(currentValue), hiddenInput); field.dataset.lastValue = currentValue; } catch(e) {}
             }
 
+            // 【復元】ドラッグ＆ドロップのハンドリング
+            if (!field.dataset.dragHandled) {
+                const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => field.addEventListener(name, preventDefaults, false));
+                field.addEventListener('drop', (e) => {
+                    const droppedFiles = e.dataTransfer.files;
+                    if (droppedFiles.length > 0 && typeof kb !== 'undefined' && kb.file && kb.file.upload) {
+                        kb.file.upload(droppedFiles[0]).then(res => {
+                            let currentFiles = JSON.parse(hiddenInput.value || "[]");
+                            currentFiles.push(res);
+                            hiddenInput.value = JSON.stringify(currentFiles);
+                            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                    }
+                }, false);
+                field.dataset.dragHandled = "true";
+            }
+
             if (field.dataset.customized) return;
             
-            // ガイドテキスト（「ここをクリック...」）の非表示化
             const defaultGuide = field.querySelector('.bst-guide') || field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
             
-            // ボタン自体のデザイン上書き
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
