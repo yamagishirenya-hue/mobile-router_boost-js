@@ -2,15 +2,28 @@
     "use strict";
 
     /**
+     * 【新機能】タブのアイコン（ファビコン）を変更する
+     * @param {string} url - 変更したいアイコン画像のURL
+     */
+    const updateFavicon = (url) => {
+        if (!url) return;
+        // 既存のリンク要素（rel="icon" または rel="shortcut icon"）を探す
+        let link = document.querySelector("link[rel*='icon']");
+        
+        // 要素がなければ新しく作成、あればURLを上書き
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+        link.href = url;
+    };
+
+    /**
      * 将来の名称変更に対応するための定義
-     * 今後「bst」「kb」以外の名称が追加された場合は、配列に文字列を追加するだけで対応可能です。
      */
     const PREFIXES = ['bst', 'kb'];
 
-    /**
-     * 指定したクラス名に対して、全てのプレフィックス候補を含むセレクタを生成します。
-     * 例: getSelector('file') -> ".bst-file, .kb-file"
-     */
     const getSelector = (cls) => PREFIXES.map(p => `.${p}-${cls}`).join(', ');
 
     /**
@@ -20,15 +33,11 @@
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
     const MSG_EXT_ERROR = "次の拡張子のみ添付可能です。\njpg, png, gif, webp, heic, xlsx, docx";
-    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。\n2MB以下の画像を選択してください。";
     const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
     
-    // 修理依頼者（ご本人）の情報
     const requesterFieldIds = ["氏名", "会社名", "連絡先電話番号", "連絡先メールアドレス"];
-    
-    // 返送先が異なる場合の追加情報
     const targetFieldIds = ["返送先対象者の氏名", "返送先対象者の会社名", "返送先対象者の電話番号", "返送先対象者のメールアドレス"];
 
     /**
@@ -71,7 +80,6 @@
      * 2. 送信ボタンの活性・非活性制御
      */
     const updateSubmitButtonState = () => {
-        // 全てのプレフィックス候補で送信ボタンを探す
         const submitBtn = document.querySelector(getSelector('injector-button'));
         if (!submitBtn) return;
         
@@ -90,12 +98,11 @@
     };
 
     /**
-     * 3. ポップアップの監視・書き換え（送信完了ダイアログ等）
+     * 3. ポップアップの監視・書き換え
      */
     const updatePopupByContent = () => {
         const msgAreas = document.querySelectorAll('div[style*="overflow: hidden auto"][style*="width: 100%"]');
         msgAreas.forEach(msgArea => {
-            // ダイアログのコンテナを探す
             const popup = msgArea.closest(getSelector('dialog')) || msgArea.closest('div[style*="rgb(240, 240, 240)"]') || msgArea.parentElement;
             
             if (popup) {
@@ -195,7 +202,7 @@
     };
 
     /**
-     * 5. フォームのバリデーション（入力チェック）
+     * 5. フォームのバリデーション
      */
     const validateAll = (record) => {
         let hasError = false;
@@ -237,7 +244,6 @@
             }
         });
         
-        // 添付ファイルのバリデーション
         document.querySelectorAll(getSelector('file')).forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
@@ -267,7 +273,7 @@
     };
 
     /**
-     * 7. ファイル添付フィールドのカスタマイズ（画像ボックスデザイン & ドラッグドロップ）
+     * 7. ファイル添付フィールドのカスタマイズ
      */
     const customizeFileField = () => {
         const fileFields = document.querySelectorAll(getSelector('file'));
@@ -275,7 +281,6 @@
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
             
-            // 全てのプレフィックス候補でボタンを探す
             const btn = field.querySelector('button' + getSelector('icon-file').replace(/,/g, ', button')) || 
                         field.querySelector('button' + getSelector('search').replace(/,/g, ', button')) || 
                         field.querySelector('button');
@@ -380,6 +385,10 @@
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
+            // ここでアイコンを変更する。
+            // ※「https://〜」から始まる画像URLを指定してください。
+            updateFavicon("https://recipeofficeari.netcoms.ne.jp/coms/img/favicon-v10.ico");
+            
             updateCarrierGuidance(ev.record["契約会社名"]?.value || ""); 
             updateSubmitButtonState(); 
             updateVisibility(ev.record); 
