@@ -8,6 +8,7 @@
     const MSG_CONFIRM = "入力内容に問題はありませんか？\nよろしければ送信してください。";
     const MSG_COMPLETE = "送信が完了しました。\n完了メールが送付されますので、ご確認ください。";
     const MSG_EXT_ERROR = "次の拡張子のみ添付可能です。\njpg, png, gif, webp, heic, xlsx, docx";
+    const MSG_SIZE_ERROR = "ファイルサイズが大きすぎます。\n2MB以下の画像を選択してください。";
     const MSG_MAIL_ERROR = "正しいメールアドレスの形式で入力してください。";
     
     const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'xlsx', 'docx'];
@@ -186,7 +187,6 @@
 
     /**
      * 5. フォームのバリデーション（入力チェック）
-     * 【修正】hasError が不当に true にならないようロジックを整理
      */
     const validateAll = (record) => {
         let hasError = false;
@@ -254,7 +254,7 @@
         });
         
         // 添付ファイルのバリデーション
-        document.querySelectorAll('.kb-file').forEach(field => {
+        document.querySelectorAll('.bst-file, .kb-file').forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             const fieldId = field.closest('[field-id]')?.getAttribute('field-id');
             if (hiddenInput && fieldId) {
@@ -284,13 +284,20 @@
 
     /**
      * 7. ファイル添付フィールドのカスタマイズ（画像ボックスデザイン）
+     * 【修正】bst- プレフィックスのクラス名に完全対応
      */
     const customizeFileField = () => {
-        const fileFields = document.querySelectorAll('.kb-file');
+        const fileFields = document.querySelectorAll('.bst-file, .kb-file');
         fileFields.forEach(field => {
             const hiddenInput = field.querySelector('input[type="hidden"]');
             if (!hiddenInput) return;
-            const btn = field.querySelector('button.kb-icon-file') || field.querySelector('button.kb-search') || field.querySelector('button');
+            
+            // ボタンの特定（bst- または kb- または 標準のbutton）
+            const btn = field.querySelector('button.bst-icon-file') || 
+                        field.querySelector('button.kb-icon-file') || 
+                        field.querySelector('button.bst-search') || 
+                        field.querySelector('button.kb-search') || 
+                        field.querySelector('button');
             if (!btn) return;
             
             // ファイル名リストの表示
@@ -328,8 +335,12 @@
             }
 
             if (field.dataset.customized) return;
-            const defaultGuide = field.querySelector('.kb-guide');
+            
+            // ガイドテキスト（「ここをクリック...」）の非表示化
+            const defaultGuide = field.querySelector('.bst-guide') || field.querySelector('.kb-guide');
             if (defaultGuide) defaultGuide.style.setProperty('display', 'none', 'important');
+            
+            // ボタン自体のデザイン上書き
             btn.style.setProperty('background-image', 'none', 'important');
             btn.style.setProperty('height', 'auto', 'important');
             btn.style.setProperty('min-height', '120px', 'important');
