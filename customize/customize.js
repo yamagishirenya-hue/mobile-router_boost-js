@@ -2,21 +2,26 @@
     "use strict";
 
     /**
-     * 【新機能】タブのアイコン（ファビコン）を変更する
+     * 【強化版】タブのアイコン（ファビコン）を強制的に変更する
+     * 既存のすべてのアイコン設定を削除してから、新しい設定を追加します。
      * @param {string} url - 変更したいアイコン画像のURL
      */
     const updateFavicon = (url) => {
         if (!url) return;
-        // 既存のリンク要素（rel="icon" または rel="shortcut icon"）を探す
-        let link = document.querySelector("link[rel*='icon']");
-        
-        // 要素がなければ新しく作成、あればURLを上書き
-        if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.head.appendChild(link);
-        }
-        link.href = url;
+
+        // 既存のすべてのアイコン用リンク要素（relにiconが含まれるもの）を一旦削除する
+        // これにより、デフォルトのfavicon.svgなどの影響を完全に排除します
+        const existingLinks = document.querySelectorAll("link[rel*='icon']");
+        existingLinks.forEach(link => {
+            link.parentNode.removeChild(link);
+        });
+
+        // 新しいアイコン要素を作成して追加する
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.type = 'image/x-icon'; // .icoファイルの場合
+        newLink.href = url;
+        document.head.appendChild(newLink);
     };
 
     /**
@@ -376,17 +381,19 @@
         else if (fieldId && fieldId.includes("メールアドレス")) e.target.value = val.replace(/[^a-zA-Z0-9@.!#$%&'*+/=?^_`{|}~-]/g, "");
     });
 
+    // 監視頻度を上げて上書きを防止
     setInterval(() => { 
         updatePopupByContent(); 
         resetPostalInput(); 
         updateSubmitButtonState(); 
         customizeFileField(); 
+        // 定期的にファビコンの状態をチェックして、デフォルトに戻っていたら再設定する
+        updateFavicon("https://recipeofficeari.netcoms.ne.jp/coms/img/favicon-v10.ico");
     }, 500);
 
     if (typeof kb !== 'undefined' && kb.event) {
         kb.event.on(['kb.view.show', 'kb.create.show', 'kb.edit.show'], (ev) => {
-            // ここでアイコンを変更する。
-            // ※「https://〜」から始まる画像URLを指定してください。
+            // 初回表示時に設定
             updateFavicon("https://recipeofficeari.netcoms.ne.jp/coms/img/favicon-v10.ico");
             
             updateCarrierGuidance(ev.record["契約会社名"]?.value || ""); 
