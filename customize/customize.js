@@ -212,7 +212,7 @@
     const validateAll = (record) => {
         let hasError = false;
         const checkValue = record["返送先対象者確認"]?.value;
-        const isDiff = checkValue === "返送先が異なる";
+        const isDiff = checkValue === "発送先が異なる";
         
         document.querySelectorAll('[field-id]').forEach(el => {
             el.querySelectorAll('.error-input').forEach(e => e.classList.remove('error-input'));
