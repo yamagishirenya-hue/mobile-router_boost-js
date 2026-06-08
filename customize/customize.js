@@ -273,7 +273,7 @@
     const updateVisibility = (record) => {
         if (!record) return;
         const checkValue = record["返送先対象者確認"]?.value;
-        const isDifferent = (checkValue === "返送先が異なる");
+        const isDifferent = (checkValue === "発送先が異なる");
         document.body.classList.toggle("show-target-fields", isDifferent);
     };
 
